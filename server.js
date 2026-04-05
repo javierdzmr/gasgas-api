@@ -7,71 +7,81 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// 🔥 CONEXIÓN A POSTGRES (Render)
+// 🔥 CONEXIÓN A POSTGRES
 const db = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
 
-// 🚀 API DE PRECIOS
+// 🚀 API DE PRECIOS (PROMEDIO PRO)
 app.get('/api/precios', async (req, res) => {
-  const { market = "nacional", value = "nacional", days = 30 } = req.query;
+  const { market = "nacional", value = "CDMX", days = 30 } = req.query;
 
   try {
     let query;
     let params;
 
-    // 🌎 CASO NACIONAL (sin filtro)
     if (market === "nacional") {
       query = `
+        WITH estaciones AS (
+          SELECT 
+            g.id as station_id,
+            AVG(p.regular) as regular,
+            AVG(p.premium) as premium,
+            AVG(p.diesel) as diesel
+          FROM prices p
+          JOIN prices_gas_station_links l ON p.id = l.price_id
+          JOIN gas_stations g ON l.gas_station_id = g.id
+          WHERE p.fecha >= NOW() - INTERVAL '${days} days'
+          GROUP BY g.id
+        )
         SELECT 
           AVG(regular) as regular,
           AVG(premium) as premium,
           AVG(diesel) as diesel
-        FROM precios_agregados
-        WHERE days = $1
+        FROM estaciones
       `;
-      params = [days];
+      params = [];
     } else {
-      // 📍 CASO ESTADO / CIUDAD
       query = `
+        WITH estaciones AS (
+          SELECT 
+            g.id as station_id,
+            AVG(p.regular) as regular,
+            AVG(p.premium) as premium,
+            AVG(p.diesel) as diesel
+          FROM prices p
+          JOIN prices_gas_station_links l ON p.id = l.price_id
+          JOIN gas_stations g ON l.gas_station_id = g.id
+          WHERE p.fecha >= NOW() - INTERVAL '${days} days'
+          AND g.estado = $1
+          GROUP BY g.id
+        )
         SELECT 
           AVG(regular) as regular,
           AVG(premium) as premium,
           AVG(diesel) as diesel
-        FROM precios_agregados
-        WHERE market_type = $1
-        AND market_value = $2
-        AND days = $3
+        FROM estaciones
       `;
-      params = [market, value, days];
+      params = [value];
     }
 
     const result = await db.query(query, params);
 
-    if (result.rows.length === 0) {
-      return res.json({
-        mercado: market,
-        regular: 0,
-        premium: 0,
-        diesel: 0
-      });
-    }
-
     res.json({
       mercado: market,
-      regular: parseFloat(result.rows[0].regular).toFixed(2),
-      premium: parseFloat(result.rows[0].premium).toFixed(2),
-      diesel: parseFloat(result.rows[0].diesel).toFixed(2)
+      regular: result.rows[0].regular ? parseFloat(result.rows[0].regular).toFixed(2) : 0,
+      premium: result.rows[0].premium ? parseFloat(result.rows[0].premium).toFixed(2) : 0,
+      diesel: result.rows[0].diesel ? parseFloat(result.rows[0].diesel).toFixed(2) : 0
     });
 
   } catch (error) {
     console.error(error);
-    res.status(500).send("Error en API");
+    res.status(500).send(error.message);
   }
 });
 
-// ✅ IMPORTANTE PARA RENDER
+// ✅ PUERTO
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
