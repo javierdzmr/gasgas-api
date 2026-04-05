@@ -84,6 +84,24 @@ app.get("/api/precios", async (req, res) => {
   }
 });
 
+app.get('/api/estados', async (req, res) => {
+  try {
+
+    const result = await pool.query(`
+      SELECT DISTINCT estado
+      FROM gas_stations
+      WHERE estado IS NOT NULL
+      ORDER BY estado ASC
+    `);
+
+    res.json(result.rows);
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error obteniendo estados' });
+  }
+});
+
 // ==================================
 // 📊 ENDPOINT HISTÓRICO (GRÁFICA REAL)
 // ==================================
