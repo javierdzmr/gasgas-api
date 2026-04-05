@@ -1,4 +1,3 @@
-```js
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
@@ -16,8 +15,8 @@ const db = new Pool({
 
 // 🧠 MAPEO DE MERCADOS
 const marketMap = {
-  "CDMX": "Ciudad de México",
-  "cdmx": "Ciudad de México"
+  CDMX: "Ciudad de México",
+  cdmx: "Ciudad de México"
 };
 
 // ===============================
@@ -29,29 +28,29 @@ app.get('/api/precios', async (req, res) => {
   const mappedValue = marketMap[value] || value;
 
   try {
-    let query;
-    let params;
+    let query = "";
+    let params = [];
 
     if (market === "nacional") {
       query = `
-        SELECT regular, premium, diesel
-        FROM precios_agregados
-        WHERE market_type = 'nacional'
-        AND days = $1
-        ORDER BY updated_at DESC
-        LIMIT 1
-      `;
+SELECT regular, premium, diesel
+FROM precios_agregados
+WHERE market_type = 'nacional'
+AND days = $1
+ORDER BY updated_at DESC
+LIMIT 1
+`;
       params = [days];
     } else {
       query = `
-        SELECT regular, premium, diesel
-        FROM precios_agregados
-        WHERE market_type = $1
-        AND LOWER(market_value) = LOWER($2)
-        AND days = $3
-        ORDER BY updated_at DESC
-        LIMIT 1
-      `;
+SELECT regular, premium, diesel
+FROM precios_agregados
+WHERE market_type = $1
+AND LOWER(market_value) = LOWER($2)
+AND days = $3
+ORDER BY updated_at DESC
+LIMIT 1
+`;
       params = [market, mappedValue, days];
     }
 
@@ -85,27 +84,27 @@ app.get('/api/historico', async (req, res) => {
   const mappedValue = marketMap[value] || value;
 
   try {
-    let query;
-    let params;
+    let query = "";
+    let params = [];
 
     if (market === "nacional") {
       query = `
-        SELECT updated_at as date, regular, premium, diesel
-        FROM precios_agregados
-        WHERE market_type = 'nacional'
-        AND days = $1
-        ORDER BY updated_at ASC
-      `;
+SELECT updated_at as date, regular, premium, diesel
+FROM precios_agregados
+WHERE market_type = 'nacional'
+AND days = $1
+ORDER BY updated_at ASC
+`;
       params = [days];
     } else {
       query = `
-        SELECT updated_at as date, regular, premium, diesel
-        FROM precios_agregados
-        WHERE market_type = $1
-        AND LOWER(market_value) = LOWER($2)
-        AND days = $3
-        ORDER BY updated_at ASC
-      `;
+SELECT updated_at as date, regular, premium, diesel
+FROM precios_agregados
+WHERE market_type = $1
+AND LOWER(market_value) = LOWER($2)
+AND days = $3
+ORDER BY updated_at ASC
+`;
       params = [market, mappedValue, days];
     }
 
@@ -140,5 +139,3 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en puerto ${PORT}`);
 });
-```
-
