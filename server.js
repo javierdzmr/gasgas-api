@@ -13,29 +13,57 @@ const db = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
-// 🚀 API DE PRECIOS (USANDO PRE-CÁLCULO)
+// 🚀 API DE PRECIOS
 app.get('/api/precios', async (req, res) => {
   const { market = "nacional", value = "nacional", days = 30 } = req.query;
 
   try {
-    const result = await db.query(`
-      SELECT regular, premium, diesel
-      FROM precios_agregados
-      WHERE market_type = $1
-      AND market_value = $2
-      AND days = $3
-      LIMIT 1
-    `, [market, value, days]);
+    let query;
+    let params;
+
+    // 🌎 CASO NACIONAL (sin filtro)
+    if (market === "nacional") {
+      query = `
+        SELECT 
+          AVG(regular) as regular,
+          AVG(premium) as premium,
+          AVG(diesel) as diesel
+        FROM precios_agregados
+        WHERE days = $1
+      `;
+      params = [days];
+    } else {
+      // 📍 CASO ESTADO / CIUDAD
+      query = `
+        SELECT 
+          AVG(regular) as regular,
+          AVG(premium) as premium,
+          AVG(diesel) as diesel
+        FROM precios_agregados
+        WHERE market_type = $1
+        AND market_value = $2
+        AND days = $3
+      `;
+      params = [market, value, days];
+    }
+
+    const result = await db.query(query, params);
 
     if (result.rows.length === 0) {
       return res.json({
+        mercado: market,
         regular: 0,
         premium: 0,
         diesel: 0
       });
     }
 
-    res.json(result.rows[0]);
+    res.json({
+      mercado: market,
+      regular: parseFloat(result.rows[0].regular).toFixed(2),
+      premium: parseFloat(result.rows[0].premium).toFixed(2),
+      diesel: parseFloat(result.rows[0].diesel).toFixed(2)
+    });
 
   } catch (error) {
     console.error(error);
