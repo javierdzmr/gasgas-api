@@ -1,141 +1,98 @@
-const express = require('express');
-const cors = require('cors');
-const { Pool } = require('pg');
+const express = require("express");
+const cors = require("cors");
+const { Pool } = require("pg");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-// 🔥 CONEXIÓN A POSTGRES
-const db = new Pool({
+// 🔌 Conexión a PostgreSQL (usa tu DATABASE_URL de Render)
+const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
+  ssl: {
+    rejectUnauthorized: false,
+  },
 });
 
-// 🧠 MAPEO DE MERCADOS
+// 🧠 Mapeo de valores (ej: CDMX → Ciudad de México)
 const marketMap = {
   CDMX: "Ciudad de México",
-  cdmx: "Ciudad de México"
+  cdmx: "Ciudad de México",
 };
 
-// ===============================
-// 📊 API DE PRECIOS
-// ===============================
-app.get('/api/precios', async (req, res) => {
-  const { market = "nacional", value = "CDMX", days = 30 } = req.query;
-
-  const mappedValue = marketMap[value] || value;
-
+// 🚀 ENDPOINT PRINCIPAL
+app.get("/api/precios", async (req, res) => {
   try {
-    let query = "";
-    let params = [];
+    const { market = "nacional", value = "nacional", days = 30 } = req.query;
 
-    if (market === "nacional") {
-      query = `
-SELECT regular, premium, diesel
-FROM precios_agregados
-WHERE market_type = 'nacional'
-AND days = $1
-ORDER BY updated_at DESC
-LIMIT 1
-`;
-      params = [days];
+    console.log("PARAMS:", { market, value, days });
+
+    const mappedValue = marketMap[value] || value;
+
+    console.log("MAPPED VALUE:", mappedValue);
+
+    let query = `
+      SELECT regular, premium, diesel
+      FROM precios_agregados
+      WHERE market_type = $1
+    `;
+
+    let params = [market];
+
+    // Si NO es nacional, agregamos filtro por value
+    if (market !== "nacional") {
+      query += `
+        AND LOWER(TRIM(market_value)) = LOWER(TRIM($2))
+        AND days = $3
+      `;
+      params.push(mappedValue, days);
     } else {
-      query = `
-SELECT regular, premium, diesel
-FROM precios_agregados
-WHERE market_type = $1
-AND LOWER(market_value) = LOWER($2)
-AND days = $3
-ORDER BY updated_at DESC
-LIMIT 1
-`;
-      params = [market, mappedValue, days];
+      query += `
+        AND days = $2
+      `;
+      params.push(days);
     }
 
-    const result = await db.query(query, params);
+    console.log("QUERY:", query);
+    console.log("PARAMS ARRAY:", params);
+
+    const result = await pool.query(query, params);
+
+    console.log("RESULT ROWS:", result.rows);
+
+    // Si no hay datos → devolver ceros
+    if (!result.rows.length) {
+      return res.json({
+        regular: 0,
+        premium: 0,
+        diesel: 0,
+      });
+    }
+
+    // Convertir a número por si vienen como string
+    const row = result.rows[0];
 
     res.json({
-      mercado: market,
-      regular: result.rows[0]?.regular
-        ? parseFloat(result.rows[0].regular).toFixed(2)
-        : 0,
-      premium: result.rows[0]?.premium
-        ? parseFloat(result.rows[0].premium).toFixed(2)
-        : 0,
-      diesel: result.rows[0]?.diesel
-        ? parseFloat(result.rows[0].diesel).toFixed(2)
-        : 0
+      regular: Number(row.regular),
+      premium: Number(row.premium),
+      diesel: Number(row.diesel),
     });
 
   } catch (error) {
-    console.error(error);
-    res.status(500).send(error.message);
+    console.error("ERROR API:", error);
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
-// ===============================
-// 📈 API HISTÓRICO
-// ===============================
-app.get('/api/historico', async (req, res) => {
-  const { market = "nacional", value = "CDMX", days = 30 } = req.query;
-
-  const mappedValue = marketMap[value] || value;
-
-  try {
-    let query = "";
-    let params = [];
-
-    if (market === "nacional") {
-      query = `
-SELECT updated_at as date, regular, premium, diesel
-FROM precios_agregados
-WHERE market_type = 'nacional'
-AND days = $1
-ORDER BY updated_at ASC
-`;
-      params = [days];
-    } else {
-      query = `
-SELECT updated_at as date, regular, premium, diesel
-FROM precios_agregados
-WHERE market_type = $1
-AND LOWER(market_value) = LOWER($2)
-AND days = $3
-ORDER BY updated_at ASC
-`;
-      params = [market, mappedValue, days];
-    }
-
-    const result = await db.query(query, params);
-
-    res.json(
-      result.rows.map(row => ({
-        date: row.date,
-        regular: row.regular
-          ? parseFloat(row.regular).toFixed(2)
-          : 0,
-        premium: row.premium
-          ? parseFloat(row.premium).toFixed(2)
-          : 0,
-        diesel: row.diesel
-          ? parseFloat(row.diesel).toFixed(2)
-          : 0
-      }))
-    );
-
-  } catch (error) {
-    console.error(error);
-    res.status(500).send(error.message);
-  }
+// ❤️ Health check
+app.get("/", (req, res) => {
+  res.send("GasGas API running 🚀");
 });
 
-// ===============================
-// 🚀 PUERTO
-// ===============================
+// 🚀 Levantar servidor
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log(`Servidor corriendo en puerto ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
