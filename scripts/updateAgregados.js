@@ -9,53 +9,71 @@ async function updateAgregados() {
   try {
     console.log("🚀 Iniciando actualización de agregados...");
 
-    // 🧹 Limpiar estados previos
+    // 🧹 Limpiar solo estados (7 y 30)
     await pool.query(`
-      DELETE FROM precios_agregados WHERE market_type = 'estado';
+      DELETE FROM precios_agregados 
+      WHERE market_type = 'estado' AND days IN (7,30);
     `);
 
     console.log("🧹 Datos anteriores eliminados");
 
-    // 🔥 Insertar nuevos agregados
+    // 🔥 Insertar 7 y 30 días en un solo query
     await pool.query(`
-      INSERT INTO precios_agregados (market_type, market_value, days, regular, premium, diesel, updated_at)
+      INSERT INTO precios_agregados 
+      (market_type, market_value, days, regular, premium, diesel, updated_at)
 
+      -- =========================
+      -- 🔥 BASE: promedio por estación
+      -- =========================
+      WITH base AS (
+        SELECT
+          psl.gas_station_id,
+          p.date,
+          AVG(NULLIF(p.regular, 0)) as regular,
+          AVG(NULLIF(p.premium, 0)) as premium,
+          AVG(NULLIF(p.diesel, 0)) as diesel
+        FROM prices p
+        JOIN prices_gas_station_links psl
+          ON p.id = psl.price_id
+        WHERE p.date >= CURRENT_DATE - INTERVAL '30 days'
+        GROUP BY psl.gas_station_id, p.date
+      )
+
+      -- =========================
+      -- 🔥 ESTADO - 7 DÍAS
+      -- =========================
       SELECT
-          'estado' as market_type,
-          gs.estado as market_value,
-          30 as days,
+        'estado',
+        gs.estado,
+        7,
+        AVG(b.regular),
+        AVG(b.premium),
+        AVG(b.diesel),
+        NOW()
+      FROM base b
+      JOIN gas_stations gs ON gs.id = b.gas_station_id
+      WHERE b.date >= CURRENT_DATE - INTERVAL '7 days'
+      GROUP BY gs.estado
 
-          AVG(est.regular_avg) as regular,
-          AVG(est.premium_avg) as premium,
-          AVG(est.diesel_avg) as diesel,
+      UNION ALL
 
-          NOW() as updated_at
-
-      FROM (
-
-          SELECT
-              psl.gas_station_id,
-              AVG(p.regular) as regular_avg,
-              AVG(p.premium) as premium_avg,
-              AVG(p.diesel) as diesel_avg
-
-          FROM prices p
-          JOIN prices_gas_station_links psl
-              ON p.id = psl.price_id
-
-          WHERE p.date >= CURRENT_DATE - INTERVAL '30 days'
-
-          GROUP BY psl.gas_station_id
-
-      ) est
-
-      JOIN gas_stations gs
-          ON est.gas_station_id = gs.id
-
+      -- =========================
+      -- 🔥 ESTADO - 30 DÍAS
+      -- =========================
+      SELECT
+        'estado',
+        gs.estado,
+        30,
+        AVG(b.regular),
+        AVG(b.premium),
+        AVG(b.diesel),
+        NOW()
+      FROM base b
+      JOIN gas_stations gs ON gs.id = b.gas_station_id
       GROUP BY gs.estado;
     `);
 
-    console.log("✅ Agregados actualizados correctamente");
+    console.log("✅ Agregados (7 y 30 días) actualizados correctamente");
 
     process.exit(0);
 
