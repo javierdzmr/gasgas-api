@@ -32,7 +32,7 @@ app.get('/api/precios', async (req, res) => {
           FROM prices p
           JOIN prices_gas_station_links l ON p.id = l.price_id
           JOIN gas_stations g ON l.gas_station_id = g.id
-          WHERE p.fecha >= NOW() - INTERVAL '${days} days'
+          WHERE p.date >= NOW() - INTERVAL '${days} days'
           GROUP BY g.id
         )
         SELECT 
@@ -53,7 +53,7 @@ app.get('/api/precios', async (req, res) => {
           FROM prices p
           JOIN prices_gas_station_links l ON p.id = l.price_id
           JOIN gas_stations g ON l.gas_station_id = g.id
-          WHERE p.fecha >= NOW() - INTERVAL '${days} days'
+          WHERE p.date >= NOW() - INTERVAL '${days} days'
           AND g.estado = $1
           GROUP BY g.id
         )
