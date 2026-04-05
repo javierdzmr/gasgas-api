@@ -14,14 +14,14 @@ const db = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
-// 🧠 MAPEO DE MERCADOS (PRO)
+// 🧠 MAPEO DE MERCADOS
 const marketMap = {
   "CDMX": "Ciudad de México",
   "cdmx": "Ciudad de México"
 };
 
 // ===============================
-// 📊 API DE PRECIOS (ACTUAL)
+// 📊 API DE PRECIOS
 // ===============================
 app.get('/api/precios', async (req, res) => {
   const { market = "nacional", value = "CDMX", days = 30 } = req.query;
@@ -77,7 +77,7 @@ app.get('/api/precios', async (req, res) => {
 });
 
 // ===============================
-// 📈 API HISTÓRICO (GRÁFICA)
+// 📈 API HISTÓRICO
 // ===============================
 app.get('/api/historico', async (req, res) => {
   const { market = "nacional", value = "CDMX", days = 30 } = req.query;
