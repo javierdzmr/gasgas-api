@@ -12,6 +12,18 @@ const pool = new Pool({
 
 
 // ==============================
+// 🔥 NORMALIZADOR (BACKEND)
+// ==============================
+function normalize(text) {
+  return text
+    ?.normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+
+// ==============================
 // 🔹 PRECIOS (CARDS + FOOTER)
 // ==============================
 app.get("/api/precios", async (req, res) => {
@@ -24,9 +36,9 @@ app.get("/api/precios", async (req, res) => {
         pa.premium,
         pa.diesel,
         pa.updated_at,
-        pa.min_regular,
-        pa.max_regular,
-        pa.std_regular,
+        pa.min_regular AS min,
+        pa.max_regular AS max,
+        pa.std_regular AS std,
         pa.stations_count,
         (SELECT COUNT(*) FROM gas_stations) AS total_estaciones
       FROM precios_agregados pa
@@ -36,8 +48,19 @@ app.get("/api/precios", async (req, res) => {
     let params = [market];
 
     if (market !== "nacional") {
-      query += ` AND pa.market_value = $2 AND pa.days = $3`;
+
+      // 🔥 FIX CLAVE: comparar normalizado
+      query += `
+        AND LOWER(
+          unaccent(pa.market_value)
+        ) = LOWER(
+          unaccent($2)
+        )
+        AND pa.days = $3
+      `;
+
       params.push(value, days);
+
     } else {
       query += ` AND pa.market_value = 'all' AND pa.days = $2`;
       params.push(days);
@@ -45,7 +68,7 @@ app.get("/api/precios", async (req, res) => {
 
     const result = await pool.query(query, params);
 
-    res.json(result.rows[0]);
+    res.json(result.rows[0] || {});
 
   } catch (err) {
     console.error(err);
@@ -59,7 +82,7 @@ app.get("/api/precios", async (req, res) => {
 // ==============================
 app.get("/api/historico", async (req, res) => {
   try {
-    const { market, value, days, product } = req.query;
+    const { market, value, days } = req.query;
 
     let query = `
       SELECT 
@@ -74,8 +97,18 @@ app.get("/api/historico", async (req, res) => {
     let params = [market];
 
     if (market !== "nacional") {
-      query += ` AND market_value = $2`;
+
+      // 🔥 MISMO FIX AQUÍ
+      query += `
+        AND LOWER(
+          unaccent(market_value)
+        ) = LOWER(
+          unaccent($2)
+        )
+      `;
+
       params.push(value);
+
     } else {
       query += ` AND market_value = 'all'`;
     }
