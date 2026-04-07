@@ -12,13 +12,13 @@ const pool = new Pool({
 
 
 // ==============================
-// 🔹 PRECIOS
+// 🔹 PRECIOS (DINÁMICO POR PRODUCTO)
 // ==============================
 app.get("/api/precios", async (req, res) => {
   try {
-    const { market, value, days } = req.query;
+    const { market, value, days, product } = req.query;
 
-    console.log("PRECIOS →", { market, value, days });
+    console.log("PRECIOS →", { market, value, days, product });
 
     let query = `
       SELECT 
@@ -26,11 +26,29 @@ app.get("/api/precios", async (req, res) => {
         pa.premium,
         pa.diesel,
         pa.updated_at,
-        pa.min_regular AS min,
-        pa.max_regular AS max,
-        pa.std_regular AS std,
+
+        CASE 
+          WHEN $4 = 'regular' THEN pa.min_regular
+          WHEN $4 = 'premium' THEN pa.min_premium
+          WHEN $4 = 'diesel' THEN pa.min_diesel
+        END AS min,
+
+        CASE 
+          WHEN $4 = 'regular' THEN pa.max_regular
+          WHEN $4 = 'premium' THEN pa.max_premium
+          WHEN $4 = 'diesel' THEN pa.max_diesel
+        END AS max,
+
+        CASE 
+          WHEN $4 = 'regular' THEN pa.std_regular
+          WHEN $4 = 'premium' THEN pa.std_premium
+          WHEN $4 = 'diesel' THEN pa.std_diesel
+        END AS std,
+
         pa.stations_count,
+
         (SELECT COUNT(*) FROM gas_stations) AS total_estaciones
+
       FROM precios_agregados pa
       WHERE pa.market_type = $1
     `;
@@ -42,13 +60,13 @@ app.get("/api/precios", async (req, res) => {
         AND LOWER(pa.market_value) = LOWER($2)
         AND pa.days = $3
       `;
-      params.push(value, days);
+      params.push(value, days, product);
     } else {
       query += `
         AND pa.market_value = 'all'
         AND pa.days = $2
       `;
-      params.push(days);
+      params.push(days, product);
     }
 
     const result = await pool.query(query, params);
