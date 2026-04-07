@@ -11,7 +11,7 @@ async function updateAgregados() {
   try {
     console.log("⛽ Actualizando precios agregados...");
 
-    // 🔥 LIMPIEZA: elimina nacional incorrecto
+    // 🔥 LIMPIEZA
     await client.query(`
       DELETE FROM precios_agregados
       WHERE market_type = 'nacional'
@@ -32,8 +32,10 @@ async function updateAgregados() {
           AVG(p.diesel) AS diesel,
           MIN(p.regular) AS min_regular,
           MAX(p.regular) AS max_regular,
-          STDDEV(p.regular) AS std_regular
+          STDDEV(p.regular) AS std_regular,
+          COUNT(DISTINCT l.gas_station_id) AS stations_count
         FROM prices p
+        JOIN prices_gas_station_links l ON l.price_id = p.id
         WHERE p.date >= NOW() - INTERVAL '${days} days'
       `);
 
@@ -50,9 +52,10 @@ async function updateAgregados() {
           updated_at,
           min_regular,
           max_regular,
-          std_regular
+          std_regular,
+          stations_count
         )
-        VALUES ('nacional', 'all', $1, $2, $3, $4, NOW(), $5, $6, $7)
+        VALUES ('nacional', 'all', $1, $2, $3, $4, NOW(), $5, $6, $7, $8)
         ON CONFLICT (market_type, market_value, days)
         DO UPDATE SET
           regular = EXCLUDED.regular,
@@ -61,7 +64,8 @@ async function updateAgregados() {
           updated_at = NOW(),
           min_regular = EXCLUDED.min_regular,
           max_regular = EXCLUDED.max_regular,
-          std_regular = EXCLUDED.std_regular;
+          std_regular = EXCLUDED.std_regular,
+          stations_count = EXCLUDED.stations_count;
       `, [
         days,
         n.regular,
@@ -69,7 +73,8 @@ async function updateAgregados() {
         n.diesel,
         n.min_regular,
         n.max_regular,
-        n.std_regular
+        n.std_regular,
+        n.stations_count
       ]);
 
       // =========================
@@ -80,7 +85,8 @@ async function updateAgregados() {
           gs.estado,
           AVG(p.regular) AS regular,
           AVG(p.premium) AS premium,
-          AVG(p.diesel) AS diesel
+          AVG(p.diesel) AS diesel,
+          COUNT(DISTINCT l.gas_station_id) AS stations_count
         FROM prices p
         JOIN prices_gas_station_links l ON l.price_id = p.id
         JOIN gas_stations gs ON gs.id = l.gas_station_id
@@ -97,21 +103,24 @@ async function updateAgregados() {
             regular,
             premium,
             diesel,
-            updated_at
+            updated_at,
+            stations_count
           )
-          VALUES ('estado', $1, $2, $3, $4, $5, NOW())
+          VALUES ('estado', $1, $2, $3, $4, $5, NOW(), $6)
           ON CONFLICT (market_type, market_value, days)
           DO UPDATE SET
             regular = EXCLUDED.regular,
             premium = EXCLUDED.premium,
             diesel = EXCLUDED.diesel,
-            updated_at = NOW();
+            updated_at = NOW(),
+            stations_count = EXCLUDED.stations_count;
         `, [
           row.estado,
           days,
           row.regular,
           row.premium,
-          row.diesel
+          row.diesel,
+          row.stations_count
         ]);
       }
 
