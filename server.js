@@ -12,7 +12,7 @@ const pool = new Pool({
 
 
 // ==============================
-// 🔹 PRECIOS (DINÁMICO POR PRODUCTO)
+// 🔹 PRECIOS (FIX REAL)
 // ==============================
 app.get("/api/precios", async (req, res) => {
   try {
@@ -20,35 +20,22 @@ app.get("/api/precios", async (req, res) => {
 
     console.log("PRECIOS →", { market, value, days, product });
 
+    // 🔥 columnas dinámicas (SIN CASE)
+    const minCol = `min_${product}`;
+    const maxCol = `max_${product}`;
+    const stdCol = `std_${product}`;
+
     let query = `
       SELECT 
         pa.regular,
         pa.premium,
         pa.diesel,
         pa.updated_at,
-
-        CASE 
-          WHEN $4 = 'regular' THEN pa.min_regular
-          WHEN $4 = 'premium' THEN pa.min_premium
-          WHEN $4 = 'diesel' THEN pa.min_diesel
-        END AS min,
-
-        CASE 
-          WHEN $4 = 'regular' THEN pa.max_regular
-          WHEN $4 = 'premium' THEN pa.max_premium
-          WHEN $4 = 'diesel' THEN pa.max_diesel
-        END AS max,
-
-        CASE 
-          WHEN $4 = 'regular' THEN pa.std_regular
-          WHEN $4 = 'premium' THEN pa.std_premium
-          WHEN $4 = 'diesel' THEN pa.std_diesel
-        END AS std,
-
+        pa.${minCol} AS min,
+        pa.${maxCol} AS max,
+        pa.${stdCol} AS std,
         pa.stations_count,
-
         (SELECT COUNT(*) FROM gas_stations) AS total_estaciones
-
       FROM precios_agregados pa
       WHERE pa.market_type = $1
     `;
@@ -60,13 +47,13 @@ app.get("/api/precios", async (req, res) => {
         AND LOWER(pa.market_value) = LOWER($2)
         AND pa.days = $3
       `;
-      params.push(value, days, product);
+      params.push(value, days);
     } else {
       query += `
         AND pa.market_value = 'all'
         AND pa.days = $2
       `;
-      params.push(days, product);
+      params.push(days);
     }
 
     const result = await pool.query(query, params);
@@ -87,8 +74,6 @@ app.get("/api/historico", async (req, res) => {
   try {
     const { market, value, days } = req.query;
 
-    console.log("HISTORICO →", { market, value, days });
-
     let query = `
       SELECT 
         date,
@@ -102,9 +87,7 @@ app.get("/api/historico", async (req, res) => {
     let params = [market];
 
     if (market !== "nacional") {
-      query += `
-        AND LOWER(market_value) = LOWER($2)
-      `;
+      query += ` AND LOWER(market_value) = LOWER($2)`;
       params.push(value);
     } else {
       query += ` AND market_value = 'all'`;
