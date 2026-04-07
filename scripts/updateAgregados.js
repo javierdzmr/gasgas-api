@@ -27,13 +27,22 @@ async function updateAgregados() {
       // =========================
       const nacional = await client.query(`
         SELECT 
-          AVG(p.regular) AS regular,
-          AVG(p.premium) AS premium,
-          AVG(p.diesel) AS diesel,
-          MIN(p.regular) AS min_regular,
-          MAX(p.regular) AS max_regular,
-          STDDEV(p.regular) AS std_regular,
-          COUNT(DISTINCT l.gas_station_id) AS stations_count
+          AVG(CASE WHEN p.regular BETWEEN 20 AND 30 THEN p.regular END) AS regular,
+          AVG(CASE WHEN p.premium BETWEEN 20 AND 35 THEN p.premium END) AS premium,
+          AVG(CASE WHEN p.diesel BETWEEN 20 AND 35 THEN p.diesel END) AS diesel,
+
+          MIN(CASE WHEN p.regular BETWEEN 20 AND 30 THEN p.regular END) AS min_regular,
+          MAX(CASE WHEN p.regular BETWEEN 20 AND 30 THEN p.regular END) AS max_regular,
+          STDDEV(CASE WHEN p.regular BETWEEN 20 AND 30 THEN p.regular END) AS std_regular,
+
+          COUNT(DISTINCT CASE 
+            WHEN 
+              (p.regular BETWEEN 20 AND 30)
+              OR (p.premium BETWEEN 20 AND 35)
+              OR (p.diesel BETWEEN 20 AND 35)
+            THEN l.gas_station_id
+          END) AS stations_count
+
         FROM prices p
         JOIN prices_gas_station_links l ON l.price_id = p.id
         WHERE p.date >= NOW() - INTERVAL '${days} days'
@@ -83,10 +92,19 @@ async function updateAgregados() {
       const estados = await client.query(`
         SELECT 
           gs.estado,
-          AVG(p.regular) AS regular,
-          AVG(p.premium) AS premium,
-          AVG(p.diesel) AS diesel,
-          COUNT(DISTINCT l.gas_station_id) AS stations_count
+
+          AVG(CASE WHEN p.regular BETWEEN 20 AND 30 THEN p.regular END) AS regular,
+          AVG(CASE WHEN p.premium BETWEEN 20 AND 35 THEN p.premium END) AS premium,
+          AVG(CASE WHEN p.diesel BETWEEN 20 AND 35 THEN p.diesel END) AS diesel,
+
+          COUNT(DISTINCT CASE 
+            WHEN 
+              (p.regular BETWEEN 20 AND 30)
+              OR (p.premium BETWEEN 20 AND 35)
+              OR (p.diesel BETWEEN 20 AND 35)
+            THEN l.gas_station_id
+          END) AS stations_count
+
         FROM prices p
         JOIN prices_gas_station_links l ON l.price_id = p.id
         JOIN gas_stations gs ON gs.id = l.gas_station_id
