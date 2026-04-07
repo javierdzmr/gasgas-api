@@ -2,70 +2,68 @@ const { Pool } = require("pg");
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
+  ssl: { rejectUnauthorized: false }
 });
 
 async function updateHistoricos() {
+  const client = await pool.connect();
+
   try {
-    console.log("🚀 Actualizando históricos...");
+    console.log("📈 Actualizando históricos...");
 
-    // 🧹 limpiar últimos 30 días (estado + nacional)
-    await pool.query(`
+    // 🔥 LIMPIEZA
+    await client.query(`
       DELETE FROM precios_historicos_agregados
-      WHERE date >= CURRENT_DATE - INTERVAL '30 days'
-      AND market_type IN ('estado','nacional');
+      WHERE market_type = 'nacional'
+      AND market_value = 'México';
     `);
 
-    console.log("🧹 Históricos limpiados");
-
-    // 🔥 insertar históricos
-    await pool.query(`
-      INSERT INTO precios_historicos_agregados
-      (market_type, market_value, date, regular, premium, diesel, updated_at)
-
-      -- =========================
-      -- 🔥 ESTADO
-      -- =========================
-      SELECT
-        'estado',
-        gs.estado,
-        p.date,
-        AVG(NULLIF(p.regular, 0)),
-        AVG(NULLIF(p.premium, 0)),
-        AVG(NULLIF(p.diesel, 0)),
-        NOW()
+    // 🔹 últimos 30 días
+    const historico = await client.query(`
+      SELECT 
+        DATE(p.date) as date,
+        AVG(p.regular) as regular,
+        AVG(p.premium) as premium,
+        AVG(p.diesel) as diesel
       FROM prices p
-      JOIN prices_gas_station_links l ON l.price_id = p.id
-      JOIN gas_stations gs ON gs.id = l.gas_station_id
-      WHERE p.date >= CURRENT_DATE - INTERVAL '30 days'
-      GROUP BY gs.estado, p.date
-
-      UNION ALL
-
-      -- =========================
-      -- 🔥 NACIONAL
-      -- =========================
-      SELECT
-        'nacional',
-        'México',
-        p.date,
-        AVG(NULLIF(p.regular, 0)),
-        AVG(NULLIF(p.premium, 0)),
-        AVG(NULLIF(p.diesel, 0)),
-        NOW()
-      FROM prices p
-      JOIN prices_gas_station_links l ON l.price_id = p.id
-      WHERE p.date >= CURRENT_DATE - INTERVAL '30 days'
-      GROUP BY p.date;
+      WHERE p.date >= NOW() - INTERVAL '30 days'
+      GROUP BY DATE(p.date)
+      ORDER BY date
     `);
 
-    console.log("✅ Históricos actualizados");
+    for (const row of historico.rows) {
+      await client.query(`
+        INSERT INTO precios_historicos_agregados (
+          market_type,
+          market_value,
+          date,
+          regular,
+          premium,
+          diesel,
+          updated_at
+        )
+        VALUES ('nacional', 'all', $1, $2, $3, $4, NOW())
+        ON CONFLICT (market_type, market_value, date)
+        DO UPDATE SET
+          regular = EXCLUDED.regular,
+          premium = EXCLUDED.premium,
+          diesel = EXCLUDED.diesel,
+          updated_at = NOW();
+      `, [
+        row.date,
+        row.regular,
+        row.premium,
+        row.diesel
+      ]);
+    }
 
-    process.exit(0);
+    console.log("✅ Históricos actualizados correctamente");
 
-  } catch (error) {
-    console.error("❌ Error en históricos:", error);
-    process.exit(1);
+  } catch (err) {
+    console.error("❌ Error en updateHistoricos:", err);
+  } finally {
+    client.release();
+    process.exit();
   }
 }
 
