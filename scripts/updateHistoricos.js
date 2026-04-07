@@ -5,117 +5,138 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
-async function updateHistoricos() {
-  const client = await pool.connect();
+async function updateStats(days) {
 
-  try {
-    console.log("📈 Actualizando históricos...");
+  console.log(`🔥 Calculando stats para ${days} días...`);
 
-    // 🔥 LIMPIEZA
-    await client.query(`
-      DELETE FROM precios_historicos_agregados
-      WHERE market_type = 'nacional'
-      AND market_value = 'México';
-    `);
+  // ==============================
+  // 🔹 ESTADOS
+  // ==============================
+  const estados = await pool.query(`
+    SELECT DISTINCT estado FROM gas_stations
+  `);
 
-    // =========================
-    // 🌎 NACIONAL (ALL)
-    // =========================
-    const historico = await client.query(`
+  for (const row of estados.rows) {
+
+    const estado = row.estado;
+
+    const stats = await pool.query(`
       SELECT 
-        DATE(p.date) as date,
+        MIN(p.regular) AS min_regular,
+        MAX(p.regular) AS max_regular,
+        STDDEV(p.regular) AS std_regular,
 
-        AVG(CASE WHEN p.regular BETWEEN 20 AND 30 THEN p.regular END) AS regular,
-        AVG(CASE WHEN p.premium BETWEEN 20 AND 35 THEN p.premium END) AS premium,
-        AVG(CASE WHEN p.diesel BETWEEN 20 AND 35 THEN p.diesel END) AS diesel
+        MIN(p.premium) AS min_premium,
+        MAX(p.premium) AS max_premium,
+        STDDEV(p.premium) AS std_premium,
 
-      FROM prices p
-      WHERE p.date >= NOW() - INTERVAL '30 days'
-      GROUP BY DATE(p.date)
-      ORDER BY date
-    `);
-
-    for (const row of historico.rows) {
-      await client.query(`
-        INSERT INTO precios_historicos_agregados (
-          market_type,
-          market_value,
-          date,
-          regular,
-          premium,
-          diesel,
-          updated_at
-        )
-        VALUES ('nacional', 'all', $1, $2, $3, $4, NOW())
-        ON CONFLICT (market_type, market_value, date)
-        DO UPDATE SET
-          regular = EXCLUDED.regular,
-          premium = EXCLUDED.premium,
-          diesel = EXCLUDED.diesel,
-          updated_at = NOW();
-      `, [
-        row.date,
-        row.regular,
-        row.premium,
-        row.diesel
-      ]);
-    }
-
-    // =========================
-    // 🗺️ ESTADOS
-    // =========================
-    const estados = await client.query(`
-      SELECT 
-        gs.estado,
-        DATE(p.date) as date,
-
-        AVG(CASE WHEN p.regular BETWEEN 20 AND 30 THEN p.regular END) AS regular,
-        AVG(CASE WHEN p.premium BETWEEN 20 AND 35 THEN p.premium END) AS premium,
-        AVG(CASE WHEN p.diesel BETWEEN 20 AND 35 THEN p.diesel END) AS diesel
+        MIN(p.diesel) AS min_diesel,
+        MAX(p.diesel) AS max_diesel,
+        STDDEV(p.diesel) AS std_diesel
 
       FROM prices p
       JOIN prices_gas_station_links l ON l.price_id = p.id
-      JOIN gas_stations gs ON gs.id = l.gas_station_id
-      WHERE p.date >= NOW() - INTERVAL '30 days'
-      GROUP BY gs.estado, DATE(p.date)
-      ORDER BY date
-    `);
+      JOIN gas_stations g ON g.id = l.gas_station_id
 
-    for (const row of estados.rows) {
-      await client.query(`
-        INSERT INTO precios_historicos_agregados (
-          market_type,
-          market_value,
-          date,
-          regular,
-          premium,
-          diesel,
-          updated_at
-        )
-        VALUES ('estado', $1, $2, $3, $4, $5, NOW())
-        ON CONFLICT (market_type, market_value, date)
-        DO UPDATE SET
-          regular = EXCLUDED.regular,
-          premium = EXCLUDED.premium,
-          diesel = EXCLUDED.diesel,
-          updated_at = NOW();
-      `, [
-        row.estado,
-        row.date,
-        row.regular,
-        row.premium,
-        row.diesel
-      ]);
-    }
+      WHERE LOWER(g.estado) = LOWER($1)
+      AND p.date >= NOW() - INTERVAL '${days} days'
+    `, [estado]);
 
-    console.log("✅ Históricos actualizados correctamente");
+    const s = stats.rows[0];
 
-  } catch (err) {
-    console.error("❌ Error en updateHistoricos:", err);
-  } finally {
-    client.release();
-    process.exit();
+    await pool.query(`
+      UPDATE precios_agregados
+      SET 
+        min_regular = $1,
+        max_regular = $2,
+        std_regular = $3,
+
+        min_premium = $4,
+        max_premium = $5,
+        std_premium = $6,
+
+        min_diesel = $7,
+        max_diesel = $8,
+        std_diesel = $9
+
+      WHERE market_type = 'estado'
+      AND LOWER(market_value) = LOWER($10)
+      AND days = $11
+    `, [
+      s.min_regular, s.max_regular, s.std_regular,
+      s.min_premium, s.max_premium, s.std_premium,
+      s.min_diesel, s.max_diesel, s.std_diesel,
+      estado, days
+    ]);
+
+    console.log(`✅ Stats actualizados: ${estado}`);
   }
+
+  // ==============================
+  // 🔹 NACIONAL
+  // ==============================
+  const nacional = await pool.query(`
+    SELECT 
+      MIN(regular) AS min_regular,
+      MAX(regular) AS max_regular,
+      STDDEV(regular) AS std_regular,
+
+      MIN(premium) AS min_premium,
+      MAX(premium) AS max_premium,
+      STDDEV(premium) AS std_premium,
+
+      MIN(diesel) AS min_diesel,
+      MAX(diesel) AS max_diesel,
+      STDDEV(diesel) AS std_diesel
+
+    FROM prices
+    WHERE date >= NOW() - INTERVAL '${days} days'
+  `);
+
+  const n = nacional.rows[0];
+
+  await pool.query(`
+    UPDATE precios_agregados
+    SET 
+      min_regular = $1,
+      max_regular = $2,
+      std_regular = $3,
+
+      min_premium = $4,
+      max_premium = $5,
+      std_premium = $6,
+
+      min_diesel = $7,
+      max_diesel = $8,
+      std_diesel = $9
+
+    WHERE market_type = 'nacional'
+    AND market_value = 'all'
+    AND days = $10
+  `, [
+    n.min_regular, n.max_regular, n.std_regular,
+    n.min_premium, n.max_premium, n.std_premium,
+    n.min_diesel, n.max_diesel, n.std_diesel,
+    days
+  ]);
+
+  console.log(`🇲🇽 Stats nacional actualizados`);
 }
 
-updateHistoricos();
+
+// ==============================
+// 🚀 EJECUCIÓN
+// ==============================
+(async () => {
+  try {
+    await updateStats(7);
+    await updateStats(30);
+
+    console.log("🚀 Stats completados");
+    process.exit(0);
+
+  } catch (err) {
+    console.error(err);
+    process.exit(1);
+  }
+})();
