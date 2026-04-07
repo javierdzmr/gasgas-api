@@ -1,5 +1,4 @@
-import pkg from "pg";
-const { Pool } = pkg;
+const { Pool } = require("pg");
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -19,7 +18,6 @@ async function updateAgregados() {
       AND market_value = 'México';
     `);
 
-    // 🔹 PERIODOS
     const daysList = [7, 30];
 
     for (const days of daysList) {
@@ -75,7 +73,7 @@ async function updateAgregados() {
       ]);
 
       // =========================
-      // 🗺️ POR ESTADO
+      // 🗺️ ESTADOS
       // =========================
       const estados = await client.query(`
         SELECT 
