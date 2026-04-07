@@ -12,23 +12,13 @@ const pool = new Pool({
 
 
 // ==============================
-// 🔥 NORMALIZADOR (BACKEND)
-// ==============================
-function normalize(text) {
-  return text
-    ?.normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim();
-}
-
-
-// ==============================
-// 🔹 PRECIOS (CARDS + FOOTER)
+// 🔹 PRECIOS
 // ==============================
 app.get("/api/precios", async (req, res) => {
   try {
     const { market, value, days } = req.query;
+
+    console.log("PRECIOS →", { market, value, days });
 
     let query = `
       SELECT 
@@ -48,21 +38,16 @@ app.get("/api/precios", async (req, res) => {
     let params = [market];
 
     if (market !== "nacional") {
-
-      // 🔥 FIX CLAVE: comparar normalizado
       query += `
-        AND LOWER(
-          unaccent(pa.market_value)
-        ) = LOWER(
-          unaccent($2)
-        )
+        AND LOWER(pa.market_value) = LOWER($2)
         AND pa.days = $3
       `;
-
       params.push(value, days);
-
     } else {
-      query += ` AND pa.market_value = 'all' AND pa.days = $2`;
+      query += `
+        AND pa.market_value = 'all'
+        AND pa.days = $2
+      `;
       params.push(days);
     }
 
@@ -71,18 +56,20 @@ app.get("/api/precios", async (req, res) => {
     res.json(result.rows[0] || {});
 
   } catch (err) {
-    console.error(err);
+    console.error("ERROR /precios:", err);
     res.status(500).json({ error: "Error obteniendo precios" });
   }
 });
 
 
 // ==============================
-// 🔹 HISTÓRICO (GRÁFICA)
+// 🔹 HISTÓRICO
 // ==============================
 app.get("/api/historico", async (req, res) => {
   try {
     const { market, value, days } = req.query;
+
+    console.log("HISTORICO →", { market, value, days });
 
     let query = `
       SELECT 
@@ -97,18 +84,10 @@ app.get("/api/historico", async (req, res) => {
     let params = [market];
 
     if (market !== "nacional") {
-
-      // 🔥 MISMO FIX AQUÍ
       query += `
-        AND LOWER(
-          unaccent(market_value)
-        ) = LOWER(
-          unaccent($2)
-        )
+        AND LOWER(market_value) = LOWER($2)
       `;
-
       params.push(value);
-
     } else {
       query += ` AND market_value = 'all'`;
     }
@@ -123,14 +102,14 @@ app.get("/api/historico", async (req, res) => {
     res.json(result.rows);
 
   } catch (err) {
-    console.error(err);
+    console.error("ERROR /historico:", err);
     res.status(500).json({ error: "Error obteniendo histórico" });
   }
 });
 
 
 // ==============================
-// 🔹 ESTADOS (DROPDOWN)
+// 🔹 ESTADOS
 // ==============================
 app.get("/api/estados", async (req, res) => {
   try {
@@ -143,7 +122,7 @@ app.get("/api/estados", async (req, res) => {
     res.json(result.rows);
 
   } catch (err) {
-    console.error(err);
+    console.error("ERROR /estados:", err);
     res.status(500).json({ error: "Error obteniendo estados" });
   }
 });
