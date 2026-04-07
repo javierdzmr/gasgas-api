@@ -1,115 +1,131 @@
-const { Pool } = require("pg");
+import pkg from "pg";
+const { Pool } = pkg;
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
+  ssl: { rejectUnauthorized: false }
 });
 
 async function updateAgregados() {
+  const client = await pool.connect();
+
   try {
-    console.log("🚀 Iniciando actualización de agregados...");
+    console.log("⛽ Actualizando precios agregados...");
 
-    // 🧹 Limpiar datos previos (solo estado y nacional)
-    await pool.query(`
-      DELETE FROM precios_agregados 
-      WHERE market_type IN ('estado','nacional') 
-      AND days IN (7,30);
+    // 🔥 LIMPIEZA: elimina nacional incorrecto
+    await client.query(`
+      DELETE FROM precios_agregados
+      WHERE market_type = 'nacional'
+      AND market_value = 'México';
     `);
 
-    console.log("🧹 Datos anteriores eliminados");
+    // 🔹 PERIODOS
+    const daysList = [7, 30];
 
-    // 🔥 Insertar nuevos agregados
-    await pool.query(`
-      INSERT INTO precios_agregados 
-      (market_type, market_value, days, regular, premium, diesel, updated_at)
+    for (const days of daysList) {
 
-      WITH base AS (
-        -- 🔹 Promedio por estación por día
-        SELECT
-          psl.gas_station_id,
-          p.date,
-          AVG(NULLIF(p.regular, 0)) AS regular,
-          AVG(NULLIF(p.premium, 0)) AS premium,
-          AVG(NULLIF(p.diesel, 0)) AS diesel
+      // =========================
+      // 🌎 NACIONAL (ALL)
+      // =========================
+      const nacional = await client.query(`
+        SELECT 
+          AVG(p.regular) AS regular,
+          AVG(p.premium) AS premium,
+          AVG(p.diesel) AS diesel,
+          MIN(p.regular) AS min_regular,
+          MAX(p.regular) AS max_regular,
+          STDDEV(p.regular) AS std_regular
         FROM prices p
-        JOIN prices_gas_station_links psl
-          ON p.id = psl.price_id
-        WHERE p.date >= CURRENT_DATE - INTERVAL '30 days'
-        GROUP BY psl.gas_station_id, p.date
-      )
+        WHERE p.date >= NOW() - INTERVAL '${days} days'
+      `);
 
-      -- =========================
-      -- 🔥 ESTADO - 7 DÍAS
-      -- =========================
-      SELECT
-        'estado',
-        gs.estado,
-        7,
-        AVG(b.regular),
-        AVG(b.premium),
-        AVG(b.diesel),
-        NOW()
-      FROM base b
-      JOIN gas_stations gs ON gs.id = b.gas_station_id
-      WHERE b.date >= CURRENT_DATE - INTERVAL '7 days'
-      GROUP BY gs.estado
+      const n = nacional.rows[0];
 
-      UNION ALL
+      await client.query(`
+        INSERT INTO precios_agregados (
+          market_type,
+          market_value,
+          days,
+          regular,
+          premium,
+          diesel,
+          updated_at,
+          min_regular,
+          max_regular,
+          std_regular
+        )
+        VALUES ('nacional', 'all', $1, $2, $3, $4, NOW(), $5, $6, $7)
+        ON CONFLICT (market_type, market_value, days)
+        DO UPDATE SET
+          regular = EXCLUDED.regular,
+          premium = EXCLUDED.premium,
+          diesel = EXCLUDED.diesel,
+          updated_at = NOW(),
+          min_regular = EXCLUDED.min_regular,
+          max_regular = EXCLUDED.max_regular,
+          std_regular = EXCLUDED.std_regular;
+      `, [
+        days,
+        n.regular,
+        n.premium,
+        n.diesel,
+        n.min_regular,
+        n.max_regular,
+        n.std_regular
+      ]);
 
-      -- =========================
-      -- 🔥 ESTADO - 30 DÍAS
-      -- =========================
-      SELECT
-        'estado',
-        gs.estado,
-        30,
-        AVG(b.regular),
-        AVG(b.premium),
-        AVG(b.diesel),
-        NOW()
-      FROM base b
-      JOIN gas_stations gs ON gs.id = b.gas_station_id
-      GROUP BY gs.estado
+      // =========================
+      // 🗺️ POR ESTADO
+      // =========================
+      const estados = await client.query(`
+        SELECT 
+          gs.estado,
+          AVG(p.regular) AS regular,
+          AVG(p.premium) AS premium,
+          AVG(p.diesel) AS diesel
+        FROM prices p
+        JOIN prices_gas_station_links l ON l.price_id = p.id
+        JOIN gas_stations gs ON gs.id = l.gas_station_id
+        WHERE p.date >= NOW() - INTERVAL '${days} days'
+        GROUP BY gs.estado
+      `);
 
-      UNION ALL
+      for (const row of estados.rows) {
+        await client.query(`
+          INSERT INTO precios_agregados (
+            market_type,
+            market_value,
+            days,
+            regular,
+            premium,
+            diesel,
+            updated_at
+          )
+          VALUES ('estado', $1, $2, $3, $4, $5, NOW())
+          ON CONFLICT (market_type, market_value, days)
+          DO UPDATE SET
+            regular = EXCLUDED.regular,
+            premium = EXCLUDED.premium,
+            diesel = EXCLUDED.diesel,
+            updated_at = NOW();
+        `, [
+          row.estado,
+          days,
+          row.regular,
+          row.premium,
+          row.diesel
+        ]);
+      }
 
-      -- =========================
-      -- 🔥 NACIONAL - 7 DÍAS
-      -- =========================
-      SELECT
-        'nacional',
-        'México',
-        7,
-        AVG(b.regular),
-        AVG(b.premium),
-        AVG(b.diesel),
-        NOW()
-      FROM base b
-      WHERE b.date >= CURRENT_DATE - INTERVAL '7 days'
+    }
 
-      UNION ALL
+    console.log("✅ Precios agregados actualizados correctamente");
 
-      -- =========================
-      -- 🔥 NACIONAL - 30 DÍAS
-      -- =========================
-      SELECT
-        'nacional',
-        'México',
-        30,
-        AVG(b.regular),
-        AVG(b.premium),
-        AVG(b.diesel),
-        NOW()
-      FROM base b;
-    `);
-
-    console.log("✅ Agregados (estado + nacional | 7 y 30 días) actualizados");
-
-    process.exit(0);
-
-  } catch (error) {
-    console.error("❌ Error actualizando agregados:", error);
-    process.exit(1);
+  } catch (err) {
+    console.error("❌ Error en updateAgregados:", err);
+  } finally {
+    client.release();
+    process.exit();
   }
 }
 
