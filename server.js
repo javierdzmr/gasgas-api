@@ -12,7 +12,7 @@ const pool = new Pool({
 
 
 // ==============================
-// 🔹 PRECIOS (FIX REAL)
+// 🔹 PRECIOS
 // ==============================
 app.get("/api/precios", async (req, res) => {
   try {
@@ -20,7 +20,6 @@ app.get("/api/precios", async (req, res) => {
 
     console.log("PRECIOS →", { market, value, days, product });
 
-    // 🔥 columnas dinámicas (SIN CASE)
     const minCol = `min_${product}`;
     const maxCol = `max_${product}`;
     const stdCol = `std_${product}`;
@@ -35,7 +34,14 @@ app.get("/api/precios", async (req, res) => {
         pa.${maxCol} AS max,
         pa.${stdCol} AS std,
         pa.stations_count,
-        (SELECT COUNT(*) FROM gas_stations) AS total_estaciones
+
+        -- 🔥 TOTAL CORRECTO POR MERCADO
+        ${
+          market !== "nacional"
+            ? `(SELECT COUNT(*) FROM gas_stations WHERE LOWER(estado)=LOWER($2)) AS total_estaciones`
+            : `(SELECT COUNT(*) FROM gas_stations) AS total_estaciones`
+        }
+
       FROM precios_agregados pa
       WHERE pa.market_type = $1
     `;
