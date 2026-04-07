@@ -3,123 +3,70 @@ const cors = require("cors");
 const { Pool } = require("pg");
 
 const app = express();
-
 app.use(cors());
-app.use(express.json());
 
-// 🔌 Conexión a PostgreSQL
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false,
-  },
+  ssl: { rejectUnauthorized: false }
 });
 
-// 🧠 Mapeo de valores
-const marketMap = {
-  CDMX: "Ciudad de México",
-  cdmx: "Ciudad de México",
-};
 
-// ===============================
-// 🚀 ENDPOINT PRECIOS (SNAPSHOT)
-// ===============================
+// ==============================
+// 🔹 PRECIOS (CARDS + FOOTER)
+// ==============================
 app.get("/api/precios", async (req, res) => {
   try {
-    const { market = "nacional", value = "nacional", days = 30 } = req.query;
-
-    console.log("PARAMS:", { market, value, days });
-
-    const mappedValue = marketMap[value] || value;
-
-    console.log("MAPPED VALUE:", mappedValue);
+    const { market, value, days } = req.query;
 
     let query = `
-      SELECT regular, premium, diesel
-      FROM precios_agregados
-      WHERE market_type = $1
+      SELECT 
+        pa.regular,
+        pa.premium,
+        pa.diesel,
+        pa.updated_at,
+        pa.min_regular,
+        pa.max_regular,
+        pa.std_regular,
+        pa.stations_count,
+        (SELECT COUNT(*) FROM gas_stations) AS total_estaciones
+      FROM precios_agregados pa
+      WHERE pa.market_type = $1
     `;
 
     let params = [market];
 
     if (market !== "nacional") {
-      query += `
-        AND LOWER(TRIM(market_value)) = LOWER(TRIM($2))
-        AND days = $3
-      `;
-      params.push(mappedValue, days);
+      query += ` AND pa.market_value = $2 AND pa.days = $3`;
+      params.push(value, days);
     } else {
-      query += `
-        AND days = $2
-      `;
+      query += ` AND pa.market_value = 'all' AND pa.days = $2`;
       params.push(days);
     }
 
-    console.log("QUERY:", query);
-    console.log("PARAMS ARRAY:", params);
-
     const result = await pool.query(query, params);
 
-    console.log("RESULT ROWS:", result.rows);
+    res.json(result.rows[0]);
 
-    if (!result.rows.length) {
-      return res.json({
-        regular: 0,
-        premium: 0,
-        diesel: 0,
-      });
-    }
-
-    const row = result.rows[0];
-
-    res.json({
-      regular: Number(row.regular),
-      premium: Number(row.premium),
-      diesel: Number(row.diesel),
-    });
-
-  } catch (error) {
-    console.error("ERROR API:", error);
-    res.status(500).json({ error: "Error interno del servidor" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error obteniendo precios" });
   }
 });
 
-app.get('/api/estados', async (req, res) => {
-  try {
 
-    const result = await pool.query(`
-      SELECT DISTINCT estado
-      FROM gas_stations
-      WHERE estado IS NOT NULL
-      ORDER BY estado ASC
-    `);
-
-    res.json(result.rows);
-
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Error obteniendo estados' });
-  }
-});
-
-// ==================================
-// 📊 ENDPOINT HISTÓRICO (GRÁFICA REAL)
-// ==================================
+// ==============================
+// 🔹 HISTÓRICO (GRÁFICA)
+// ==============================
 app.get("/api/historico", async (req, res) => {
   try {
-    const {
-      market = "nacional",
-      value = "nacional",
-      days = 30,
-      product = "regular"
-    } = req.query;
-
-    console.log("HIST PARAMS:", { market, value, days, product });
-
-    const mappedValue = marketMap[value] || value;
+    const { market, value, days, product } = req.query;
 
     let query = `
-      SELECT date, ${product}
+      SELECT 
+        date,
+        regular,
+        premium,
+        diesel
       FROM precios_historicos_agregados
       WHERE market_type = $1
     `;
@@ -127,46 +74,53 @@ app.get("/api/historico", async (req, res) => {
     let params = [market];
 
     if (market !== "nacional") {
-      query += `
-        AND LOWER(TRIM(market_value)) = LOWER(TRIM($2))
-        AND date >= CURRENT_DATE - INTERVAL '${days} days'
-      `;
-      params.push(mappedValue);
+      query += ` AND market_value = $2`;
+      params.push(value);
     } else {
-      query += `
-        AND date >= CURRENT_DATE - INTERVAL '${days} days'
-      `;
+      query += ` AND market_value = 'all'`;
     }
 
-    query += ` ORDER BY date ASC`;
-
-    console.log("HIST QUERY:", query);
-    console.log("HIST PARAMS ARRAY:", params);
+    query += `
+      AND date >= NOW() - INTERVAL '${days} days'
+      ORDER BY date
+    `;
 
     const result = await pool.query(query, params);
 
-    console.log("HIST RESULT ROWS:", result.rows.length);
-
     res.json(result.rows);
 
-  } catch (error) {
-    console.error("ERROR HISTORICO:", error);
-    res.status(500).json({ error: "Error histórico" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error obteniendo histórico" });
   }
 });
 
-// ===============================
-// ❤️ HEALTH CHECK
-// ===============================
-app.get("/", (req, res) => {
-  res.send("GasGas API running 🚀");
+
+// ==============================
+// 🔹 ESTADOS (DROPDOWN)
+// ==============================
+app.get("/api/estados", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT DISTINCT estado
+      FROM gas_stations
+      ORDER BY estado
+    `);
+
+    res.json(result.rows);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error obteniendo estados" });
+  }
 });
 
-// ===============================
-// 🚀 START SERVER
-// ===============================
+
+// ==============================
+// 🚀 SERVER
+// ==============================
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 API corriendo en puerto ${PORT}`);
 });
