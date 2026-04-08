@@ -154,13 +154,3 @@ app.get("/api/estados", async (req, res) => {
     res.status(500).json({ error: "Error obteniendo estados" });
   }
 });
-
-
-// ==============================
-// 🚀 SERVER
-// ==============================
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log(`🚀 API corriendo en puerto ${PORT}`);
-});
