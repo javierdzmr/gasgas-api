@@ -1,5 +1,5 @@
 const express = require('express');
-const path = require('path');
+const { Pool } = require('pg');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -7,27 +7,10 @@ const PORT = process.env.PORT || 10000;
 // 🔐 importante para Cloudflare / Render
 app.set('trust proxy', 1);
 
-// 👉 si tienes archivos estáticos (frontend)
-
-// 👉 RUTA PRINCIPAL (FIX CLAVE)
-app.get('/', (req, res) => {
-  // Si no tienes carpeta public, usa esto en su lugar:
-  // res.send('API GasGas funcionando');
-});
-
-// 👉 ejemplo de API (ajústalo a tu lógica real)
-app.get('/api/test', (req, res) => {
-  res.json({ status: 'ok' });
-});
-
-// 👉 fallback para rutas no encontradas
-app.use((req, res) => {
-  res.status(404).send('Not Found');
-});
-
-// 👉 levantar servidor
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
+// 🗄️ conexión a la base de datos
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
 });
 
 // ==============================
@@ -36,8 +19,6 @@ app.listen(PORT, '0.0.0.0', () => {
 app.get("/api/precios", async (req, res) => {
   try {
     const { market, value, days, product } = req.query;
-
-    console.log("PRECIOS →", { market, value, days, product });
 
     const minCol = `min_${product}`;
     const maxCol = `max_${product}`;
@@ -53,14 +34,11 @@ app.get("/api/precios", async (req, res) => {
         pa.${maxCol} AS max,
         pa.${stdCol} AS std,
         pa.stations_count,
-
-        -- 🔥 TOTAL CORRECTO POR MERCADO
         ${
           market !== "nacional"
             ? `(SELECT COUNT(*) FROM gas_stations WHERE LOWER(estado)=LOWER($2)) AS total_estaciones`
             : `(SELECT COUNT(*) FROM gas_stations) AS total_estaciones`
         }
-
       FROM precios_agregados pa
       WHERE pa.market_type = $1
     `;
@@ -68,21 +46,14 @@ app.get("/api/precios", async (req, res) => {
     let params = [market];
 
     if (market !== "nacional") {
-      query += `
-        AND LOWER(pa.market_value) = LOWER($2)
-        AND pa.days = $3
-      `;
+      query += ` AND LOWER(pa.market_value) = LOWER($2) AND pa.days = $3`;
       params.push(value, days);
     } else {
-      query += `
-        AND pa.market_value = 'all'
-        AND pa.days = $2
-      `;
+      query += ` AND pa.market_value = 'all' AND pa.days = $2`;
       params.push(days);
     }
 
     const result = await pool.query(query, params);
-
     res.json(result.rows[0] || {});
 
   } catch (err) {
@@ -90,7 +61,6 @@ app.get("/api/precios", async (req, res) => {
     res.status(500).json({ error: "Error obteniendo precios" });
   }
 });
-
 
 // ==============================
 // 🔹 HISTÓRICO
@@ -100,11 +70,7 @@ app.get("/api/historico", async (req, res) => {
     const { market, value, days } = req.query;
 
     let query = `
-      SELECT 
-        date,
-        regular,
-        premium,
-        diesel
+      SELECT date, regular, premium, diesel
       FROM precios_historicos_agregados
       WHERE market_type = $1
     `;
@@ -118,13 +84,9 @@ app.get("/api/historico", async (req, res) => {
       query += ` AND market_value = 'all'`;
     }
 
-    query += `
-      AND date >= NOW() - INTERVAL '${days} days'
-      ORDER BY date
-    `;
+    query += ` AND date >= NOW() - INTERVAL '${days} days' ORDER BY date`;
 
     const result = await pool.query(query, params);
-
     res.json(result.rows);
 
   } catch (err) {
@@ -132,7 +94,6 @@ app.get("/api/historico", async (req, res) => {
     res.status(500).json({ error: "Error obteniendo histórico" });
   }
 });
-
 
 // ==============================
 // 🔹 ESTADOS
@@ -144,11 +105,33 @@ app.get("/api/estados", async (req, res) => {
       FROM gas_stations
       ORDER BY estado
     `);
-
     res.json(result.rows);
 
   } catch (err) {
     console.error("ERROR /estados:", err);
     res.status(500).json({ error: "Error obteniendo estados" });
   }
+});
+
+// ==============================
+// 🔹 HEALTH CHECK
+// ==============================
+app.get("/", (req, res) => {
+  res.json({ status: "ok", service: "GasGas API" });
+});
+
+app.get("/api/test", (req, res) => {
+  res.json({ status: "ok" });
+});
+
+// 404
+app.use((req, res) => {
+  res.status(404).json({ error: "Not Found" });
+});
+
+// ==============================
+// 🚀 SERVER
+// ==============================
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 GasGas API corriendo en puerto ${PORT}`);
 });
