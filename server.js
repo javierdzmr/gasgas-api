@@ -8,11 +8,9 @@ const PORT = process.env.PORT || 10000;
 app.set('trust proxy', 1);
 
 // 👉 si tienes archivos estáticos (frontend)
-app.use(express.static(path.join(__dirname, 'public')));
 
 // 👉 RUTA PRINCIPAL (FIX CLAVE)
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
   // Si no tienes carpeta public, usa esto en su lugar:
   // res.send('API GasGas funcionando');
 });
