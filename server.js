@@ -1,15 +1,36 @@
-const express = require("express");
-const cors = require("cors");
-const { Pool } = require("pg");
+const express = require('express');
+const path = require('path');
 
 const app = express();
-app.use(cors());
+const PORT = process.env.PORT || 10000;
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
+// 🔐 importante para Cloudflare / Render
+app.set('trust proxy', 1);
+
+// 👉 si tienes archivos estáticos (frontend)
+app.use(express.static(path.join(__dirname, 'public')));
+
+// 👉 RUTA PRINCIPAL (FIX CLAVE)
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  // Si no tienes carpeta public, usa esto en su lugar:
+  // res.send('API GasGas funcionando');
 });
 
+// 👉 ejemplo de API (ajústalo a tu lógica real)
+app.get('/api/test', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
+// 👉 fallback para rutas no encontradas
+app.use((req, res) => {
+  res.status(404).send('Not Found');
+});
+
+// 👉 levantar servidor
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
 
 // ==============================
 // 🔹 PRECIOS
