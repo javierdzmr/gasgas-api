@@ -20,21 +20,21 @@ async function updateAgregados() {
       // =========================
       const nacional = await client.query(`
         SELECT 
-          AVG(CASE WHEN p.regular BETWEEN 20 AND 30 THEN p.regular END)  AS regular,
-          AVG(CASE WHEN p.premium BETWEEN 20 AND 35 THEN p.premium END)  AS premium,
-          AVG(CASE WHEN p.diesel  BETWEEN 20 AND 35 THEN p.diesel  END)  AS diesel,
+          AVG(CASE WHEN p.regular BETWEEN 20 AND 30 THEN p.regular END)    AS regular,
+          AVG(CASE WHEN p.premium BETWEEN 20 AND 35 THEN p.premium END)    AS premium,
+          AVG(CASE WHEN p.diesel  BETWEEN 20 AND 35 THEN p.diesel  END)    AS diesel,
 
-          MIN(CASE WHEN p.regular BETWEEN 20 AND 30 THEN p.regular END)  AS min_regular,
-          MAX(CASE WHEN p.regular BETWEEN 20 AND 30 THEN p.regular END)  AS max_regular,
+          MIN(CASE WHEN p.regular BETWEEN 20 AND 30 THEN p.regular END)    AS min_regular,
+          MAX(CASE WHEN p.regular BETWEEN 20 AND 30 THEN p.regular END)    AS max_regular,
           STDDEV(CASE WHEN p.regular BETWEEN 20 AND 30 THEN p.regular END) AS std_regular,
 
-          MIN(CASE WHEN p.premium BETWEEN 20 AND 35 THEN p.premium END)  AS min_premium,
-          MAX(CASE WHEN p.premium BETWEEN 20 AND 35 THEN p.premium END)  AS max_premium,
+          MIN(CASE WHEN p.premium BETWEEN 20 AND 35 THEN p.premium END)    AS min_premium,
+          MAX(CASE WHEN p.premium BETWEEN 20 AND 35 THEN p.premium END)    AS max_premium,
           STDDEV(CASE WHEN p.premium BETWEEN 20 AND 35 THEN p.premium END) AS std_premium,
 
-          MIN(CASE WHEN p.diesel BETWEEN 20 AND 35 THEN p.diesel END)    AS min_diesel,
-          MAX(CASE WHEN p.diesel BETWEEN 20 AND 35 THEN p.diesel END)    AS max_diesel,
-          STDDEV(CASE WHEN p.diesel BETWEEN 20 AND 35 THEN p.diesel END) AS std_diesel,
+          MIN(CASE WHEN p.diesel BETWEEN 20 AND 35 THEN p.diesel END)      AS min_diesel,
+          MAX(CASE WHEN p.diesel BETWEEN 20 AND 35 THEN p.diesel END)      AS max_diesel,
+          STDDEV(CASE WHEN p.diesel BETWEEN 20 AND 35 THEN p.diesel END)   AS std_diesel,
 
           COUNT(DISTINCT CASE 
             WHEN (p.regular BETWEEN 20 AND 30)
@@ -53,37 +53,28 @@ async function updateAgregados() {
       await client.query(`
         INSERT INTO precios_agregados (
           market_type, market_value, days,
-          regular, premium, diesel,
-          updated_at,
+          regular, premium, diesel, updated_at,
           min_regular, max_regular, std_regular,
           min_premium, max_premium, std_premium,
           min_diesel,  max_diesel,  std_diesel,
           stations_count
         )
-        VALUES (
-          'nacional', 'all', $1,
-          $2, $3, $4,
-          NOW(),
-          $5, $6, $7,
-          $8, $9, $10,
-          $11, $12, $13,
-          $14
-        )
+        VALUES ('nacional', 'all', $1, $2, $3, $4, NOW(), $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
         ON CONFLICT (market_type, market_value, days)
         DO UPDATE SET
-          regular       = EXCLUDED.regular,
-          premium       = EXCLUDED.premium,
-          diesel        = EXCLUDED.diesel,
-          updated_at    = NOW(),
-          min_regular   = EXCLUDED.min_regular,
-          max_regular   = EXCLUDED.max_regular,
-          std_regular   = EXCLUDED.std_regular,
-          min_premium   = EXCLUDED.min_premium,
-          max_premium   = EXCLUDED.max_premium,
-          std_premium   = EXCLUDED.std_premium,
-          min_diesel    = EXCLUDED.min_diesel,
-          max_diesel    = EXCLUDED.max_diesel,
-          std_diesel    = EXCLUDED.std_diesel,
+          regular        = EXCLUDED.regular,
+          premium        = EXCLUDED.premium,
+          diesel         = EXCLUDED.diesel,
+          updated_at     = NOW(),
+          min_regular    = EXCLUDED.min_regular,
+          max_regular    = EXCLUDED.max_regular,
+          std_regular    = EXCLUDED.std_regular,
+          min_premium    = EXCLUDED.min_premium,
+          max_premium    = EXCLUDED.max_premium,
+          std_premium    = EXCLUDED.std_premium,
+          min_diesel     = EXCLUDED.min_diesel,
+          max_diesel     = EXCLUDED.max_diesel,
+          std_diesel     = EXCLUDED.std_diesel,
           stations_count = EXCLUDED.stations_count;
       `, [
         days,
@@ -94,7 +85,7 @@ async function updateAgregados() {
         n.stations_count
       ]);
 
-      console.log(`✅ Nacional ${days} días actualizado`);
+      console.log(`✅ Nacional ${days} días actualizado — ${n.stations_count} estaciones`);
 
       // =========================
       // 🗺️ ESTADOS
@@ -103,22 +94,23 @@ async function updateAgregados() {
         SELECT 
           gs.estado,
 
-          AVG(CASE WHEN p.regular BETWEEN 20 AND 30 THEN p.regular END)  AS regular,
-          AVG(CASE WHEN p.premium BETWEEN 20 AND 35 THEN p.premium END)  AS premium,
-          AVG(CASE WHEN p.diesel  BETWEEN 20 AND 35 THEN p.diesel  END)  AS diesel,
+          AVG(CASE WHEN p.regular BETWEEN 20 AND 30 THEN p.regular END)    AS regular,
+          AVG(CASE WHEN p.premium BETWEEN 20 AND 35 THEN p.premium END)    AS premium,
+          AVG(CASE WHEN p.diesel  BETWEEN 20 AND 35 THEN p.diesel  END)    AS diesel,
 
-          MIN(CASE WHEN p.regular BETWEEN 20 AND 30 THEN p.regular END)  AS min_regular,
-          MAX(CASE WHEN p.regular BETWEEN 20 AND 30 THEN p.regular END)  AS max_regular,
+          MIN(CASE WHEN p.regular BETWEEN 20 AND 30 THEN p.regular END)    AS min_regular,
+          MAX(CASE WHEN p.regular BETWEEN 20 AND 30 THEN p.regular END)    AS max_regular,
           STDDEV(CASE WHEN p.regular BETWEEN 20 AND 30 THEN p.regular END) AS std_regular,
 
-          MIN(CASE WHEN p.premium BETWEEN 20 AND 35 THEN p.premium END)  AS min_premium,
-          MAX(CASE WHEN p.premium BETWEEN 20 AND 35 THEN p.premium END)  AS max_premium,
+          MIN(CASE WHEN p.premium BETWEEN 20 AND 35 THEN p.premium END)    AS min_premium,
+          MAX(CASE WHEN p.premium BETWEEN 20 AND 35 THEN p.premium END)    AS max_premium,
           STDDEV(CASE WHEN p.premium BETWEEN 20 AND 35 THEN p.premium END) AS std_premium,
 
-          MIN(CASE WHEN p.diesel BETWEEN 20 AND 35 THEN p.diesel END)    AS min_diesel,
-          MAX(CASE WHEN p.diesel BETWEEN 20 AND 35 THEN p.diesel END)    AS max_diesel,
-          STDDEV(CASE WHEN p.diesel BETWEEN 20 AND 35 THEN p.diesel END) AS std_diesel,
+          MIN(CASE WHEN p.diesel BETWEEN 20 AND 35 THEN p.diesel END)      AS min_diesel,
+          MAX(CASE WHEN p.diesel BETWEEN 20 AND 35 THEN p.diesel END)      AS max_diesel,
+          STDDEV(CASE WHEN p.diesel BETWEEN 20 AND 35 THEN p.diesel END)   AS std_diesel,
 
+          -- 🔥 FIX: COUNT filtrado por estado gracias al GROUP BY
           COUNT(DISTINCT CASE 
             WHEN (p.regular BETWEEN 20 AND 30)
               OR (p.premium BETWEEN 20 AND 35)
@@ -137,37 +129,28 @@ async function updateAgregados() {
         await client.query(`
           INSERT INTO precios_agregados (
             market_type, market_value, days,
-            regular, premium, diesel,
-            updated_at,
+            regular, premium, diesel, updated_at,
             min_regular, max_regular, std_regular,
             min_premium, max_premium, std_premium,
             min_diesel,  max_diesel,  std_diesel,
             stations_count
           )
-          VALUES (
-            'estado', $1, $2,
-            $3, $4, $5,
-            NOW(),
-            $6, $7, $8,
-            $9, $10, $11,
-            $12, $13, $14,
-            $15
-          )
+          VALUES ('estado', $1, $2, $3, $4, $5, NOW(), $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
           ON CONFLICT (market_type, market_value, days)
           DO UPDATE SET
-            regular       = EXCLUDED.regular,
-            premium       = EXCLUDED.premium,
-            diesel        = EXCLUDED.diesel,
-            updated_at    = NOW(),
-            min_regular   = EXCLUDED.min_regular,
-            max_regular   = EXCLUDED.max_regular,
-            std_regular   = EXCLUDED.std_regular,
-            min_premium   = EXCLUDED.min_premium,
-            max_premium   = EXCLUDED.max_premium,
-            std_premium   = EXCLUDED.std_premium,
-            min_diesel    = EXCLUDED.min_diesel,
-            max_diesel    = EXCLUDED.max_diesel,
-            std_diesel    = EXCLUDED.std_diesel,
+            regular        = EXCLUDED.regular,
+            premium        = EXCLUDED.premium,
+            diesel         = EXCLUDED.diesel,
+            updated_at     = NOW(),
+            min_regular    = EXCLUDED.min_regular,
+            max_regular    = EXCLUDED.max_regular,
+            std_regular    = EXCLUDED.std_regular,
+            min_premium    = EXCLUDED.min_premium,
+            max_premium    = EXCLUDED.max_premium,
+            std_premium    = EXCLUDED.std_premium,
+            min_diesel     = EXCLUDED.min_diesel,
+            max_diesel     = EXCLUDED.max_diesel,
+            std_diesel     = EXCLUDED.std_diesel,
             stations_count = EXCLUDED.stations_count;
         `, [
           row.estado, days,
