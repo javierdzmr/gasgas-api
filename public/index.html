@@ -11,14 +11,65 @@ body { margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-se
 .hero { text-align:center; padding:40px 20px 10px; }
 .logo { width:140px; }
 .dashboard { background:white; border-radius:20px; padding:20px; box-shadow:0 20px 60px rgba(0,0,0,0.08); }
+
+/* CHIPS BASE */
 .chips { display:flex; gap:8px; justify-content:center; margin:10px 0 16px; flex-wrap:wrap; }
-.chip { padding:7px 16px; border-radius:999px; background:#eee; cursor:pointer; font-size:14px; }
-.chip.active { background:black; color:white; }
+.chip {
+  padding:7px 16px;
+  border-radius:999px;
+  cursor:pointer;
+  font-size:14px;
+  font-weight:500;
+  transition: all 0.15s ease;
+  /* INACTIVO: apagado */
+  background:#f0f0f0;
+  color:#bbb;
+  border: 1.5px solid transparent;
+}
+
+/* ACTIVO NEGRO (mercado y periodo) */
+.chip.active {
+  background:black;
+  color:white;
+}
+
+/* ACTIVO VERDE (regular) */
+.chip.active-regular {
+  background:#1a6b2f;
+  color:white;
+}
+
+/* ACTIVO ROJO (premium) */
+.chip.active-premium {
+  background:#8b1a1a;
+  color:white;
+}
+
+/* ACTIVO NEGRO (diesel) */
+.chip.active-diesel {
+  background:#111;
+  color:white;
+}
+
+/* CARDS */
 .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:20px; }
-.card { padding:14px; border-radius:12px; border:1px solid #eee; }
+.card {
+  padding:14px;
+  border-radius:12px;
+  border:1px solid #eee;
+  border-top-width: 3px;
+  transition: border-color 0.2s ease;
+}
 .card-label { font-size:12px; color:#555; margin-bottom:2px; }
 .card-period { font-size:11px; color:#aaa; margin-bottom:6px; }
 .price { font-size:22px; font-weight:600; color:#111; }
+
+/* Border top color por producto activo */
+.card.highlight-regular { border-top-color: #1a6b2f; }
+.card.highlight-premium { border-top-color: #8b1a1a; }
+.card.highlight-diesel  { border-top-color: #111; }
+.card.highlight-none    { border-top-color: #eee; }
+
 .chart-container { position:relative; width:100%; }
 canvas { width:100% !important; }
 .skeleton {
@@ -91,17 +142,17 @@ canvas { width:100% !important; }
   </div>
 
   <div class="grid">
-    <div class="card">
+    <div class="card highlight-regular" id="card-regular">
       <div class="card-label">Regular</div>
       <div class="card-period" id="period-regular">Promedio 30 d&#237;as</div>
       <div class="price" id="regular">$0.00</div>
     </div>
-    <div class="card">
+    <div class="card highlight-none" id="card-premium">
       <div class="card-label">Premium</div>
       <div class="card-period" id="period-premium">Promedio 30 d&#237;as</div>
       <div class="price" id="premium">$0.00</div>
     </div>
-    <div class="card">
+    <div class="card highlight-none" id="card-diesel">
       <div class="card-label">Diesel</div>
       <div class="card-period" id="period-diesel">Promedio 30 d&#237;as</div>
       <div class="price" id="diesel">$0.00</div>
@@ -109,7 +160,7 @@ canvas { width:100% !important; }
   </div>
 
   <div class="chips">
-    <div class="chip active" id="btn-regular" onclick="setProduct('regular')">Regular</div>
+    <div class="chip active-regular" id="btn-regular" onclick="setProduct('regular')">Regular</div>
     <div class="chip" id="btn-premium" onclick="setProduct('premium')">Premium</div>
     <div class="chip" id="btn-diesel" onclick="setProduct('diesel')">Diesel</div>
   </div>
@@ -158,6 +209,13 @@ canvas { width:100% !important; }
 
 <script>
 const API = "https://api.gasgas.com.mx";
+
+const PRODUCT_COLORS = {
+  regular: "#1a6b2f",
+  premium: "#8b1a1a",
+  diesel:  "#111111"
+};
+
 let currentMarket = "nacional";
 let currentProduct = "regular";
 let periodo = 30;
@@ -186,6 +244,21 @@ function getNiceScale(min, max){
   const niceMin = Math.floor((min - step) / step) * step;
   const niceMax = Math.ceil((max + step) / step) * step;
   return { niceMin, niceMax, step };
+}
+
+function updateProductUI(product){
+  // Chips de producto
+  ["regular","premium","diesel"].forEach(p => {
+    const chip = document.getElementById("btn-"+p);
+    chip.className = "chip";
+    if(p === product) chip.classList.add("active-"+p);
+  });
+
+  // Cards — solo la del producto activo tiene border-top de color
+  ["regular","premium","diesel"].forEach(p => {
+    const card = document.getElementById("card-"+p);
+    card.className = "card " + (p === product ? "highlight-"+p : "highlight-none");
+  });
 }
 
 function updateFooter(precios){
@@ -262,9 +335,8 @@ function drawChart(data){
   const min = Math.min(...values);
   const max = Math.max(...values);
   const { niceMin, niceMax, step } = getNiceScale(min, max);
+  const color = PRODUCT_COLORS[currentProduct];
 
-  // Portrait mobile: solo primera y última fecha
-  // Landscape + desktop: todas las fechas
   const tickCallback = portrait
     ? function(val, index) {
         if(index === 0 || index === labels.length - 1) return labels[index];
@@ -280,12 +352,12 @@ function drawChart(data){
       labels,
       datasets:[{
         data: values,
-        borderColor: "#111",
-        backgroundColor: "rgba(0,0,0,0.03)",
+        borderColor: color,
+        backgroundColor: color + "18",
         borderWidth: 2.5,
         tension: 0.35,
         pointRadius: portrait ? 2 : 3,
-        pointBackgroundColor: "#111"
+        pointBackgroundColor: color
       }]
     },
     options:{
@@ -315,7 +387,6 @@ function drawChart(data){
   });
 }
 
-// Redibujar al rotar el dispositivo
 window.addEventListener("orientationchange", () => {
   setTimeout(() => { loadData(); }, 300);
 });
@@ -329,7 +400,9 @@ function setPeriodo(p){
 
 async function setMarket(m){
   currentMarket = m;
-  ["nacional","estado"].forEach(x => document.getElementById("btn-"+x).classList.remove("active"));
+  ["nacional","estado"].forEach(x => {
+    document.getElementById("btn-"+x).classList.remove("active");
+  });
   document.getElementById("btn-"+m).classList.add("active");
   document.getElementById("inputContainer").style.display = m === "estado" ? "block" : "none";
   if(m === "estado") await loadEstados();
@@ -338,11 +411,12 @@ async function setMarket(m){
 
 function setProduct(p){
   currentProduct = p;
-  ["regular","premium","diesel"].forEach(x => document.getElementById("btn-"+x).classList.remove("active"));
-  document.getElementById("btn-"+p).classList.add("active");
+  updateProductUI(p);
   loadData();
 }
 
+// Init
+updateProductUI(currentProduct);
 loadData();
 </script>
 </body>
