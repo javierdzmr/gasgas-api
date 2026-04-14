@@ -7,6 +7,26 @@ const PORT = process.env.PORT || 10000;
 // 🔐 importante para Cloudflare / Render
 app.set('trust proxy', 1);
 
+// 🌐 CORS
+const ALLOWED_ORIGINS = [
+  'https://gasgas.com.mx',
+  'https://www.gasgas.com.mx',
+  'https://api.gasgas.com.mx',
+  'https://gasgas-api-dev.onrender.com',
+  'http://localhost:3000'
+];
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
+
 // 🗄️ conexión a la base de datos
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
