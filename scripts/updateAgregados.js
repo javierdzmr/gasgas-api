@@ -5,47 +5,65 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
+// ============================================================
+// Rangos de precios válidos (actualizados Abril 2026)
+// Basados en análisis de percentiles p05–p99 sobre 30 días:
+//   regular: p05=21.29  p99=24.99  → BETWEEN 21 AND 27
+//   premium: p05=24.99  p99=29.99  → BETWEEN 23 AND 32
+//   diesel:  p05=26.99  p99=30.35  → BETWEEN 25 AND 33
+// ============================================================
+const RANGE = {
+  regular: { min: 21, max: 27 },
+  premium: { min: 23, max: 32 },
+  diesel:  { min: 25, max: 33 },
+};
+
 async function updateAgregados() {
   const client = await pool.connect();
 
   try {
     console.log("⛽ Actualizando precios agregados...");
 
-    const daysList = [7, 30];
+    const daysList = [1, 7, 30];
 
     for (const days of daysList) {
+
+      // days=1 usa CURRENT_DATE para filtrar solo registros de hoy (no últimas 24h)
+      const dateFilter = days === 1
+        ? `p.date >= CURRENT_DATE`
+        : `p.date >= NOW() - INTERVAL '${days} days'`;
 
       // =========================
       // 🌎 NACIONAL
       // =========================
       const nacional = await client.query(`
         SELECT 
-          AVG(CASE WHEN p.regular BETWEEN 20 AND 30 THEN p.regular END)    AS regular,
-          AVG(CASE WHEN p.premium BETWEEN 20 AND 35 THEN p.premium END)    AS premium,
-          AVG(CASE WHEN p.diesel  BETWEEN 20 AND 35 THEN p.diesel  END)    AS diesel,
+          AVG(CASE WHEN p.regular BETWEEN ${RANGE.regular.min} AND ${RANGE.regular.max} THEN p.regular END)    AS regular,
+          AVG(CASE WHEN p.premium BETWEEN ${RANGE.premium.min} AND ${RANGE.premium.max} THEN p.premium END)    AS premium,
+          AVG(CASE WHEN p.diesel  BETWEEN ${RANGE.diesel.min}  AND ${RANGE.diesel.max}  THEN p.diesel  END)    AS diesel,
 
-          MIN(CASE WHEN p.regular BETWEEN 20 AND 30 THEN p.regular END)    AS min_regular,
-          MAX(CASE WHEN p.regular BETWEEN 20 AND 30 THEN p.regular END)    AS max_regular,
-          STDDEV(CASE WHEN p.regular BETWEEN 20 AND 30 THEN p.regular END) AS std_regular,
+          MIN(CASE WHEN p.regular BETWEEN ${RANGE.regular.min} AND ${RANGE.regular.max} THEN p.regular END)    AS min_regular,
+          MAX(CASE WHEN p.regular BETWEEN ${RANGE.regular.min} AND ${RANGE.regular.max} THEN p.regular END)    AS max_regular,
+          STDDEV(CASE WHEN p.regular BETWEEN ${RANGE.regular.min} AND ${RANGE.regular.max} THEN p.regular END) AS std_regular,
 
-          MIN(CASE WHEN p.premium BETWEEN 20 AND 35 THEN p.premium END)    AS min_premium,
-          MAX(CASE WHEN p.premium BETWEEN 20 AND 35 THEN p.premium END)    AS max_premium,
-          STDDEV(CASE WHEN p.premium BETWEEN 20 AND 35 THEN p.premium END) AS std_premium,
+          MIN(CASE WHEN p.premium BETWEEN ${RANGE.premium.min} AND ${RANGE.premium.max} THEN p.premium END)    AS min_premium,
+          MAX(CASE WHEN p.premium BETWEEN ${RANGE.premium.min} AND ${RANGE.premium.max} THEN p.premium END)    AS max_premium,
+          STDDEV(CASE WHEN p.premium BETWEEN ${RANGE.premium.min} AND ${RANGE.premium.max} THEN p.premium END) AS std_premium,
 
-          MIN(CASE WHEN p.diesel BETWEEN 20 AND 35 THEN p.diesel END)      AS min_diesel,
-          MAX(CASE WHEN p.diesel BETWEEN 20 AND 35 THEN p.diesel END)      AS max_diesel,
-          STDDEV(CASE WHEN p.diesel BETWEEN 20 AND 35 THEN p.diesel END)   AS std_diesel,
+          MIN(CASE WHEN p.diesel BETWEEN ${RANGE.diesel.min} AND ${RANGE.diesel.max} THEN p.diesel END)        AS min_diesel,
+          MAX(CASE WHEN p.diesel BETWEEN ${RANGE.diesel.min} AND ${RANGE.diesel.max} THEN p.diesel END)        AS max_diesel,
+          STDDEV(CASE WHEN p.diesel BETWEEN ${RANGE.diesel.min} AND ${RANGE.diesel.max} THEN p.diesel END)     AS std_diesel,
 
           COUNT(DISTINCT CASE 
-            WHEN (p.regular BETWEEN 20 AND 30)
-              OR (p.premium BETWEEN 20 AND 35)
-              OR (p.diesel  BETWEEN 20 AND 35)
+            WHEN (p.regular BETWEEN ${RANGE.regular.min} AND ${RANGE.regular.max})
+              OR (p.premium BETWEEN ${RANGE.premium.min} AND ${RANGE.premium.max})
+              OR (p.diesel  BETWEEN ${RANGE.diesel.min}  AND ${RANGE.diesel.max})
             THEN l.gas_station_id
           END) AS stations_count
 
         FROM prices p
         JOIN prices_gas_station_links l ON l.price_id = p.id
-        WHERE p.date >= NOW() - INTERVAL '${days} days'
+        WHERE ${dateFilter}
       `);
 
       const n = nacional.rows[0];
@@ -94,34 +112,33 @@ async function updateAgregados() {
         SELECT 
           gs.estado,
 
-          AVG(CASE WHEN p.regular BETWEEN 20 AND 30 THEN p.regular END)    AS regular,
-          AVG(CASE WHEN p.premium BETWEEN 20 AND 35 THEN p.premium END)    AS premium,
-          AVG(CASE WHEN p.diesel  BETWEEN 20 AND 35 THEN p.diesel  END)    AS diesel,
+          AVG(CASE WHEN p.regular BETWEEN ${RANGE.regular.min} AND ${RANGE.regular.max} THEN p.regular END)    AS regular,
+          AVG(CASE WHEN p.premium BETWEEN ${RANGE.premium.min} AND ${RANGE.premium.max} THEN p.premium END)    AS premium,
+          AVG(CASE WHEN p.diesel  BETWEEN ${RANGE.diesel.min}  AND ${RANGE.diesel.max}  THEN p.diesel  END)    AS diesel,
 
-          MIN(CASE WHEN p.regular BETWEEN 20 AND 30 THEN p.regular END)    AS min_regular,
-          MAX(CASE WHEN p.regular BETWEEN 20 AND 30 THEN p.regular END)    AS max_regular,
-          STDDEV(CASE WHEN p.regular BETWEEN 20 AND 30 THEN p.regular END) AS std_regular,
+          MIN(CASE WHEN p.regular BETWEEN ${RANGE.regular.min} AND ${RANGE.regular.max} THEN p.regular END)    AS min_regular,
+          MAX(CASE WHEN p.regular BETWEEN ${RANGE.regular.min} AND ${RANGE.regular.max} THEN p.regular END)    AS max_regular,
+          STDDEV(CASE WHEN p.regular BETWEEN ${RANGE.regular.min} AND ${RANGE.regular.max} THEN p.regular END) AS std_regular,
 
-          MIN(CASE WHEN p.premium BETWEEN 20 AND 35 THEN p.premium END)    AS min_premium,
-          MAX(CASE WHEN p.premium BETWEEN 20 AND 35 THEN p.premium END)    AS max_premium,
-          STDDEV(CASE WHEN p.premium BETWEEN 20 AND 35 THEN p.premium END) AS std_premium,
+          MIN(CASE WHEN p.premium BETWEEN ${RANGE.premium.min} AND ${RANGE.premium.max} THEN p.premium END)    AS min_premium,
+          MAX(CASE WHEN p.premium BETWEEN ${RANGE.premium.min} AND ${RANGE.premium.max} THEN p.premium END)    AS max_premium,
+          STDDEV(CASE WHEN p.premium BETWEEN ${RANGE.premium.min} AND ${RANGE.premium.max} THEN p.premium END) AS std_premium,
 
-          MIN(CASE WHEN p.diesel BETWEEN 20 AND 35 THEN p.diesel END)      AS min_diesel,
-          MAX(CASE WHEN p.diesel BETWEEN 20 AND 35 THEN p.diesel END)      AS max_diesel,
-          STDDEV(CASE WHEN p.diesel BETWEEN 20 AND 35 THEN p.diesel END)   AS std_diesel,
+          MIN(CASE WHEN p.diesel BETWEEN ${RANGE.diesel.min} AND ${RANGE.diesel.max} THEN p.diesel END)        AS min_diesel,
+          MAX(CASE WHEN p.diesel BETWEEN ${RANGE.diesel.min} AND ${RANGE.diesel.max} THEN p.diesel END)        AS max_diesel,
+          STDDEV(CASE WHEN p.diesel BETWEEN ${RANGE.diesel.min} AND ${RANGE.diesel.max} THEN p.diesel END)     AS std_diesel,
 
-          -- 🔥 FIX: COUNT filtrado por estado gracias al GROUP BY
           COUNT(DISTINCT CASE 
-            WHEN (p.regular BETWEEN 20 AND 30)
-              OR (p.premium BETWEEN 20 AND 35)
-              OR (p.diesel  BETWEEN 20 AND 35)
+            WHEN (p.regular BETWEEN ${RANGE.regular.min} AND ${RANGE.regular.max})
+              OR (p.premium BETWEEN ${RANGE.premium.min} AND ${RANGE.premium.max})
+              OR (p.diesel  BETWEEN ${RANGE.diesel.min}  AND ${RANGE.diesel.max})
             THEN l.gas_station_id
           END) AS stations_count
 
         FROM prices p
         JOIN prices_gas_station_links l ON l.price_id = p.id
         JOIN gas_stations gs ON gs.id = l.gas_station_id
-        WHERE p.date >= NOW() - INTERVAL '${days} days'
+        WHERE ${dateFilter}
         GROUP BY gs.estado
       `);
 
