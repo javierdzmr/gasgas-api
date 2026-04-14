@@ -28,9 +28,9 @@ async function updateAgregados() {
 
     for (const days of daysList) {
 
-      // days=1 usa CURRENT_DATE para filtrar solo registros de hoy (no últimas 24h)
+      // days=1 usa el último día disponible en prices (evita problemas de zona horaria UTC vs México)
       const dateFilter = days === 1
-        ? `p.date >= CURRENT_DATE`
+        ? `p.date::date = (SELECT MAX(date::date) FROM prices)`
         : `p.date >= NOW() - INTERVAL '${days} days'`;
 
       // =========================
