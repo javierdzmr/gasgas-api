@@ -134,6 +134,97 @@ app.get("/api/estados", async (req, res) => {
 });
 
 // ==============================
+// 🔹 RANKING ESTADOS
+// ==============================
+app.get("/api/ranking-estados", async (req, res) => {
+  try {
+    const { product } = req.query;
+    const col = ['regular','premium','diesel'].includes(product) ? product : 'regular';
+
+    const result = await pool.query(`
+      SELECT market_value AS estado, regular, premium, diesel
+      FROM precios_agregados
+      WHERE market_type = 'estado'
+        AND days = 1
+        AND ${col} IS NOT NULL
+      ORDER BY ${col} DESC
+    `);
+
+    res.json(result.rows);
+
+  } catch (err) {
+    console.error("ERROR /ranking-estados:", err);
+    res.status(500).json({ error: "Error obteniendo ranking" });
+  }
+});
+
+// ==============================
+// 🔹 VECINOS
+// ==============================
+const VECINOS = {
+  'Aguascalientes':       ['Jalisco', 'Zacatecas', 'San Luis Potosí'],
+  'Baja California':      ['Sonora', 'Baja California Sur'],
+  'Baja California Sur':  ['Baja California', 'Sonora', 'Sinaloa'],
+  'Campeche':             ['Tabasco', 'Chiapas', 'Yucatán'],
+  'Chiapas':              ['Tabasco', 'Oaxaca', 'Veracruz', 'Campeche'],
+  'Chihuahua':            ['Sonora', 'Sinaloa', 'Durango', 'Coahuila'],
+  'Ciudad de México':     ['Estado de México', 'Morelos'],
+  'Coahuila':             ['Chihuahua', 'Durango', 'Zacatecas', 'Nuevo León', 'Tamaulipas'],
+  'Colima':               ['Jalisco', 'Michoacán'],
+  'Durango':              ['Chihuahua', 'Sinaloa', 'Nayarit', 'Zacatecas', 'Coahuila'],
+  'Estado de México':     ['Ciudad de México', 'Morelos', 'Guerrero', 'Michoacán', 'Querétaro', 'Hidalgo', 'Tlaxcala', 'Puebla'],
+  'Guanajuato':           ['Jalisco', 'Michoacán', 'Querétaro', 'San Luis Potosí', 'Zacatecas'],
+  'Guerrero':             ['Michoacán', 'Estado de México', 'Morelos', 'Puebla', 'Oaxaca'],
+  'Hidalgo':              ['San Luis Potosí', 'Veracruz', 'Puebla', 'Tlaxcala', 'Estado de México', 'Querétaro'],
+  'Jalisco':              ['Nayarit', 'Zacatecas', 'Aguascalientes', 'Guanajuato', 'Michoacán', 'Colima'],
+  'Michoacán':            ['Jalisco', 'Guanajuato', 'Querétaro', 'Estado de México', 'Guerrero', 'Colima'],
+  'Morelos':              ['Estado de México', 'Ciudad de México', 'Puebla', 'Guerrero'],
+  'Nayarit':              ['Sinaloa', 'Durango', 'Zacatecas', 'Jalisco'],
+  'Nuevo León':           ['Coahuila', 'Zacatecas', 'San Luis Potosí', 'Tamaulipas'],
+  'Oaxaca':               ['Guerrero', 'Puebla', 'Veracruz', 'Chiapas'],
+  'Puebla':               ['Hidalgo', 'Veracruz', 'Oaxaca', 'Guerrero', 'Morelos', 'Estado de México', 'Tlaxcala'],
+  'Querétaro':            ['Guanajuato', 'San Luis Potosí', 'Hidalgo', 'Estado de México', 'Michoacán'],
+  'Quintana Roo':         ['Yucatán', 'Campeche'],
+  'San Luis Potosí':      ['Zacatecas', 'Jalisco', 'Guanajuato', 'Querétaro', 'Hidalgo', 'Veracruz', 'Tamaulipas', 'Nuevo León'],
+  'Sinaloa':              ['Sonora', 'Chihuahua', 'Durango', 'Nayarit'],
+  'Sonora':               ['Baja California', 'Chihuahua', 'Sinaloa'],
+  'Tabasco':              ['Veracruz', 'Chiapas', 'Campeche'],
+  'Tamaulipas':           ['Nuevo León', 'Coahuila', 'San Luis Potosí', 'Veracruz'],
+  'Tlaxcala':             ['Hidalgo', 'Puebla', 'Estado de México'],
+  'Veracruz':             ['Tamaulipas', 'San Luis Potosí', 'Hidalgo', 'Puebla', 'Oaxaca', 'Chiapas', 'Tabasco'],
+  'Yucatán':              ['Campeche', 'Quintana Roo'],
+  'Zacatecas':            ['Durango', 'Coahuila', 'Nuevo León', 'San Luis Potosí', 'Jalisco', 'Aguascalientes', 'Nayarit', 'Guanajuato'],
+};
+
+app.get("/api/vecinos", async (req, res) => {
+  try {
+    const { estado, product } = req.query;
+    const col = ['regular','premium','diesel'].includes(product) ? product : 'regular';
+
+    const vecinosList = VECINOS[estado] || [];
+    if (vecinosList.length === 0) return res.json([]);
+
+    const placeholders = vecinosList.map((_, i) => `$${i + 1}`).join(', ');
+
+    const result = await pool.query(`
+      SELECT market_value AS estado, regular, premium, diesel
+      FROM precios_agregados
+      WHERE market_type = 'estado'
+        AND days = 1
+        AND market_value IN (${placeholders})
+        AND ${col} IS NOT NULL
+      ORDER BY ${col} DESC
+    `, vecinosList);
+
+    res.json(result.rows);
+
+  } catch (err) {
+    console.error("ERROR /vecinos:", err);
+    res.status(500).json({ error: "Error obteniendo vecinos" });
+  }
+});
+
+// ==============================
 // 🔹 HEALTH CHECK
 // ==============================
 app.get("/", (req, res) => {
