@@ -24,6 +24,25 @@ async function updateAgregados() {
   try {
     console.log("⛽ Actualizando precios agregados...");
 
+    // Limpiar min/max corruptos antes de recalcular (outliers de versiones anteriores sin filtros)
+    await client.query(`
+      UPDATE precios_agregados SET
+        min_regular = CASE WHEN min_regular < ${RANGE.regular.min} OR min_regular > ${RANGE.regular.max} THEN NULL ELSE min_regular END,
+        max_regular = CASE WHEN max_regular < ${RANGE.regular.min} OR max_regular > ${RANGE.regular.max} THEN NULL ELSE max_regular END,
+        min_premium = CASE WHEN min_premium < ${RANGE.premium.min} OR min_premium > ${RANGE.premium.max} THEN NULL ELSE min_premium END,
+        max_premium = CASE WHEN max_premium < ${RANGE.premium.min} OR max_premium > ${RANGE.premium.max} THEN NULL ELSE max_premium END,
+        min_diesel  = CASE WHEN min_diesel  < ${RANGE.diesel.min}  OR min_diesel  > ${RANGE.diesel.max}  THEN NULL ELSE min_diesel  END,
+        max_diesel  = CASE WHEN max_diesel  < ${RANGE.diesel.min}  OR max_diesel  > ${RANGE.diesel.max}  THEN NULL ELSE max_diesel  END
+      WHERE
+        (min_regular IS NOT NULL AND (min_regular < ${RANGE.regular.min} OR min_regular > ${RANGE.regular.max}))
+        OR (max_regular IS NOT NULL AND (max_regular < ${RANGE.regular.min} OR max_regular > ${RANGE.regular.max}))
+        OR (min_premium IS NOT NULL AND (min_premium < ${RANGE.premium.min} OR min_premium > ${RANGE.premium.max}))
+        OR (max_premium IS NOT NULL AND (max_premium < ${RANGE.premium.min} OR max_premium > ${RANGE.premium.max}))
+        OR (min_diesel  IS NOT NULL AND (min_diesel  < ${RANGE.diesel.min}  OR min_diesel  > ${RANGE.diesel.max}))
+        OR (max_diesel  IS NOT NULL AND (max_diesel  < ${RANGE.diesel.min}  OR max_diesel  > ${RANGE.diesel.max}))
+    `);
+    console.log("🧹 Min/max corruptos limpiados");
+
     const daysList = [1, 7, 30];
 
     for (const days of daysList) {
@@ -67,6 +86,19 @@ async function updateAgregados() {
       `);
 
       const n = nacional.rows[0];
+
+      // Guardar saneado: si el min/max calculado cae fuera del rango válido, guardarlo como NULL
+      const sanear = (val, min, max) => {
+        const v = parseFloat(val);
+        return (!isNaN(v) && v >= min && v <= max) ? v : null;
+      };
+
+      n.min_regular = sanear(n.min_regular, RANGE.regular.min, RANGE.regular.max);
+      n.max_regular = sanear(n.max_regular, RANGE.regular.min, RANGE.regular.max);
+      n.min_premium = sanear(n.min_premium, RANGE.premium.min, RANGE.premium.max);
+      n.max_premium = sanear(n.max_premium, RANGE.premium.min, RANGE.premium.max);
+      n.min_diesel  = sanear(n.min_diesel,  RANGE.diesel.min,  RANGE.diesel.max);
+      n.max_diesel  = sanear(n.max_diesel,  RANGE.diesel.min,  RANGE.diesel.max);
 
       await client.query(`
         INSERT INTO precios_agregados (
@@ -143,6 +175,13 @@ async function updateAgregados() {
       `);
 
       for (const row of estados.rows) {
+        row.min_regular = sanear(row.min_regular, RANGE.regular.min, RANGE.regular.max);
+        row.max_regular = sanear(row.max_regular, RANGE.regular.min, RANGE.regular.max);
+        row.min_premium = sanear(row.min_premium, RANGE.premium.min, RANGE.premium.max);
+        row.max_premium = sanear(row.max_premium, RANGE.premium.min, RANGE.premium.max);
+        row.min_diesel  = sanear(row.min_diesel,  RANGE.diesel.min,  RANGE.diesel.max);
+        row.max_diesel  = sanear(row.max_diesel,  RANGE.diesel.min,  RANGE.diesel.max);
+
         await client.query(`
           INSERT INTO precios_agregados (
             market_type, market_value, days,
