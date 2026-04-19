@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GasGas Analytics</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 body { margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:#f7f8fa; }
 .container { max-width:1100px; margin:auto; padding:20px; }
@@ -21,34 +21,47 @@ body { margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-se
   font-size:14px;
   font-weight:500;
   transition: all 0.15s ease;
-  /* INACTIVO: apagado */
   background:#f0f0f0;
   color:#bbb;
   border: 1.5px solid transparent;
 }
+.chip.active { background:black; color:white; }
+.chip.active-regular { background:#1a6b2f; color:white; }
+.chip.active-premium { background:#8b1a1a; color:white; }
+.chip.active-diesel  { background:#111; color:white; }
 
-/* ACTIVO NEGRO (mercado y periodo) */
-.chip.active {
-  background:black;
-  color:white;
+/* CHIPS BLOQUEADOS */
+.chip.locked {
+  background:#f7f7f7;
+  color:#ccc;
+  border: 1.5px solid #e8e8e8;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
 }
-
-/* ACTIVO VERDE (regular) */
-.chip.active-regular {
-  background:#1a6b2f;
-  color:white;
+.chip.locked:hover { background:#f0f0f0; }
+.chip.locked .lock-icon { font-size:11px; }
+.excel-download-row {
+  display: flex;
+  justify-content: flex-end;
+  margin: 8px 0 4px;
 }
-
-/* ACTIVO ROJO (premium) */
-.chip.active-premium {
-  background:#8b1a1a;
-  color:white;
+.btn-excel-download {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 7px 16px; border-radius: 999px;
+  font-size: 13px; font-family: inherit;
+  background: transparent;
+  color: #888; border: 0.5px solid #ccc;
+  cursor: pointer;
 }
-
-/* ACTIVO NEGRO (diesel) */
-.chip.active-diesel {
-  background:#111;
-  color:white;
+.btn-excel-download:hover { background: #f5f5f5; }
+.excel-xls-icon {
+  width: 16px; height: 16px;
+  background: #1a6b2f; border-radius: 3px;
+  font-size: 9px; font-weight: 700; color: #fff;
+  display: inline-flex; align-items: center; justify-content: center;
+  letter-spacing: -0.5px; flex-shrink: 0;
 }
 
 /* CARDS */
@@ -63,8 +76,6 @@ body { margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-se
 .card-label { font-size:12px; color:#555; margin-bottom:2px; }
 .card-period { font-size:11px; color:#aaa; margin-bottom:6px; }
 .price { font-size:22px; font-weight:600; color:#111; }
-
-/* Border top color por producto activo */
 .card.highlight-regular { border-top-color: #1a6b2f; }
 .card.highlight-premium { border-top-color: #8b1a1a; }
 .card.highlight-diesel  { border-top-color: #111; }
@@ -99,6 +110,110 @@ canvas { width:100% !important; }
   border:1px solid #ccc; font-size:14px; margin-bottom:10px;
 }
 .page-footer { text-align:center; padding:24px; color:#aaa; font-size:12px; }
+
+/* MODAL PRO */
+.modal-overlay {
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.45);
+  z-index:1000;
+  align-items:center;
+  justify-content:center;
+}
+.modal-overlay.show { display:flex; }
+.modal-box {
+  background:white;
+  border-radius:20px;
+  padding:32px 28px;
+  max-width:320px;
+  width:90%;
+  text-align:center;
+  box-shadow:0 20px 60px rgba(0,0,0,0.15);
+}
+.modal-lock { font-size:32px; margin-bottom:12px; }
+.modal-title { font-size:18px; font-weight:600; color:#111; margin-bottom:8px; }
+.modal-desc { font-size:14px; color:#666; line-height:1.6; margin-bottom:14px; }
+.modal-badge {
+  display:inline-block;
+  background:#fef3c7;
+  color:#92400e;
+  font-size:11px;
+  font-weight:600;
+  padding:4px 12px;
+  border-radius:999px;
+  margin-bottom:20px;
+  letter-spacing:0.03em;
+}
+.modal-btn-primary {
+  display:block;
+  width:100%;
+  padding:11px;
+  background:#111;
+  color:white;
+  border:none;
+  border-radius:999px;
+  font-size:14px;
+  font-weight:500;
+  cursor:pointer;
+  margin-bottom:10px;
+  text-decoration:none;
+}
+.modal-btn-primary:hover { background:#333; }
+.modal-close {
+  font-size:13px;
+  color:#aaa;
+  cursor:pointer;
+  background:none;
+  border:none;
+  padding:4px;
+}
+.modal-close:hover { color:#666; }
+
+/* VISTA HOY */
+.hoy-container { display:none; margin-top:4px; }
+
+/* Cards métricas estado */
+.hoy-metrics { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+.hoy-metric { background:#f7f8fa; border-radius:12px; padding:14px 16px; }
+.hoy-metric-label { font-size:11px; color:#aaa; margin-bottom:6px; }
+.hoy-metric-value { font-size:22px; font-weight:600; color:#111; }
+.hoy-metric-sub { font-size:11px; color:#aaa; margin-top:3px; }
+.hoy-up   { color:#a32d2d; font-size:18px; font-weight:600; }
+.hoy-down { color:#1a6b2f; font-size:18px; font-weight:600; }
+.hoy-flat { font-size:18px; font-weight:600; color:#aaa; }
+.range-bar { margin-top:6px; position:relative; height:5px; background:#e8e8e8; border-radius:999px; }
+.range-fill { position:absolute; height:5px; border-radius:999px; left:0; top:0; width:100%; }
+.range-labels { display:flex; justify-content:space-between; font-size:10px; color:#aaa; margin-top:3px; }
+
+/* Sparkline */
+.sparkline-wrap { margin-top:6px; }
+
+/* Vecinos */
+.vecino-row { display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:0.5px solid #f0f0f0; }
+.vecino-row:last-child { border-bottom:none; }
+.vecino-name { font-size:12px; color:#333; }
+.vecino-price { font-size:12px; font-weight:500; }
+.vecino-diff { font-size:11px; }
+.vecino-up { color:#a32d2d; }
+.vecino-down { color:#1a6b2f; }
+
+/* Ranking nacional */
+.ranking-wrap { margin-top:4px; }
+.ranking-cols { display:grid; grid-template-columns:1fr 1fr; gap:0 20px; }
+.ranking-row { display:flex; justify-content:space-between; align-items:center; padding:5px 6px; border-bottom:0.5px solid #f0f0f0; border-radius:6px; }
+.ranking-row:last-child { border-bottom:none; }
+.ranking-row.top-cheap { background:#eaf3de; border-bottom-color:#c0dd97; }
+.ranking-row.top-exp   { background:#fcebeb; border-bottom-color:#f7c1c1; }
+.ranking-left { display:flex; align-items:center; gap:6px; overflow:hidden; }
+.ranking-num { font-size:11px; color:#aaa; width:18px; flex-shrink:0; }
+.ranking-num.cheap { color:#27500a; }
+.ranking-num.exp   { color:#791f1f; }
+.ranking-name { font-size:12px; color:#333; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ranking-name.cheap { color:#27500a; }
+.ranking-name.exp   { color:#791f1f; }
+.ranking-price { font-size:12px; font-weight:500; flex-shrink:0; }
+
 @keyframes shimmer {
   0%{background-position:200% 0;}
   100%{background-position:-200% 0;}
@@ -130,6 +245,9 @@ canvas { width:100% !important; }
   <div class="chips">
     <div class="chip active" id="btn-nacional" onclick="setMarket('nacional')">Nacional</div>
     <div class="chip" id="btn-estado" onclick="setMarket('estado')">Estado</div>
+    <div class="chip locked" onclick="showProModal('ciudad')"><span class="lock-icon">&#128274;</span> Ciudad</div>
+    <div class="chip locked" onclick="showProModal('cp')"><span class="lock-icon">&#128274;</span> C.P.</div>
+    <div class="chip locked" onclick="showProModal('es')"><span class="lock-icon">&#128274;</span> E.S.</div>
   </div>
 
   <div id="inputContainer" style="display:none; text-align:center;">
@@ -137,8 +255,10 @@ canvas { width:100% !important; }
   </div>
 
   <div class="chips">
+    <div class="chip" id="btn-hoy" onclick="setPeriodo('hoy')">Hoy</div>
     <div class="chip" id="btn-7" onclick="setPeriodo(7)">7 d&#237;as</div>
     <div class="chip active" id="btn-30" onclick="setPeriodo(30)">30 d&#237;as</div>
+    <div class="chip locked" onclick="showProModal('personalizado')"><span class="lock-icon">&#128274;</span> Personalizado</div>
   </div>
 
   <div class="grid">
@@ -159,6 +279,14 @@ canvas { width:100% !important; }
     </div>
   </div>
 
+  <div class="excel-download-row">
+    <button class="btn-excel-download" onclick="showProModal('excel')">
+      <span class="excel-xls-icon">XLS</span>
+      Descargar Excel
+      <span style="font-size:11px;">&#128274;</span>
+    </button>
+  </div>
+
   <div class="chips">
     <div class="chip active-regular" id="btn-regular" onclick="setProduct('regular')">Regular</div>
     <div class="chip" id="btn-premium" onclick="setProduct('premium')">Premium</div>
@@ -168,6 +296,11 @@ canvas { width:100% !important; }
   <div class="chart-container">
     <canvas id="chart"></canvas>
     <div class="skeleton" id="skeleton"></div>
+  </div>
+
+  <!-- VISTA HOY -->
+  <div class="hoy-container" id="hoyContainer">
+    <div id="hoyContent"></div>
   </div>
 
   <div class="chart-footer" id="chartFooter" style="display:none;">
@@ -202,10 +335,34 @@ canvas { width:100% !important; }
     </div>
   </div>
 
+  <div style="text-align:center; margin-top:14px; font-size:13px; color:#1a6b2f;">
+    <strong>GasGas Analytics</strong> &middot; gasgas.com.mx
+  </div>
+
 </div>
 </section>
 
+<section class="container" style="margin-top:0; padding-top:0;">
+  <div style="background:white; border-radius:16px; padding:24px; text-align:center; box-shadow:0 4px 20px rgba(0,0,0,0.05);">
+    <p style="color:#555; margin:0 0 14px; font-size:15px;">&#191;Necesitas acceso a nuestra API o m&#225;s informaci&#243;n sobre precios?</p>
+    <a href="mailto:hola@gasgas.com.mx" style="display:inline-block; background:#111; color:white; padding:12px 28px; border-radius:999px; text-decoration:none; font-size:14px; font-weight:500;">
+      &#9993; Cont&#225;ctanos
+    </a>
+  </div>
+</section>
+
 <div class="page-footer">&copy; Plataforma Digital GasGas 2026</div>
+
+<div class="modal-overlay" id="proModal">
+  <div class="modal-box">
+    <div class="modal-lock">&#128274;</div>
+    <div class="modal-title" id="modal-title">Nivel Ciudad</div>
+    <div class="modal-desc" id="modal-desc">Consulta promedios por municipio — ideal para flotas, distribuidores y análisis competitivo.</div>
+    <div class="modal-badge">GasGas Pro</div>
+    <a class="modal-btn-primary" href="mailto:hola@gasgas.com.mx">Conocer GasGas Pro</a>
+    <button class="modal-close" onclick="hideProModal()">cerrar</button>
+  </div>
+</div>
 
 <script>
 const API = "https://api.gasgas.com.mx";
@@ -247,14 +404,11 @@ function getNiceScale(min, max){
 }
 
 function updateProductUI(product){
-  // Chips de producto
   ["regular","premium","diesel"].forEach(p => {
     const chip = document.getElementById("btn-"+p);
     chip.className = "chip";
     if(p === product) chip.classList.add("active-"+p);
   });
-
-  // Cards — solo la del producto activo tiene border-top de color
   ["regular","premium","diesel"].forEach(p => {
     const card = document.getElementById("card-"+p);
     card.className = "card " + (p === product ? "highlight-"+p : "highlight-none");
@@ -290,10 +444,17 @@ async function loadEstados(){
 }
 
 async function loadData(){
-  document.getElementById("skeleton").style.display = "block";
+  const esHoy = periodo === 'hoy';
+
+  document.getElementById("chart").parentElement.style.display = esHoy ? "none" : "block";
+  document.getElementById("hoyContainer").style.display = esHoy ? "block" : "none";
   document.getElementById("chartFooter").style.display = "none";
 
-  const label = `Promedio ${periodo} d&#237;as`;
+  if(!esHoy) {
+    document.getElementById("skeleton").style.display = "block";
+  }
+
+  const label = esHoy ? "Precio hoy" : `Promedio ${periodo} d&#237;as`;
   document.getElementById("period-regular").innerHTML = label;
   document.getElementById("period-premium").innerHTML = label;
   document.getElementById("period-diesel").innerHTML  = label;
@@ -303,21 +464,24 @@ async function loadData(){
     : "all";
 
   try {
+    const days = esHoy ? 1 : periodo;
     const precios = await fetch(
-      `${API}/api/precios?market=${currentMarket}&value=${encodeURIComponent(value)}&days=${periodo}&product=${currentProduct}`
+      `${API}/api/precios?market=${currentMarket}&value=${encodeURIComponent(value)}&days=${days}&product=${currentProduct}`
     ).then(r => r.json());
 
     document.getElementById("regular").innerText = formatMoney(precios.regular);
     document.getElementById("premium").innerText = formatMoney(precios.premium);
     document.getElementById("diesel").innerText  = formatMoney(precios.diesel);
 
-    updateFooter(precios);
-
-    const hist = await fetch(
-      `${API}/api/historico?market=${currentMarket}&value=${encodeURIComponent(value)}&days=${periodo}&product=${currentProduct}`
-    ).then(r => r.json());
-
-    drawChart(hist);
+    if(!esHoy) {
+      updateFooter(precios);
+      const hist = await fetch(
+        `${API}/api/historico?market=${currentMarket}&value=${encodeURIComponent(value)}&days=${periodo}&product=${currentProduct}`
+      ).then(r => r.json());
+      drawChart(hist);
+    } else {
+      await renderHoy(precios, value);
+    }
 
   } catch(e){
     console.error("Error:", e);
@@ -393,7 +557,10 @@ window.addEventListener("orientationchange", () => {
 
 function setPeriodo(p){
   periodo = p;
-  ["7","30"].forEach(x => document.getElementById("btn-"+x).classList.remove("active"));
+  ["hoy","7","30"].forEach(x => {
+    const el = document.getElementById("btn-"+x);
+    if(el) el.classList.remove("active");
+  });
   document.getElementById("btn-"+p).classList.add("active");
   loadData();
 }
@@ -415,9 +582,207 @@ function setProduct(p){
   loadData();
 }
 
+// ==============================
+// VISTA HOY
+// ==============================
+const PRODUCT_COLOR = { regular:"#1a6b2f", premium:"#8b1a1a", diesel:"#111" };
+
+async function renderHoy(preciosHoy, value) {
+  if(currentMarket === "nacional") {
+    await renderRankingNacional();
+  } else {
+    await renderEstadoHoy(preciosHoy, value);
+  }
+}
+
+async function renderRankingNacional() {
+  const data = await fetch(`${API}/api/ranking-estados?product=${currentProduct}`).then(r => r.json());
+  const total = data.length;
+  const mid = Math.ceil(total / 2);
+  const col1 = data.slice(0, mid);
+  const col2 = data.slice(mid);
+  const color = PRODUCT_COLOR[currentProduct];
+
+  function makeRow(e, rank) {
+    const isExp   = rank <= 5;
+    const isCheap = rank > total - 5;
+    const rowClass = isExp ? "ranking-row top-exp" : isCheap ? "ranking-row top-cheap" : "ranking-row";
+    const numClass = isExp ? "ranking-num exp" : isCheap ? "ranking-num cheap" : "ranking-num";
+    const nameClass = isExp ? "ranking-name exp" : isCheap ? "ranking-name cheap" : "ranking-name";
+    const priceColor = isExp ? "#a32d2d" : isCheap ? "#1a6b2f" : color;
+    const price = Number(e[currentProduct]);
+    return `<div class="${rowClass}">
+      <div class="ranking-left">
+        <span class="${numClass}">${rank}</span>
+        <span class="${nameClass}">${e.estado}</span>
+      </div>
+      <span class="ranking-price" style="color:${priceColor}">${formatMoney(price)}</span>
+    </div>`;
+  }
+
+  document.getElementById("hoyContent").innerHTML = `
+    <p style="font-size:11px;color:#aaa;text-align:center;margin-bottom:10px;">
+      Ranking de estados &middot; ${currentProduct} &middot; hoy
+    </p>
+    <div class="ranking-cols">
+      <div>${col1.map((e,i) => makeRow(e, i+1)).join("")}</div>
+      <div>${col2.map((e,i) => makeRow(e, mid+i+1)).join("")}</div>
+    </div>`;
+}
+
+async function renderEstadoHoy(preciosHoy, estado) {
+  const color = PRODUCT_COLOR[currentProduct];
+
+  // Ranking posición
+  const ranking = await fetch(`${API}/api/ranking-estados?product=${currentProduct}`).then(r => r.json());
+  const pos = ranking.findIndex(e => e.estado.toLowerCase() === estado.toLowerCase()) + 1;
+  const total = ranking.length;
+
+  // Variación vs ayer (último punto del histórico de 7 días)
+  const hist = await fetch(`${API}/api/historico?market=estado&value=${encodeURIComponent(estado)}&days=7`).then(r => r.json());
+  let deltaHtml = '<span class="hoy-flat">—</span>';
+  let ayerStr = "—";
+  if(hist.length >= 2) {
+    const ayer = Number(hist[hist.length - 2][currentProduct]);
+    const hoy  = Number(preciosHoy[currentProduct]);
+    const diff = hoy - ayer;
+    ayerStr = formatMoney(ayer);
+    if(diff > 0.005)       deltaHtml = `<span class="hoy-up">&#9650; +${formatMoney(diff)}</span>`;
+    else if(diff < -0.005) deltaHtml = `<span class="hoy-down">&#9660; ${formatMoney(diff)}</span>`;
+    else                   deltaHtml = `<span class="hoy-flat">Sin cambio</span>`;
+  }
+
+  // Distancia al promedio nacional
+  const nacional = await fetch(`${API}/api/precios?market=nacional&value=all&days=1&product=${currentProduct}`).then(r => r.json());
+  const promNacional = Number(nacional[currentProduct]);
+  const distancia = Number(preciosHoy[currentProduct]) - promNacional;
+  const distColor = distancia > 0 ? "#a32d2d" : "#1a6b2f";
+  const distSign  = distancia > 0 ? "+" : "";
+
+  // Rango interno del estado (de precios de hoy, days=1)
+  const minKey = `min_${currentProduct}`;
+  const maxKey = `max_${currentProduct}`;
+  const minVal = preciosHoy[minKey] ? formatMoney(preciosHoy[minKey]) : "—";
+  const maxVal = preciosHoy[maxKey] ? formatMoney(preciosHoy[maxKey]) : "—";
+
+  // Sparkline 7 días
+  let sparkHtml = "";
+  if(hist.length > 1) {
+    const vals = hist.map(d => Number(d[currentProduct]));
+    const minS = Math.min(...vals), maxS = Math.max(...vals);
+    const range = maxS - minS || 1;
+    const pts = vals.map((v, i) => {
+      const x = (i / (vals.length - 1)) * 200;
+      const y = 44 - ((v - minS) / range) * 36;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(" ");
+    const last = vals[vals.length-1];
+    const lx = 200, ly = (44 - ((last - minS)/range)*36).toFixed(1);
+    const trend = vals[vals.length-1] > vals[0];
+    sparkHtml = `
+      <div class="sparkline-wrap">
+        <svg width="100%" height="50" viewBox="0 0 200 50" preserveAspectRatio="none">
+          <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+          <circle cx="${lx}" cy="${ly}" r="3.5" fill="${color}"/>
+        </svg>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:#aaa;margin-top:2px;">
+          <span>hace 7 d&#237;as ${formatMoney(vals[0])}</span><span>hoy ${formatMoney(last)}</span>
+        </div>
+        <div style="font-size:11px;margin-top:3px;color:${trend ? '#a32d2d':'#1a6b2f'}">
+          ${trend ? "&#9650; tendencia alcista" : "&#9660; tendencia a la baja"}
+        </div>
+      </div>`;
+  }
+
+  // Vecinos
+  const vecinos = await fetch(`${API}/api/vecinos?estado=${encodeURIComponent(estado)}&product=${currentProduct}`).then(r => r.json());
+  const vecinosHtml = vecinos.length
+    ? vecinos.map(v => {
+        const vp = Number(v[currentProduct]);
+        const hp = Number(preciosHoy[currentProduct]);
+        const d  = vp - hp;
+        const dc = d > 0.005 ? "vecino-up" : d < -0.005 ? "vecino-down" : "";
+        const ds = d > 0.005 ? `&#9650; +${formatMoney(d)}` : d < -0.005 ? `&#9660; ${formatMoney(d)}` : "—";
+        return `<div class="vecino-row">
+          <span class="vecino-name">${v.estado}</span>
+          <span class="vecino-price">${formatMoney(vp)}</span>
+          <span class="vecino-diff ${dc}">${ds}</span>
+        </div>`;
+      }).join("")
+    : '<p style="font-size:12px;color:#aaa;">Sin datos de vecinos</p>';
+
+  document.getElementById("hoyContent").innerHTML = `
+    <div class="hoy-metrics">
+      <div class="hoy-metric">
+        <div class="hoy-metric-label">Posici&#243;n nacional</div>
+        <div class="hoy-metric-value">#${pos} <span style="font-size:14px;font-weight:400;color:#aaa">de ${total}</span></div>
+        <div class="hoy-metric-sub">de m&#225;s caro a m&#225;s barato</div>
+      </div>
+      <div class="hoy-metric">
+        <div class="hoy-metric-label">Variaci&#243;n vs ayer</div>
+        <div>${deltaHtml}</div>
+        <div class="hoy-metric-sub">ayer: ${ayerStr}</div>
+      </div>
+      <div class="hoy-metric">
+        <div class="hoy-metric-label">Distancia al promedio nacional</div>
+        <div class="hoy-metric-value" style="color:${distColor}">${distSign}${formatMoney(distancia)}</div>
+        <div class="hoy-metric-sub">promedio nacional: ${formatMoney(promNacional)}</div>
+      </div>
+      <div class="hoy-metric">
+        <div class="hoy-metric-label">Rango interno del estado</div>
+        <div style="font-size:13px;color:#333;margin-top:2px;">${minVal} &mdash; ${maxVal}</div>
+        <div class="range-bar"><div class="range-fill" style="background:${color};"></div></div>
+        <div class="range-labels"><span>m&#237;n ${minVal}</span><span>m&#225;x ${maxVal}</span></div>
+      </div>
+      <div class="hoy-metric">
+        <div class="hoy-metric-label">Tendencia 7 d&#237;as</div>
+        ${sparkHtml}
+      </div>
+      <div class="hoy-metric">
+        <div class="hoy-metric-label">Estados vecinos hoy</div>
+        <div style="margin-top:6px;">${vecinosHtml}</div>
+      </div>
+    </div>`;
+}
+
 // Init
 updateProductUI(currentProduct);
 loadData();
+
+// Modal Pro
+const PRO_CONTENT = {
+  ciudad: {
+    title: "Nivel Ciudad",
+    desc: "Consulta promedios por municipio — ideal para flotas, distribuidores y análisis competitivo."
+  },
+  cp: {
+    title: "Nivel Código Postal",
+    desc: "Granularidad máxima por código postal — perfecto para pricing localizado y estudios de mercado."
+  },
+  excel: {
+    title: "Descargar Excel",
+    desc: "Exporta los datos de precios a Excel — ideal para análisis, reportes y seguimiento histórico."
+  },
+  personalizado: {
+    title: "Periodo Personalizado",
+    desc: "Define un rango de fechas a la medida — ideal para análisis comparativos y reportes específicos."
+  },
+  es: {
+    title: "Estación de Servicio",
+    desc: "Consulta precios por estación de servicio específica — ideal para monitoreo competitivo y auditorías de precios."
+  }
+};
+
+function showProModal(type) {
+  const content = PRO_CONTENT[type];
+  document.getElementById("modal-title").innerText = content.title;
+  document.getElementById("modal-desc").innerText  = content.desc;
+  document.getElementById("proModal").classList.add("show");
+}
+
+function hideProModal() {
+  document.getElementById("proModal").classList.remove("show");
+}
 </script>
 </body>
 </html>
