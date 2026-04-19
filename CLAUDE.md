@@ -1,5 +1,5 @@
 # CLAUDE.md — GasGas Analytics
-Checkpoint: Abril 2026 — v1.0-stable
+Checkpoint: Abril 2026 — v18abril26
 
 Este archivo provee contexto a Claude cuando trabaja en este repositorio.
 
@@ -75,6 +75,7 @@ Catálogo de ~14,000 gasolineras. Columnas clave: `id`, `estado`, `municipio`, `
 ### prices
 Motor principal. +9M registros, se actualiza varias veces al día.
 Columnas: `id`, `date`, `regular`, `premium`, `diesel`.
+**Importante:** El campo `date` es un timestamp. El servidor Render corre en UTC, que va 6-7 horas adelante de México. Usar siempre `p.date::date` para comparaciones de fecha.
 
 ### prices_gas_station_links
 JOIN entre `prices` y `gas_stations`. Columnas: `id`, `price_id`, `gas_station_id`.
@@ -96,6 +97,33 @@ Columnas: `market_type`, `market_value`, `date`, `regular`, `premium`, `diesel`,
 
 ---
 
+## Rangos de Precios Válidos (updateAgregados.js)
+
+Actualizados el 13 Abril 2026 basados en análisis de percentiles p05–p99 sobre 30 días de datos reales:
+
+| Producto | Mínimo | Máximo |
+|---|---|---|
+| Regular | 21 | 27 |
+| Premium | 23 | 32 |
+| Diesel | 25 | 33 |
+
+Estos rangos están centralizados en el objeto `RANGE` al inicio de `updateAgregados.js`. Si los precios en México cambian significativamente, correr la query de diagnóstico de percentiles antes de ajustar:
+
+```sql
+SELECT
+  'regular' AS producto,
+  PERCENTILE_CONT(0.01) WITHIN GROUP (ORDER BY regular) AS p01,
+  PERCENTILE_CONT(0.05) WITHIN GROUP (ORDER BY regular) AS p05,
+  PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY regular) AS p95,
+  PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY regular) AS p99
+FROM prices
+WHERE regular IS NOT NULL AND regular > 0
+  AND date >= NOW() - INTERVAL '30 days'
+-- repetir para premium y diesel
+```
+
+---
+
 ## API Endpoints
 
 ### GET /api/precios
@@ -110,6 +138,8 @@ Retorna precios promedio y estadísticas.
 
 Respuesta: `regular`, `premium`, `diesel`, `updated_at`, `min`, `max`, `std`, `stations_count`, `total_estaciones`
 
+**CRÍTICO:** `min` y `max` ya vienen mapeados al producto solicitado. En el frontend NO usar `min_regular`, `min_premium` etc. — usar directamente `precios.min` y `precios.max`.
+
 ### GET /api/historico
 Retorna serie de tiempo diaria para gráficas.
 
@@ -122,14 +152,14 @@ Retorna serie de tiempo diaria para gráficas.
 ### GET /api/estados
 Lista de los 32 estados disponibles.
 
-### GET /api/ranking-estados ⚠️ PENDIENTE DE IMPLEMENTAR
-Ranking de 32 estados por precio de hoy.
+### GET /api/ranking-estados ✅ IMPLEMENTADO
+Ranking de 32 estados por precio de hoy (days=1).
 | Parámetro | Valores |
 |---|---|
 | `product` | `regular` \| `premium` \| `diesel` |
 
-### GET /api/vecinos ⚠️ PENDIENTE DE IMPLEMENTAR
-Estados vecinos de un estado dado con sus precios de hoy.
+### GET /api/vecinos ✅ IMPLEMENTADO
+Estados vecinos de un estado dado con sus precios de hoy (days=1).
 | Parámetro | Valores |
 |---|---|
 | `estado` | nombre del estado |
@@ -148,33 +178,58 @@ Health check. Responde `{ status: 'ok' }`.
 | update-precios-historico | updateHistoricos.js | Cada 4h | Stats históricos legacy |
 | update-historicos-daily | updateHistoricosDaily.js | 4x al día (8,14,20,2 UTC) | Inserta promedio diario en precios_historicos_agregados |
 
-**Importante:** `updateAgregados.js` ya fue modificado para calcular `days=1` usando `p.date >= CURRENT_DATE`. Este cambio está en la rama `dev` pero NO en `main` (versión estable actual).
-
 ---
 
 ## Frontend — Dashboard (public/index.html)
 
 ### Dimensiones
-- Mercado: Nacional / Estado
-- Periodo: 7 días / 30 días
+- Mercado: Nacional / Estado / 🔒 Ciudad / 🔒 C.P. / 🔒 E.S.
+- Periodo: Hoy / 7 días / 30 días / 🔒 Personalizado
 - Producto: Regular / Premium / Diesel
+
+### Vista "Hoy" — Nacional
+Muestra ranking de 32 estados ordenados de más caro a más barato usando `/api/ranking-estados`.
+
+### Vista "Hoy" — Estado
+Muestra 6 métricas:
+1. Posición nacional (de `/api/ranking-estados`)
+2. Variación vs ayer (del último punto de `/api/historico?days=7`)
+3. Distancia al promedio nacional (de `/api/precios?market=nacional&days=1`)
+4. Rango interno del estado (de `precios.min` y `precios.max` de `/api/precios?market=estado&days=1`)
+5. Sparkline tendencia 7 días
+6. Estados vecinos hoy (de `/api/vecinos`)
+
+### ⚠️ BUG PENDIENTE — Rango interno del estado no muestra datos
+**Estado al 14 Abril 2026:** La API sí devuelve `min` y `max` correctamente (verificado: `https://api.gasgas.com.mx/api/precios?market=estado&value=Chiapas&days=1&product=regular` retorna `min: 21.75`, `max: 25.74`). El problema está en el `index.html` de GoDaddy.
+
+**Fix identificado:** En `renderEstadoHoy`, cambiar:
+```javascript
+// MAL — la API no devuelve min_regular, devuelve min
+const minKey = `min_${currentProduct}`;
+const maxKey = `max_${currentProduct}`;
+const minVal = preciosHoy[minKey] ? formatMoney(preciosHoy[minKey]) : "—";
+const maxVal = preciosHoy[maxKey] ? formatMoney(preciosHoy[maxKey]) : "—";
+
+// BIEN — usar min/max directamente
+const minVal = preciosHoy.min ? formatMoney(preciosHoy.min) : "—";
+const maxVal = preciosHoy.max ? formatMoney(preciosHoy.max) : "—";
+```
+
+**Próximo paso al retomar:** Abrir consola del navegador en gasgas.com.mx con Estado+Hoy seleccionado y revisar errores JS. El último `index.html` subido a GoDaddy no cargó nada — posiblemente Cloudflare volvió a inyectar cfasync o el archivo se subió incompleto.
 
 ### Chips GasGas Pro (bloqueados)
 - Ciudad 🔒 — al hacer click abre modal "Nivel Ciudad"
 - C.P. 🔒 — al hacer click abre modal "Nivel Código Postal"
+- E.S. 🔒 — al hacer click abre modal "Estación de Servicio"
+- Personalizado 🔒 (en fila de periodos, a la derecha de "30 días") — abre modal "Periodo Personalizado"
+- Botón "Descargar Excel" 🔒 (debajo de tarjetas de precios, alineado a la derecha) — abre modal "Descargar Excel"
 - Modal incluye badge "GasGas Pro" y botón mailto a hola@gasgas.com.mx
+- Todos los modales usan `showProModal(type)` con entradas en el objeto `PRO_CONTENT` en el JS
 
 ### Colores por producto
 - Regular: `#1a6b2f` (verde oscuro)
 - Premium: `#8b1a1a` (rojo oscuro)
 - Diesel: `#111111` (negro)
-
-### Componentes
-- Cards de precio con label de periodo
-- Gráfica de línea (Chart.js) coloreada por producto
-- Brand bar: "GasGas Analytics · gasgas.com.mx"
-- Footer: Actualizado | estaciones | cobertura% | Min | Max | Std
-- Sección de contacto con botón mailto pre-cargado a hola@gasgas.com.mx
 
 ### CDN Chart.js
 Usar siempre: `https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js`
@@ -211,10 +266,37 @@ Ambos archivos deben mantenerse sincronizados manualmente. Al hacer cambios al f
 
 ---
 
+## CORS — Configuración actual en server.js
+
+Implementado con middleware nativo de Express (sin paquete `cors`):
+
+```javascript
+const ALLOWED_ORIGINS = [
+  'https://gasgas.com.mx',
+  'https://www.gasgas.com.mx',
+  'https://api.gasgas.com.mx',
+  'https://gasgas-api-dev.onrender.com',
+  'http://localhost:3000'
+];
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
+```
+
+---
+
 ## Ramas de Git
 
-- `main` → producción (versión estable v1.0-stable)
-- `dev` → desarrollo y pruebas
+- `main` → producción
+- `dev` → desarrollo y pruebas (siempre partir de main antes de nuevos features)
 
 ### Flujo de trabajo
 1. `git checkout dev`
@@ -223,64 +305,54 @@ Ambos archivos deben mantenerse sincronizados manualmente. Al hacer cambios al f
 4. Probar en gasgas-api-dev.onrender.com
 5. Si todo bien: `git checkout main && git merge dev && git push origin main`
 
-### Tag de seguridad
+### Sincronizar dev con main (antes de empezar nuevos cambios)
+```bash
+git checkout dev
+git reset --hard main
+git push origin dev --force
+```
+
+### Tags de seguridad
 ```bash
 # Regresar a versión estable en caso de emergencia
-git reset --hard v1.0-stable
+git reset --hard 18abril26
 git push origin main --force
 ```
+
+| Tag | Fecha | Descripción |
+|---|---|---|
+| `v1.0-stable` | commit 3e6ce6d | Primera versión estable |
+| `13abril26` | 13 Abril 2026 | Rangos de precios corregidos, producto presentable a clientes |
+| `18abril26` | 18 Abril 2026 | Fix min/max corruptos en cron, chips Pro: E.S., Personalizado, Descargar Excel |
 
 ### Checklist antes de pasar a producción
 - GET /api/test → `{ status: 'ok' }`
 - GET /api/estados → 32 estados
 - GET /api/precios?market=nacional&days=30&product=regular → precios con min/max/std
 - GET /api/historico?market=nacional&days=30 → serie de tiempo
-- Abrir dashboard y verificar que carguen precios
+- GET /api/precios?market=estado&value=Chiapas&days=1&product=regular → min y max con valores reales
+- GET /api/ranking-estados?product=regular → 32 estados con precios
+- GET /api/vecinos?estado=Chiapas&product=regular → estados vecinos con precios
+- Abrir dashboard y verificar que carguen precios en 7 días, 30 días y Hoy
 - Verificar consola del navegador — no debe haber errores de CORS ni JS
 
 ---
 
-## Desarrollo Pendiente: Periodo "Hoy"
+## Problemas Conocidos (no repetir)
 
-Se intentó implementar un nuevo periodo "Hoy" en el dashboard. El trabajo está en la rama `dev` pero se revirtió `main` por inestabilidad. A continuación el estado y los problemas encontrados para no repetirlos.
-
-### Qué se construyó
-- `updateAgregados.js` — agregado `days=1` con `p.date >= CURRENT_DATE`
-- `server.js` — endpoints `/api/ranking-estados` y `/api/vecinos`
-- `index.html` — chip "Hoy", vista Nacional+Hoy (ranking 32 estados), vista Estado+Hoy (6 cards: posición nacional, variación vs ayer, distancia al promedio, rango interno, sparkline 7 días, vecinos)
-
-### Problemas encontrados (no repetir)
-
-#### 1. CORS
-La API de producción (`api.gasgas.com.mx`) necesita tener configurado CORS para aceptar requests desde `gasgas.com.mx`, `www.gasgas.com.mx` y `gasgas-api-dev.onrender.com`. Sin esto, el navegador bloquea todas las llamadas a la API.
-**Solución:** Agregar al `server.js` antes de cualquier route:
-```javascript
-const cors = require('cors');
-app.use(cors({
-  origin: [
-    'https://gasgas.com.mx',
-    'https://www.gasgas.com.mx',
-    'https://api.gasgas.com.mx',
-    'https://gasgas-api-dev.onrender.com',
-    'http://localhost:3000'
-  ]
-}));
-```
-Y correr `npm install cors` antes del deploy.
+#### 1. CORS — resuelto 14 Abril 2026
+Implementado con middleware nativo en `server.js`. Ver sección CORS arriba.
 
 #### 2. Tag cfasync de Cloudflare rompe el JS
-Cloudflare inyecta `<script data-cfasync="false" src="/cdn-cgi/...">` antes del `<script>` principal, lo que hace que todo el JavaScript del dashboard falle silenciosamente. `loadData` aparece como `undefined`.
+Cloudflare inyecta `<script data-cfasync="false" src="/cdn-cgi/...">` antes del `<script>` principal, lo que hace que todo el JavaScript del dashboard falle silenciosamente.
 **Solución:** El `index.html` que se sube a GoDaddy no debe tener ese tag. Verificar siempre con `grep "cfasync" index.html` antes de hacer deploy.
 
 #### 3. CDN de Chart.js
 `cdn.jsdelivr.net` da 404 en el entorno de Render dev.
-**Solución:** Usar siempre `cdnjs.cloudflare.com`:
-```html
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-```
+**Solución:** Usar siempre `cdnjs.cloudflare.com`.
 
 #### 4. Script cortado al copiar/pegar
-El `index.html` se cortaba al pegarlo en el chat o al copiarlo. Siempre verificar con:
+El `index.html` se cortaba al pegarlo en el chat. Siempre verificar con:
 ```bash
 tail -5 public/index.html
 ```
@@ -295,6 +367,18 @@ https://gasgas-api-dev.onrender.com/api/test
 #### 6. Dos frontends desincronizados
 `gasgas.com.mx` (GoDaddy) y `gasgas-api-dev.onrender.com` (Render) tienen archivos distintos. Probar en dev no garantiza que producción funcione igual si el HTML de GoDaddy no se actualizó.
 
+#### 7. Min/Max con valores irreales — resuelto 13 Abril 2026
+Los rangos originales (`BETWEEN 20 AND 35`) dejaban pasar outliers. Se ajustaron con análisis de percentiles. Ver sección "Rangos de Precios Válidos".
+
+#### 8. days=1 devuelve 0 estaciones por desfase UTC — resuelto 14 Abril 2026
+`CURRENT_DATE` en Render es UTC, ya es "mañana" respecto a México. Solución: usar `p.date::date = (SELECT MAX(date::date) FROM prices)` para siempre tomar el último día disponible en la BD.
+
+#### 9. Frontend no muestra rango interno del estado — PENDIENTE
+La API sí devuelve `min` y `max` correctamente. El bug está en el `index.html` de GoDaddy — el código buscaba `min_regular` pero la API devuelve `min`. Fix identificado, pendiente de aplicar y verificar con consola del navegador.
+
+#### 10. Min/Max muestran outliers en periodos 7d y 30d — resuelto 18 Abril 2026
+La tabla `precios_agregados` tenía datos corruptos de versiones anteriores sin filtros de rango. Solución en tres capas en `updateAgregados.js`: (1) `UPDATE` de limpieza al inicio de cada ejecución, (2) `CASE WHEN BETWEEN` en el cálculo SQL, (3) función `sanear()` que valida antes del INSERT.
+
 ---
 
 ## Issues Resueltos
@@ -308,5 +392,17 @@ https://gasgas-api-dev.onrender.com/api/test
 - ✅ express.static('public') configurado en server.js
 - ✅ Chips bloqueados GasGas Pro (Ciudad y C.P.) con modal
 - ✅ Banner de Contáctanos en el footer
-- ✅ updateAgregados.js calcula days=1 (en rama dev)
 - ✅ Tag v1.0-stable creado en commit 3e6ce6d
+- ✅ Rangos de precios corregidos con análisis de percentiles (13 Abril 2026)
+- ✅ Tag 13abril26 creado — versión presentable a clientes
+- ✅ dev sincronizado con main (13 Abril 2026)
+- ✅ days=1 implementado en updateAgregados.js con MAX(date::date)
+- ✅ CORS implementado en server.js (14 Abril 2026)
+- ✅ /api/ranking-estados implementado (14 Abril 2026)
+- ✅ /api/vecinos implementado con mapa de 32 estados (14 Abril 2026)
+- ✅ 7 días y 30 días funcionando correctamente en gasgas.com.mx
+- ✅ Fix min/max outliers en days=7 y days=30 — limpieza en cron updateAgregados.js (18 Abril 2026)
+- ✅ Chips GasGas Pro ampliados: E.S. y Personalizado agregados (18 Abril 2026)
+- ✅ Botón "Descargar Excel" Pro debajo de tarjetas de precios (18 Abril 2026)
+- ✅ Tag 18abril26 creado — versión estable
+- ⏳ Vista "Hoy" — rango interno del estado pendiente de resolver
