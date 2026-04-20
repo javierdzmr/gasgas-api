@@ -261,6 +261,10 @@ canvas { width:100% !important; }
     <div class="chip locked" onclick="showProModal('personalizado')"><span class="lock-icon">&#128274;</span> Personalizado</div>
   </div>
 
+  <div style="display:flex; justify-content:center; margin: 4px 0 8px;">
+    <div class="chip locked" onclick="showProModal('marca')" style="border-radius:999px;"><span class="lock-icon">&#128274;</span> Filtrar por marca</div>
+  </div>
+
   <div class="grid">
     <div class="card highlight-regular" id="card-regular">
       <div class="card-label">Regular</div>
@@ -770,6 +774,10 @@ const PRO_CONTENT = {
   es: {
     title: "Estación de Servicio",
     desc: "Consulta precios por estación de servicio específica — ideal para monitoreo competitivo y auditorías de precios."
+  },
+  marca: {
+    title: "Filtrar por Marca",
+    desc: "Filtra precios por marca comercial — PEMEX, Mobil, Valero, OXXOGas y más. Ideal para análisis competitivo por cadena."
   }
 };
 

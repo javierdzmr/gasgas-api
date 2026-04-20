@@ -1,5 +1,5 @@
 # CLAUDE.md — GasGas Analytics
-Checkpoint: Abril 2026 — v18abril26
+Checkpoint: Abril 2026 — v19abril26
 
 Este archivo provee contexto a Claude cuando trabaja en este repositorio.
 
@@ -185,6 +185,7 @@ Health check. Responde `{ status: 'ok' }`.
 ### Dimensiones
 - Mercado: Nacional / Estado / 🔒 Ciudad / 🔒 C.P. / 🔒 E.S.
 - Periodo: Hoy / 7 días / 30 días / 🔒 Personalizado
+- Marca: 🔒 Filtrar por marca (centrado debajo de chips de periodo)
 - Producto: Regular / Premium / Diesel
 
 ### Vista "Hoy" — Nacional
@@ -223,8 +224,10 @@ const maxVal = preciosHoy.max ? formatMoney(preciosHoy.max) : "—";
 - E.S. 🔒 — al hacer click abre modal "Estación de Servicio"
 - Personalizado 🔒 (en fila de periodos, a la derecha de "30 días") — abre modal "Periodo Personalizado"
 - Botón "Descargar Excel" 🔒 (debajo de tarjetas de precios, alineado a la derecha) — abre modal "Descargar Excel"
+- Botón "Filtrar por marca" 🔒 (centrado debajo de chips de periodo, mismo estilo chip locked) — abre modal "Filtrar por Marca"
 - Modal incluye badge "GasGas Pro" y botón mailto a hola@gasgas.com.mx
 - Todos los modales usan `showProModal(type)` con entradas en el objeto `PRO_CONTENT` en el JS
+- Tipos disponibles en PRO_CONTENT: `ciudad`, `cp`, `es`, `personalizado`, `excel`, `marca`
 
 ### Colores por producto
 - Regular: `#1a6b2f` (verde oscuro)
@@ -315,7 +318,7 @@ git push origin dev --force
 ### Tags de seguridad
 ```bash
 # Regresar a versión estable en caso de emergencia
-git reset --hard 18abril26
+git reset --hard 19abril26
 git push origin main --force
 ```
 
@@ -324,6 +327,7 @@ git push origin main --force
 | `v1.0-stable` | commit 3e6ce6d | Primera versión estable |
 | `13abril26` | 13 Abril 2026 | Rangos de precios corregidos, producto presentable a clientes |
 | `18abril26` | 18 Abril 2026 | Fix min/max corruptos en cron, chips Pro: E.S., Personalizado, Descargar Excel |
+| `19abril26` | 19 Abril 2026 | Chip Pro: Filtrar por marca centrado debajo de periodos |
 
 ### Checklist antes de pasar a producción
 - GET /api/test → `{ status: 'ok' }`
@@ -404,5 +408,6 @@ La tabla `precios_agregados` tenía datos corruptos de versiones anteriores sin 
 - ✅ Fix min/max outliers en days=7 y days=30 — limpieza en cron updateAgregados.js (18 Abril 2026)
 - ✅ Chips GasGas Pro ampliados: E.S. y Personalizado agregados (18 Abril 2026)
 - ✅ Botón "Descargar Excel" Pro debajo de tarjetas de precios (18 Abril 2026)
-- ✅ Tag 18abril26 creado — versión estable
+- ✅ Botón "Filtrar por marca" Pro centrado debajo de chips de periodo (19 Abril 2026)
+- ✅ Tag 19abril26 creado — versión estable
 - ⏳ Vista "Hoy" — rango interno del estado pendiente de resolver
