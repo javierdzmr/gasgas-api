@@ -24,6 +24,51 @@ async function updateAgregados() {
   try {
     console.log("⛽ Actualizando precios agregados...");
 
+    // ============================================================
+    // 🛡️ PROTECCIÓN: Crear tablas si no existen
+    // Evita que deploys de Strapi o reinicios rompan el sistema
+    // ============================================================
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS precios_agregados (
+        id             SERIAL PRIMARY KEY,
+        market_type    VARCHAR(50)    NOT NULL,
+        market_value   VARCHAR(100)   NOT NULL,
+        days           INTEGER        NOT NULL,
+        regular        NUMERIC(10,4),
+        premium        NUMERIC(10,4),
+        diesel         NUMERIC(10,4),
+        min_regular    NUMERIC(10,4),
+        max_regular    NUMERIC(10,4),
+        std_regular    NUMERIC(10,4),
+        min_premium    NUMERIC(10,4),
+        max_premium    NUMERIC(10,4),
+        std_premium    NUMERIC(10,4),
+        min_diesel     NUMERIC(10,4),
+        max_diesel     NUMERIC(10,4),
+        std_diesel     NUMERIC(10,4),
+        stations_count INTEGER,
+        updated_at     TIMESTAMP DEFAULT NOW(),
+        UNIQUE (market_type, market_value, days)
+      )
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS precios_historicos_agregados (
+        id           SERIAL PRIMARY KEY,
+        market_type  VARCHAR(50),
+        market_value VARCHAR(100),
+        date         DATE,
+        regular      NUMERIC(10,4),
+        premium      NUMERIC(10,4),
+        diesel       NUMERIC(10,4),
+        estado_slug  VARCHAR(100),
+        updated_at   TIMESTAMP DEFAULT NOW(),
+        UNIQUE (market_type, market_value, date)
+      )
+    `);
+
+    console.log("🛡️ Tablas verificadas/creadas");
+
     // Limpiar min/max corruptos antes de recalcular (outliers de versiones anteriores sin filtros)
     await client.query(`
       UPDATE precios_agregados SET
