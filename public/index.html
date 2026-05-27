@@ -664,10 +664,8 @@ async function renderEstadoHoy(preciosHoy, estado) {
   const distSign  = distancia > 0 ? "+" : "";
 
   // Rango interno del estado (de precios de hoy, days=1)
-  const minKey = `min_${currentProduct}`;
-  const maxKey = `max_${currentProduct}`;
-  const minVal = preciosHoy[minKey] ? formatMoney(preciosHoy[minKey]) : "—";
-  const maxVal = preciosHoy[maxKey] ? formatMoney(preciosHoy[maxKey]) : "—";
+  const minVal = preciosHoy.min ? formatMoney(preciosHoy.min) : "—";
+  const maxVal = preciosHoy.max ? formatMoney(preciosHoy.max) : "—";
 
   // Sparkline 7 días
   let sparkHtml = "";
@@ -769,11 +767,11 @@ const PRO_CONTENT = {
   },
   personalizado: {
     title: "Periodo Personalizado",
-    desc: "Define un rango de fechas a la medida — ideal para análisis comparativos y reportes específicos."
+    desc: "Define un rango de fechas a la medida — Tendencia de 8 años disponible."
   },
   es: {
     title: "Estación de Servicio",
-    desc: "Consulta precios por estación de servicio específica — ideal para monitoreo competitivo y auditorías de precios."
+    desc: "Consulta precios y analiticos por estación de servicio específica"
   },
   marca: {
     title: "Filtrar por Marca",

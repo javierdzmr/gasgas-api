@@ -1,5 +1,5 @@
 # CLAUDE.md — GasGas Analytics
-Checkpoint: Abril 2026 — v19abril26
+Checkpoint: Mayo 2026 — v03mayo26
 
 Este archivo provee contexto a Claude cuando trabaja en este repositorio.
 
@@ -8,7 +8,7 @@ Este archivo provee contexto a Claude cuando trabaja en este repositorio.
 ## Descripción del Proyecto
 
 GasGas Analytics recopila, almacena y analiza precios de gasolina en México.
-Modelo de negocio: venta de API de precios a clientes del sector gasolinero.
+Modelo de negocio: venta de acceso al dashboard (GasGas Pro) y en Fase 2 venta de API de precios.
 Sitio público: https://gasgas.com.mx
 
 ---
@@ -36,9 +36,9 @@ gasgas-api/
   public/
     index.html                  ← Frontend del dashboard
   scripts/
-    updateAgregados.js          ← Cron: calcula promedios + min/max/std
+    updateAgregados.js          ← Cron: CREATE TABLE IF NOT EXISTS + promedios + min/max/std
     updateHistoricos.js         ← Cron: stats históricos legacy
-    updateHistoricosDaily.js    ← Cron: inserta promedios diarios para gráficas
+    updateHistoricosDaily.js    ← Cron: CREATE TABLE IF NOT EXISTS + auto-rebuild + inserta día
   docs/
     GasGas_Documentacion_Tecnica.docx
 ```
@@ -76,6 +76,7 @@ Catálogo de ~14,000 gasolineras. Columnas clave: `id`, `estado`, `municipio`, `
 Motor principal. +9M registros, se actualiza varias veces al día.
 Columnas: `id`, `date`, `regular`, `premium`, `diesel`.
 **Importante:** El campo `date` es un timestamp. El servidor Render corre en UTC, que va 6-7 horas adelante de México. Usar siempre `p.date::date` para comparaciones de fecha.
+**Backdata disponible:** Mayo 2024 → presente (~2 años).
 
 ### prices_gas_station_links
 JOIN entre `prices` y `gas_stations`. Columnas: `id`, `price_id`, `gas_station_id`.
@@ -89,17 +90,22 @@ Columnas: `market_type`, `market_value`, `days`, `regular`, `premium`, `diesel`,
 Valores de `market_type`: `'nacional'` o `'estado'`.
 Valores de `market_value`: `'all'` para nacional, nombre del estado con capitalización normal (ej. `'Chiapas'`).
 **Periodos disponibles:** `days = 1` (hoy), `days = 7`, `days = 30`.
+**🛡️ Protección:** `updateAgregados.js` hace `CREATE TABLE IF NOT EXISTS` al inicio — si Strapi borra la tabla, el próximo cron la recrea automáticamente.
 
 ### precios_historicos_agregados
 Serie de tiempo diaria para las gráficas del dashboard.
 Columnas: `market_type`, `market_value`, `date`, `regular`, `premium`, `diesel`, `updated_at`, `estado_slug`.
 Índice único: `(market_type, market_value, date)`.
+**🛡️ Protección:** `updateHistoricosDaily.js` hace `CREATE TABLE IF NOT EXISTS` + si detecta menos de 10 registros, repobla automáticamente nacional + 32 estados con los últimos 30 días sin intervención manual.
+
+### Strapi y la DB
+Todas las tablas tienen owner `_304ba600355ba807` (único usuario de Render). Strapi comparte esta DB y en el pasado (3 Mayo 2026) borró `precios_agregados` y `precios_historicos_agregados` al hacer deploy/migraciones automáticas. La protección `CREATE TABLE IF NOT EXISTS` en los scripts resuelve esto sin intervención manual.
 
 ---
 
-## Rangos de Precios Válidos (updateAgregados.js)
+## Rangos de Precios Válidos
 
-Actualizados el 13 Abril 2026 basados en análisis de percentiles p05–p99 sobre 30 días de datos reales:
+Actualizados 13 Abril 2026. Objeto `RANGE` presente en **ambos** scripts (`updateAgregados.js` y `updateHistoricosDaily.js`):
 
 | Producto | Mínimo | Máximo |
 |---|---|---|
@@ -107,7 +113,7 @@ Actualizados el 13 Abril 2026 basados en análisis de percentiles p05–p99 sobr
 | Premium | 23 | 32 |
 | Diesel | 25 | 33 |
 
-Estos rangos están centralizados en el objeto `RANGE` al inicio de `updateAgregados.js`. Si los precios en México cambian significativamente, correr la query de diagnóstico de percentiles antes de ajustar:
+Query de diagnóstico para ajustar rangos si los precios en México cambian:
 
 ```sql
 SELECT
@@ -172,11 +178,13 @@ Health check. Responde `{ status: 'ok' }`.
 
 ## Cron Jobs (Render)
 
-| Nombre | Script | Schedule | Función |
-|---|---|---|---|
-| update-precios-agregados | updateAgregados.js | Cada 6h | Promedios + min/max/std para 1, 7 y 30 días |
-| update-precios-historico | updateHistoricos.js | Cada 4h | Stats históricos legacy |
-| update-historicos-daily | updateHistoricosDaily.js | 4x al día (8,14,20,2 UTC) | Inserta promedio diario en precios_historicos_agregados |
+| Nombre | Script | Schedule (UTC) | Hora México | Función |
+|---|---|---|---|---|
+| update-precios-historico | updateHistoricos.js | `50 11 * * *` | 5:50 AM | Stats históricos legacy — corre primero |
+| update-precios-agregados | updateAgregados.js | `0 12,20 * * *` | 6:00 AM y 2:00 PM | Crea tablas si no existen + recalcula promedios |
+| update-historicos-daily | updateHistoricosDaily.js | 4x al día (8,14,20,2 UTC) | — | Crea tabla + auto-rebuild si vacía + inserta día |
+
+**Lógica de orden:** `update-precios-historico` corre 10 minutos antes que `update-precios-agregados` para que aunque el legacy corrompa algo, el agregados lo limpia inmediatamente después.
 
 ---
 
@@ -200,14 +208,10 @@ Muestra 6 métricas:
 5. Sparkline tendencia 7 días
 6. Estados vecinos hoy (de `/api/vecinos`)
 
-### ⚠️ BUG PENDIENTE — Rango interno del estado no muestra datos
-**Estado al 14 Abril 2026:** La API sí devuelve `min` y `max` correctamente (verificado: `https://api.gasgas.com.mx/api/precios?market=estado&value=Chiapas&days=1&product=regular` retorna `min: 21.75`, `max: 25.74`). El problema está en el `index.html` de GoDaddy.
+### CRÍTICO — uso correcto de min/max en el frontend
 
-**Fix identificado:** En `renderEstadoHoy`, cambiar:
 ```javascript
-// MAL — la API no devuelve min_regular, devuelve min
-const minKey = `min_${currentProduct}`;
-const maxKey = `max_${currentProduct}`;
+// MAL — la API NO devuelve estas claves
 const minVal = preciosHoy[minKey] ? formatMoney(preciosHoy[minKey]) : "—";
 const maxVal = preciosHoy[maxKey] ? formatMoney(preciosHoy[maxKey]) : "—";
 
@@ -215,8 +219,6 @@ const maxVal = preciosHoy[maxKey] ? formatMoney(preciosHoy[maxKey]) : "—";
 const minVal = preciosHoy.min ? formatMoney(preciosHoy.min) : "—";
 const maxVal = preciosHoy.max ? formatMoney(preciosHoy.max) : "—";
 ```
-
-**Próximo paso al retomar:** Abrir consola del navegador en gasgas.com.mx con Estado+Hoy seleccionado y revisar errores JS. El último `index.html` subido a GoDaddy no cargó nada — posiblemente Cloudflare volvió a inyectar cfasync o el archivo se subió incompleto.
 
 ### Chips GasGas Pro (bloqueados)
 - Ciudad 🔒 — al hacer click abre modal "Nivel Ciudad"
@@ -260,18 +262,16 @@ El proyecto tiene DOS lugares donde vive el `index.html`:
 1. **GoDaddy cPanel** → sirve `gasgas.com.mx` (lo que ven los usuarios)
 2. **Render `public/`** → sirve `gasgas-api-dev.onrender.com` (entorno de dev)
 
-Ambos archivos deben mantenerse sincronizados manualmente. Al hacer cambios al frontend, hay que:
-1. Hacer commit a `dev` y probar en `gasgas-api-dev.onrender.com`
-2. Hacer merge a `main`
+Al hacer cambios al frontend:
+1. Commit a `dev` y probar en `gasgas-api-dev.onrender.com`
+2. Merge a `main`
 3. Subir manualmente el `index.html` al cPanel de GoDaddy
 
-**Problema pendiente:** Unificar a un solo frontend servido desde Render, apuntando el DNS de `gasgas.com.mx` a Render y abandonando GoDaddy para el frontend.
+**Problema pendiente:** Unificar a un solo frontend servido desde Render.
 
 ---
 
 ## CORS — Configuración actual en server.js
-
-Implementado con middleware nativo de Express (sin paquete `cors`):
 
 ```javascript
 const ALLOWED_ORIGINS = [
@@ -308,7 +308,7 @@ app.use((req, res, next) => {
 4. Probar en gasgas-api-dev.onrender.com
 5. Si todo bien: `git checkout main && git merge dev && git push origin main`
 
-### Sincronizar dev con main (antes de empezar nuevos cambios)
+### Sincronizar dev con main
 ```bash
 git checkout dev
 git reset --hard main
@@ -316,18 +316,14 @@ git push origin dev --force
 ```
 
 ### Tags de seguridad
-```bash
-# Regresar a versión estable en caso de emergencia
-git reset --hard 19abril26
-git push origin main --force
-```
 
 | Tag | Fecha | Descripción |
 |---|---|---|
 | `v1.0-stable` | commit 3e6ce6d | Primera versión estable |
-| `13abril26` | 13 Abril 2026 | Rangos de precios corregidos, producto presentable a clientes |
-| `18abril26` | 18 Abril 2026 | Fix min/max corruptos en cron, chips Pro: E.S., Personalizado, Descargar Excel |
-| `19abril26` | 19 Abril 2026 | Chip Pro: Filtrar por marca centrado debajo de periodos |
+| `13abril26` | 13 Abril 2026 | Rangos de precios corregidos |
+| `18abril26` | 18 Abril 2026 | Fix min/max corruptos en cron |
+| `19abril26` | 19 Abril 2026 | Chip Pro: Filtrar por marca |
+| `03mayo26` | 3 Mayo 2026 | Protección CREATE TABLE IF NOT EXISTS + auto-rebuild históricos |
 
 ### Checklist antes de pasar a producción
 - GET /api/test → `{ status: 'ok' }`
@@ -342,46 +338,120 @@ git push origin main --force
 
 ---
 
+## GasGas Pro — Cotizador (EN DESARROLLO)
+
+### Estado actual: Preview funcional completado — 21 Abril 2026
+Se construyó un cotizador interactivo en HTML/CSS/JS (`gasgas-cotizador.html`) con precio en tiempo real.
+
+### Modelo comercial definido
+
+**Plan base: $500 MXN/mes**
+Incluye: Nacional + nivel Estado + 3 productos + datos desde contratación + sin apertura por marca
+
+**Add-on: Granularidad**
+| Nivel | Precio adicional |
+|---|---|
+| Estado | Incluido en base |
+| Ciudad | +$1,500 |
+| C.P. | +$5,000 |
+| ES (Estación de Servicio) | +$19,500 |
+
+**Multiplicador geográfico** (aplica solo si granularidad > Estado)
+| Cobertura | Multiplicador |
+|---|---|
+| 1 Área | 1x |
+| 2–3 Áreas | 1.3x |
+| 4–5 Áreas o Nacional | 1.5x |
+
+**Add-on: Historial / Backdata**
+| Periodo | Precio adicional |
+|---|---|
+| Desde contratación | Incluido |
+| 6 meses | +$500 |
+| 1 año | +$1,500 |
+| 2 años (todo disponible desde mayo 2024) | +$3,500 |
+
+**Add-on: Apertura por marca**
+| Opción | Precio adicional |
+|---|---|
+| Sin apertura | Incluido |
+| Con apertura por marca | +$2,000 |
+| Nivel ES | Forzado, incluido sin costo adicional |
+
+**Fórmula:**
+```
+Precio = (Base $500 + Granularidad) × Multiplicador geográfico + Historial + Marca
+```
+
+**Todos los precios son + IVA (16%). Se factura en MXN.**
+
+### Áreas geográficas definidas
+| Área | Estados |
+|---|---|
+| Norte | BC, BCS, Sonora, Chihuahua, Coahuila, NL, Tamaulipas, Sinaloa |
+| Pacífico | Nayarit, Jalisco, Colima, Michoacán, Guerrero, Oaxaca, Chiapas |
+| Occidente | Durango, Zacatecas, Aguascalientes, SLP, Guanajuato, Querétaro |
+| Centro | CDMX, Edomex, Hidalgo, Tlaxcala, Morelos, Puebla, Veracruz |
+| Sureste | Tabasco, Campeche, Yucatán, Quintana Roo |
+
+Si el cliente selecciona las 5 áreas = equivale a Nacional.
+
+### Reglas de negocio importantes
+- El cliente puede combinar múltiples áreas
+- Elegir un nivel de granularidad incluye los niveles superiores
+- Apertura por marca es **obligatoria y forzada** cuando se selecciona nivel ES
+- Los 3 productos siempre están incluidos — no es variable de precio
+- Fase 1: Solo dashboard. API es Fase 2.
+- Pagos: tarjeta, Apple Pay, PayPal — procesador pendiente
+- Facturación en MXN + IVA. RFC y razón social disponibles.
+- Autenticación: JWT directo en server.js (NO usar Strapi para esto)
+
+### Próximos pasos del cotizador
+1. Integración de procesador de pagos (Stripe u otro)
+2. Pantalla de login/cuenta del cliente
+3. Definir qué ve cada cliente según su plan
+4. Implementar autenticación JWT en server.js
+5. Generación automática de facturas
+
+---
+
 ## Problemas Conocidos (no repetir)
 
 #### 1. CORS — resuelto 14 Abril 2026
-Implementado con middleware nativo en `server.js`. Ver sección CORS arriba.
+Middleware nativo en `server.js`. Ver sección CORS.
 
 #### 2. Tag cfasync de Cloudflare rompe el JS
-Cloudflare inyecta `<script data-cfasync="false" src="/cdn-cgi/...">` antes del `<script>` principal, lo que hace que todo el JavaScript del dashboard falle silenciosamente.
-**Solución:** El `index.html` que se sube a GoDaddy no debe tener ese tag. Verificar siempre con `grep "cfasync" index.html` antes de hacer deploy.
+Cloudflare inyecta `<script data-cfasync="false">` y rompe el JS. Verificar con `grep "cfasync" index.html` antes de deploy a GoDaddy.
 
 #### 3. CDN de Chart.js
-`cdn.jsdelivr.net` da 404 en el entorno de Render dev.
-**Solución:** Usar siempre `cdnjs.cloudflare.com`.
+Usar siempre `cdnjs.cloudflare.com`, nunca `cdn.jsdelivr.net`.
 
 #### 4. Script cortado al copiar/pegar
-El `index.html` se cortaba al pegarlo en el chat. Siempre verificar con:
-```bash
-tail -5 public/index.html
-```
-Debe terminar con `</script></body></html>`.
+Verificar con `tail -5 public/index.html` — debe terminar con `</script></body></html>`.
 
 #### 5. Render plan Free se duerme
-El servicio `gasgas-api-dev` es plan Free y se duerme con inactividad. Antes de probar el dashboard en dev, siempre despertar la API primero:
-```
-https://gasgas-api-dev.onrender.com/api/test
-```
+Despertar con `https://gasgas-api-dev.onrender.com/api/test` antes de probar.
 
 #### 6. Dos frontends desincronizados
-`gasgas.com.mx` (GoDaddy) y `gasgas-api-dev.onrender.com` (Render) tienen archivos distintos. Probar en dev no garantiza que producción funcione igual si el HTML de GoDaddy no se actualizó.
+GoDaddy y Render tienen archivos distintos. Probar en dev no garantiza que producción funcione.
 
 #### 7. Min/Max con valores irreales — resuelto 13 Abril 2026
-Los rangos originales (`BETWEEN 20 AND 35`) dejaban pasar outliers. Se ajustaron con análisis de percentiles. Ver sección "Rangos de Precios Válidos".
+Rangos ajustados con percentiles. Ver sección Rangos de Precios Válidos.
 
 #### 8. days=1 devuelve 0 estaciones por desfase UTC — resuelto 14 Abril 2026
-`CURRENT_DATE` en Render es UTC, ya es "mañana" respecto a México. Solución: usar `p.date::date = (SELECT MAX(date::date) FROM prices)` para siempre tomar el último día disponible en la BD.
+Usar `p.date::date = (SELECT MAX(date::date) FROM prices)`.
 
-#### 9. Frontend no muestra rango interno del estado — PENDIENTE
-La API sí devuelve `min` y `max` correctamente. El bug está en el `index.html` de GoDaddy — el código buscaba `min_regular` pero la API devuelve `min`. Fix identificado, pendiente de aplicar y verificar con consola del navegador.
+#### 9. Frontend no muestra rango interno del estado — resuelto 22 Abril 2026
+Usar `preciosHoy.min` / `preciosHoy.max`, no `preciosHoy[minKey]`.
 
-#### 10. Min/Max muestran outliers en periodos 7d y 30d — resuelto 18 Abril 2026
-La tabla `precios_agregados` tenía datos corruptos de versiones anteriores sin filtros de rango. Solución en tres capas en `updateAgregados.js`: (1) `UPDATE` de limpieza al inicio de cada ejecución, (2) `CASE WHEN BETWEEN` en el cálculo SQL, (3) función `sanear()` que valida antes del INSERT.
+#### 10. Min/Max outliers en 7d y 30d — resuelto 18 Abril 2026
+Triple protección en `updateAgregados.js`: UPDATE limpieza + CASE WHEN BETWEEN + función `sanear()`.
+
+#### 11. Min/Max se corrompían periódicamente — resuelto 21 Abril 2026
+`updateHistoricos.js` reducido a 1 vez/día (5:50 AM). `updateAgregados.js` limpia 10 min después.
+
+#### 12. Tablas borradas por Strapi — resuelto 3 Mayo 2026
+Strapi borró `precios_agregados` y `precios_historicos_agregados` al hacer deploy. Solución: `CREATE TABLE IF NOT EXISTS` en ambos scripts + auto-rebuild en `updateHistoricosDaily.js` si tabla vacía. También se corrigieron rangos incorrectos (`BETWEEN 20 AND 30/35`) en `updateHistoricosDaily.js`.
 
 ---
 
@@ -394,20 +464,21 @@ La tabla `precios_agregados` tenía datos corruptos de versiones anteriores sin 
 - ✅ Bypass caché para /api/* en Cloudflare
 - ✅ public/index.html creado con dashboard completo
 - ✅ express.static('public') configurado en server.js
-- ✅ Chips bloqueados GasGas Pro (Ciudad y C.P.) con modal
+- ✅ Chips bloqueados GasGas Pro con modales
 - ✅ Banner de Contáctanos en el footer
-- ✅ Tag v1.0-stable creado en commit 3e6ce6d
 - ✅ Rangos de precios corregidos con análisis de percentiles (13 Abril 2026)
-- ✅ Tag 13abril26 creado — versión presentable a clientes
-- ✅ dev sincronizado con main (13 Abril 2026)
-- ✅ days=1 implementado en updateAgregados.js con MAX(date::date)
-- ✅ CORS implementado en server.js (14 Abril 2026)
+- ✅ days=1 con MAX(date::date) (14 Abril 2026)
+- ✅ CORS implementado (14 Abril 2026)
 - ✅ /api/ranking-estados implementado (14 Abril 2026)
-- ✅ /api/vecinos implementado con mapa de 32 estados (14 Abril 2026)
-- ✅ 7 días y 30 días funcionando correctamente en gasgas.com.mx
-- ✅ Fix min/max outliers en days=7 y days=30 — limpieza en cron updateAgregados.js (18 Abril 2026)
-- ✅ Chips GasGas Pro ampliados: E.S. y Personalizado agregados (18 Abril 2026)
-- ✅ Botón "Descargar Excel" Pro debajo de tarjetas de precios (18 Abril 2026)
-- ✅ Botón "Filtrar por marca" Pro centrado debajo de chips de periodo (19 Abril 2026)
-- ✅ Tag 19abril26 creado — versión estable
-- ⏳ Vista "Hoy" — rango interno del estado pendiente de resolver
+- ✅ /api/vecinos implementado (14 Abril 2026)
+- ✅ Fix min/max outliers en days=7 y days=30 (18 Abril 2026)
+- ✅ Chips Pro: E.S., Personalizado, Descargar Excel (18 Abril 2026)
+- ✅ Chip Pro: Filtrar por marca (19 Abril 2026)
+- ✅ Tag 19abril26 — versión estable
+- ✅ Cron jobs reconfigurados (21 Abril 2026)
+- ✅ Modelo comercial GasGas Pro + cotizador preview (21 Abril 2026)
+- ✅ Rango interno del estado corregido en frontend (22 Abril 2026)
+- ✅ CREATE TABLE IF NOT EXISTS en updateAgregados.js (3 Mayo 2026)
+- ✅ Auto-rebuild históricos + rangos corregidos en updateHistoricosDaily.js (3 Mayo 2026)
+- ✅ Tag 03mayo26 — versión con protección de tablas
+- ⏳ GasGas Pro — flujo de pago, login de clientes y backend pendiente
