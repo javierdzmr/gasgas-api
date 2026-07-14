@@ -27,11 +27,67 @@ app.use((req, res, next) => {
   next();
 });
 
+// 📄 Servir el dashboard desde public/ (gasgas-api-dev.onrender.com)
+app.use(express.static('public'));
+
 // 🗄️ conexión a la base de datos
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
+
+// ==============================
+// 🛡️ INIT: Crear tablas si no existen al arrancar
+// Protege contra borrados de Strapi en deploys
+// ==============================
+async function initTables() {
+  const client = await pool.connect();
+  try {
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS precios_agregados (
+        id             SERIAL PRIMARY KEY,
+        market_type    VARCHAR(50)    NOT NULL,
+        market_value   VARCHAR(100)   NOT NULL,
+        days           INTEGER        NOT NULL,
+        regular        NUMERIC(10,4),
+        premium        NUMERIC(10,4),
+        diesel         NUMERIC(10,4),
+        min_regular    NUMERIC(10,4),
+        max_regular    NUMERIC(10,4),
+        std_regular    NUMERIC(10,4),
+        min_premium    NUMERIC(10,4),
+        max_premium    NUMERIC(10,4),
+        std_premium    NUMERIC(10,4),
+        min_diesel     NUMERIC(10,4),
+        max_diesel     NUMERIC(10,4),
+        std_diesel     NUMERIC(10,4),
+        stations_count INTEGER,
+        updated_at     TIMESTAMP DEFAULT NOW(),
+        UNIQUE (market_type, market_value, days)
+      )
+    `);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS precios_historicos_agregados (
+        id           SERIAL PRIMARY KEY,
+        market_type  VARCHAR(50),
+        market_value VARCHAR(100),
+        date         DATE,
+        regular      NUMERIC(10,4),
+        premium      NUMERIC(10,4),
+        diesel       NUMERIC(10,4),
+        estado_slug  VARCHAR(100),
+        updated_at   TIMESTAMP DEFAULT NOW(),
+        UNIQUE (market_type, market_value, date)
+      )
+    `);
+    console.log("🛡️ Tablas verificadas al arrancar");
+  } catch (err) {
+    console.error("❌ Error en initTables:", err);
+  } finally {
+    client.release();
+  }
+}
+initTables();
 
 // ==============================
 // 🔹 PRECIOS
@@ -40,9 +96,11 @@ app.get("/api/precios", async (req, res) => {
   try {
     const { market, value, days, product } = req.query;
 
-    const minCol = `min_${product}`;
-    const maxCol = `max_${product}`;
-    const stdCol = `std_${product}`;
+    // 🛡️ Whitelist: evita SQL injection vía nombre de columna
+    const prod = ['regular', 'premium', 'diesel'].includes(product) ? product : 'regular';
+    const minCol = `min_${prod}`;
+    const maxCol = `max_${prod}`;
+    const stdCol = `std_${prod}`;
 
     let query = `
       SELECT 
@@ -104,7 +162,9 @@ app.get("/api/historico", async (req, res) => {
       query += ` AND market_value = 'all'`;
     }
 
-    query += ` AND date >= NOW() - INTERVAL '${days} days' ORDER BY date`;
+    // 🛡️ Whitelist: solo periodos válidos, evita SQL injection
+    const daysInt = [7, 30].includes(parseInt(days, 10)) ? parseInt(days, 10) : 30;
+    query += ` AND date >= NOW() - INTERVAL '${daysInt} days' ORDER BY date`;
 
     const result = await pool.query(query, params);
     res.json(result.rows);

@@ -1,5 +1,5 @@
 # CLAUDE.md — GasGas Analytics
-Checkpoint: Mayo 2026 — v03mayo26
+Checkpoint: Mayo 2026 — v27mayo26
 
 Este archivo provee contexto a Claude cuando trabaja en este repositorio.
 
@@ -324,6 +324,7 @@ git push origin dev --force
 | `18abril26` | 18 Abril 2026 | Fix min/max corruptos en cron |
 | `19abril26` | 19 Abril 2026 | Chip Pro: Filtrar por marca |
 | `03mayo26` | 3 Mayo 2026 | Protección CREATE TABLE IF NOT EXISTS + auto-rebuild históricos |
+| `27mayo26` | 27 Mayo 2026 | initTables() en server.js al arrancar + fix NaN en frontend |
 
 ### Checklist antes de pasar a producción
 - GET /api/test → `{ status: 'ok' }`
@@ -450,8 +451,14 @@ Triple protección en `updateAgregados.js`: UPDATE limpieza + CASE WHEN BETWEEN 
 #### 11. Min/Max se corrompían periódicamente — resuelto 21 Abril 2026
 `updateHistoricos.js` reducido a 1 vez/día (5:50 AM). `updateAgregados.js` limpia 10 min después.
 
-#### 12. Tablas borradas por Strapi — resuelto 3 Mayo 2026
+#### 12. Tablas borradas por Strapi — resuelto 3 Mayo 2026 + reforzado 27 Mayo 2026
 Strapi borró `precios_agregados` y `precios_historicos_agregados` al hacer deploy. Solución: `CREATE TABLE IF NOT EXISTS` en ambos scripts + auto-rebuild en `updateHistoricosDaily.js` si tabla vacía. También se corrigieron rangos incorrectos (`BETWEEN 20 AND 30/35`) en `updateHistoricosDaily.js`.
+
+#### 13. Frontend mostraba $NaN cuando API devuelve {} — resuelto 27 Mayo 2026
+`formatMoney(undefined)` producía `$NaN`. Fix: guard en `formatMoney` con `isNaN()` y check de objeto vacío en `loadData()`. Muestra "—" o "Sin datos" en lugar de crashear.
+
+#### 14. Crons sin correr 23 días + tablas inexistentes al arranque — resuelto 27 Mayo 2026
+Los cron jobs de Render se suspendieron 23 días. Al volver a correr, `updateHistoricos.js` (legacy) corría primero e intentaba UPDATE sobre tabla inexistente. Fix: `initTables()` en `server.js` al arrancar — las tablas se recrean en cada deploy sin esperar al cron.
 
 ---
 
@@ -481,4 +488,7 @@ Strapi borró `precios_agregados` y `precios_historicos_agregados` al hacer depl
 - ✅ CREATE TABLE IF NOT EXISTS en updateAgregados.js (3 Mayo 2026)
 - ✅ Auto-rebuild históricos + rangos corregidos en updateHistoricosDaily.js (3 Mayo 2026)
 - ✅ Tag 03mayo26 — versión con protección de tablas
+- ✅ initTables() en server.js — protección al arrancar (27 Mayo 2026)
+- ✅ Fix NaN en frontend cuando API devuelve {} (27 Mayo 2026)
+- ✅ Tag 27mayo26 — protección máxima contra borrado de tablas por Strapi
 - ⏳ GasGas Pro — flujo de pago, login de clientes y backend pendiente

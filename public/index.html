@@ -387,7 +387,10 @@ function isPortraitMobile(){
   return window.innerWidth < 600 && window.innerHeight > window.innerWidth;
 }
 
-function formatMoney(n){ return "$" + Number(n).toFixed(2); }
+function formatMoney(n){
+  const v = Number(n);
+  return isNaN(v) ? "—" : "$" + v.toFixed(2);
+}
 
 function formatDate(d){
   if(!d) return "—";
@@ -473,9 +476,10 @@ async function loadData(){
       `${API}/api/precios?market=${currentMarket}&value=${encodeURIComponent(value)}&days=${days}&product=${currentProduct}`
     ).then(r => r.json());
 
-    document.getElementById("regular").innerText = formatMoney(precios.regular);
-    document.getElementById("premium").innerText = formatMoney(precios.premium);
-    document.getElementById("diesel").innerText  = formatMoney(precios.diesel);
+    const noData = !precios || (!precios.regular && !precios.premium && !precios.diesel);
+    document.getElementById("regular").innerText = noData ? "Sin datos" : formatMoney(precios.regular);
+    document.getElementById("premium").innerText = noData ? "Sin datos" : formatMoney(precios.premium);
+    document.getElementById("diesel").innerText  = noData ? "Sin datos" : formatMoney(precios.diesel);
 
     if(!esHoy) {
       updateFooter(precios);
