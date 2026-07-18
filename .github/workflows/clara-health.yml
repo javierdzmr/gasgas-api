@@ -1,0 +1,21 @@
+name: Clara API health check
+
+on:
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Correr monitor de Clara
+        env:
+          CLARA_API_KEY: ${{ secrets.CLARA_API_KEY }}
+        run: node scripts/clara-monitor.js
