@@ -264,6 +264,70 @@ async function updateAgregados() {
       }
 
       console.log(`✅ ${estados.rows.length} estados actualizados para ${days} días`);
+
+      // =========================
+      // 🏙️ MUNICIPIOS (set-based: ~3,000 mercados por periodo)
+      // market_value = 'Estado|Municipio' — los nombres de municipio se
+      // repiten entre estados (ej. Juárez), la llave compuesta los distingue.
+      // Los CASE de rango ya filtran outliers, no se requiere sanear().
+      // =========================
+      const municipios = await client.query(`
+        INSERT INTO precios_agregados (
+          market_type, market_value, days,
+          regular, premium, diesel, updated_at,
+          min_regular, max_regular, std_regular,
+          min_premium, max_premium, std_premium,
+          min_diesel,  max_diesel,  std_diesel,
+          stations_count
+        )
+        SELECT
+          'municipio',
+          gs.estado || '|' || gs.municipio,
+          ${days},
+          AVG(CASE WHEN p.regular BETWEEN ${RANGE.regular.min} AND ${RANGE.regular.max} THEN p.regular END),
+          AVG(CASE WHEN p.premium BETWEEN ${RANGE.premium.min} AND ${RANGE.premium.max} THEN p.premium END),
+          AVG(CASE WHEN p.diesel  BETWEEN ${RANGE.diesel.min}  AND ${RANGE.diesel.max}  THEN p.diesel  END),
+          NOW(),
+          MIN(CASE WHEN p.regular BETWEEN ${RANGE.regular.min} AND ${RANGE.regular.max} THEN p.regular END),
+          MAX(CASE WHEN p.regular BETWEEN ${RANGE.regular.min} AND ${RANGE.regular.max} THEN p.regular END),
+          STDDEV(CASE WHEN p.regular BETWEEN ${RANGE.regular.min} AND ${RANGE.regular.max} THEN p.regular END),
+          MIN(CASE WHEN p.premium BETWEEN ${RANGE.premium.min} AND ${RANGE.premium.max} THEN p.premium END),
+          MAX(CASE WHEN p.premium BETWEEN ${RANGE.premium.min} AND ${RANGE.premium.max} THEN p.premium END),
+          STDDEV(CASE WHEN p.premium BETWEEN ${RANGE.premium.min} AND ${RANGE.premium.max} THEN p.premium END),
+          MIN(CASE WHEN p.diesel BETWEEN ${RANGE.diesel.min} AND ${RANGE.diesel.max} THEN p.diesel END),
+          MAX(CASE WHEN p.diesel BETWEEN ${RANGE.diesel.min} AND ${RANGE.diesel.max} THEN p.diesel END),
+          STDDEV(CASE WHEN p.diesel BETWEEN ${RANGE.diesel.min} AND ${RANGE.diesel.max} THEN p.diesel END),
+          COUNT(DISTINCT CASE
+            WHEN (p.regular BETWEEN ${RANGE.regular.min} AND ${RANGE.regular.max})
+              OR (p.premium BETWEEN ${RANGE.premium.min} AND ${RANGE.premium.max})
+              OR (p.diesel  BETWEEN ${RANGE.diesel.min}  AND ${RANGE.diesel.max})
+            THEN l.gas_station_id
+          END)
+        FROM prices p
+        JOIN prices_gas_station_links l ON l.price_id = p.id
+        JOIN gas_stations gs ON gs.id = l.gas_station_id
+        WHERE ${dateFilter}
+          AND gs.municipio IS NOT NULL AND gs.municipio <> ''
+        GROUP BY gs.estado, gs.municipio
+        ON CONFLICT (market_type, market_value, days)
+        DO UPDATE SET
+          regular        = EXCLUDED.regular,
+          premium        = EXCLUDED.premium,
+          diesel         = EXCLUDED.diesel,
+          updated_at     = NOW(),
+          min_regular    = EXCLUDED.min_regular,
+          max_regular    = EXCLUDED.max_regular,
+          std_regular    = EXCLUDED.std_regular,
+          min_premium    = EXCLUDED.min_premium,
+          max_premium    = EXCLUDED.max_premium,
+          std_premium    = EXCLUDED.std_premium,
+          min_diesel     = EXCLUDED.min_diesel,
+          max_diesel     = EXCLUDED.max_diesel,
+          std_diesel     = EXCLUDED.std_diesel,
+          stations_count = EXCLUDED.stations_count;
+      `);
+
+      console.log(`✅ ${municipios.rowCount} municipios actualizados para ${days} días`);
     }
 
     console.log("🚀 Precios agregados completados sin NULLs");
