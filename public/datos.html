@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>GasGas · Datos y API de precios de combustible en México</title>
+<meta name="description" content="La API de precios de gasolina de México: 14,194 estaciones, datos oficiales CNE, histórico desde 2024, por estado, municipio, código postal y estación.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="%230E2A47"/><rect x="8" y="20" width="48" height="24" rx="12" fill="%2300A94F"/><text x="32" y="37" text-anchor="middle" font-family="Figtree,Arial,sans-serif" font-size="17" font-weight="800" letter-spacing="-.5" fill="white">GG</text></svg>'>
+<style>
+/* GasGas Design System v1.1-draft — página /datos (audiencia B2B) */
+:root{
+  --verde-50:#E8F7EE;--verde-500:#00A94F;--verde-600:#007A39;--verde-700:#005C2B;
+  --azul-50:#EEF3F8;--azul-800:#163A5E;--azul-900:#0E2A47;
+  --gris-0:#FFF;--gris-50:#F7F9FB;--gris-100:#EDF1F5;--gris-200:#DCE3EB;--gris-300:#C3CDD8;
+  --gris-500:#7B8A9A;--gris-600:#5B6B7C;--gris-900:#111C28;
+  --alerta:#B45309;--alerta-bg:#FEF3E2;
+  --ui:'Figtree',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;
+  --r-sm:6px;--r-md:10px;--r-lg:14px;--r-full:999px;
+  --sombra-sm:0 1px 2px rgba(14,42,71,.06);--sombra-md:0 2px 8px rgba(14,42,71,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--ui);font-size:15px;line-height:22px;color:var(--gris-900);background:var(--gris-50);-webkit-font-smoothing:antialiased}
+.tabular{font-variant-numeric:tabular-nums}
+:focus-visible{outline:2px solid var(--verde-600);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:960px;margin:0 auto;padding:0 20px}
+
+/* Nav + hero */
+.marca{background:var(--azul-900);color:#fff}
+.nav{display:flex;align-items:center;justify-content:space-between;height:60px}
+.lockup{display:flex;align-items:center;gap:8px}
+.logo-pill{background:#fff;color:var(--azul-900);font-weight:800;font-size:13px;line-height:18px;letter-spacing:-.04em;border-radius:var(--r-full);padding:3px 9px}
+.wordmark{font-weight:800;font-size:20px;letter-spacing:-.02em}
+.wordmark small{font-weight:600;font-size:14px;color:var(--gris-300)}
+.nav a.volver{font-size:13px;font-weight:600;color:var(--gris-300)}
+.hero{padding:48px 0 56px}
+.overline{font-size:11px;line-height:14px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--verde-500)}
+.hero h1{font-size:clamp(30px,5vw,44px);line-height:1.12;font-weight:800;letter-spacing:-.02em;margin:12px 0 14px;max-width:17ch}
+.hero p.sub{font-size:17px;line-height:26px;color:var(--gris-300);max-width:52ch}
+.hero .ctas{display:flex;gap:12px;margin-top:24px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 22px;border-radius:var(--r-md);border:none;font-family:var(--ui);font-size:14px;font-weight:600;cursor:pointer;transition:background .12s}
+.btn--primario{background:var(--verde-600);color:#fff}
+.btn--primario:hover{background:var(--verde-700)}
+.btn--inverso{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.35)}
+
+/* Stats de cobertura */
+.stats{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--gris-200);border-radius:var(--r-lg);overflow:hidden;margin:-28px auto 0;box-shadow:var(--sombra-md);position:relative}
+.stat{background:var(--gris-0);padding:18px 10px;text-align:center}
+.stat b{display:block;font-size:20px;font-weight:800;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.stat span{display:block;font-size:11px;line-height:15px;color:var(--gris-600);margin-top:4px}
+@media (max-width:760px){.stats{grid-template-columns:repeat(3,1fr)}}
+
+.seccion{padding:56px 0 0}
+.seccion h2{font-size:28px;line-height:36px;font-weight:700;letter-spacing:-.01em;margin:8px 0 6px}
+.seccion .intro{color:var(--gris-600);max-width:60ch;margin-bottom:24px}
+
+/* Niveles */
+.niveles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media (max-width:860px){.niveles{grid-template-columns:repeat(2,1fr)}}
+.nivel{background:var(--gris-0);border:1px solid var(--gris-200);border-radius:var(--r-lg);padding:18px 16px;box-shadow:var(--sombra-sm)}
+.nivel .n{font-size:16px;font-weight:700}
+.nivel .m{font-family:var(--mono);font-size:12px;color:var(--gris-500);margin-top:2px}
+.nivel p{font-size:13px;line-height:19px;color:var(--gris-600);margin-top:8px}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:var(--r-sm);font-size:11px;line-height:16px;font-weight:600;margin-top:10px}
+.badge--prod{background:var(--verde-50);color:var(--verde-700)}
+.badge--nuevo{background:var(--azul-50);color:var(--azul-900)}
+.badge--premium{background:var(--alerta-bg);color:var(--alerta)}
+
+/* Playground */
+.playground{background:var(--gris-0);border:1px solid var(--gris-200);border-radius:var(--r-lg);box-shadow:var(--sombra-md);overflow:hidden;margin-top:8px}
+.pg-controles{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:16px}
+.pg-controles select{height:36px;padding:0 12px;border-radius:var(--r-full);border:1px solid var(--gris-300);background:var(--gris-0);font-family:var(--ui);font-size:13px;font-weight:600;color:var(--gris-900);cursor:pointer}
+.pg-controles select[hidden]{display:none}
+.pg-controles .btn{height:36px;padding:0 18px;font-size:13px;margin-left:auto}
+.pg-request{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--gris-100);border-top:1px solid var(--gris-200);font-family:var(--mono);font-size:12px;color:var(--gris-600);overflow-x:auto;white-space:nowrap}
+.pg-request .metodo{color:var(--verde-700);font-weight:700}
+.pg-out{background:var(--azul-900);padding:16px;min-height:280px;position:relative}
+.pg-meta{display:flex;gap:14px;font-family:var(--mono);font-size:11.5px;color:var(--gris-300);margin-bottom:10px}
+.pg-meta .ok{color:var(--verde-500);font-weight:700}
+.pg-meta .err{color:#F87171;font-weight:700}
+pre.json{font-family:var(--mono);font-size:12.5px;line-height:19px;color:#D9E2EC;overflow-x:auto;white-space:pre}
+pre.json .k{color:#7DD3FC}
+pre.json .s{color:#86EFAC}
+pre.json .n{color:#FDE68A}
+.pg-nota{padding:12px 16px;font-size:12px;line-height:17px;color:var(--gris-500);border-top:1px solid var(--gris-200);background:var(--gris-0)}
+
+/* Casos de uso */
+.casos{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+@media (max-width:760px){.casos{grid-template-columns:1fr}}
+.caso{background:var(--gris-0);border:1px solid var(--gris-200);border-radius:var(--r-lg);padding:18px;box-shadow:var(--sombra-sm)}
+.caso .t{font-size:15px;font-weight:700}
+.caso p{font-size:13.5px;line-height:20px;color:var(--gris-600);margin-top:6px}
+.caso .nivel-tag{font-family:var(--mono);font-size:11px;color:var(--verde-700);background:var(--verde-50);border-radius:var(--r-sm);padding:2px 8px;display:inline-block;margin-top:10px}
+
+/* Confianza */
+.confianza{background:var(--azul-50);border-radius:var(--r-lg);padding:24px;display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+@media (max-width:760px){.confianza{grid-template-columns:1fr}}
+.conf .t{font-size:14px;font-weight:700;margin-bottom:4px}
+.conf p{font-size:13px;line-height:19px;color:var(--gris-600)}
+
+/* CTA final */
+.cta-final{background:var(--azul-900);border-radius:var(--r-lg);color:#fff;padding:36px 28px;text-align:center;margin-top:56px}
+.cta-final h2{font-size:26px;line-height:34px;font-weight:700;letter-spacing:-.01em}
+.cta-final p{color:var(--gris-300);margin:10px auto 20px;max-width:52ch;font-size:14.5px;line-height:21px}
+
+.footer{text-align:center;padding:32px 0 40px;color:var(--gris-500);font-size:12px}
+.footer b{color:var(--gris-600)}
+</style>
+</head>
+<body>
+
+<header class="marca">
+  <div class="wrap nav">
+    <span class="lockup"><span class="logo-pill">GG</span><span class="wordmark">GasGas <small>· Datos</small></span></span>
+    <a class="volver" href="/">Ver el sitio para conductores →</a>
+  </div>
+  <div class="wrap hero">
+    <div class="overline">API y datos para empresas</div>
+    <h1>Los precios de todas las estaciones de México, en tu sistema.</h1>
+    <p class="sub">Datos oficiales de la Comisión Nacional de Energía, procesados y servidos vía API: por estado, municipio, código postal o estación, con histórico desde mayo de 2024. En producción con clientes de fintech y análisis de mercado.</p>
+    <div class="ctas">
+      <a class="btn btn--primario" href="mailto:hola@gasgas.com.mx?subject=API%20de%20datos%20GasGas">Hablar con nosotros</a>
+      <a class="btn btn--inverso" href="#playground">Probar la API en vivo ↓</a>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div class="stats">
+    <div class="stat"><b class="tabular">14,194</b><span>estaciones en el padrón</span></div>
+    <div class="stat"><b class="tabular">94%</b><span>reportando cada día</span></div>
+    <div class="stat"><b class="tabular">11×</b><span>actualizaciones al día</span></div>
+    <div class="stat"><b class="tabular">2,900+</b><span>municipios</span></div>
+    <div class="stat"><b class="tabular">4,900+</b><span>códigos postales</span></div>
+    <div class="stat"><b class="tabular">may 2024</b><span>histórico desde</span></div>
+  </div>
+
+  <section class="seccion">
+    <div class="overline" style="color:var(--verde-600)">Niveles de datos</div>
+    <h2>Del promedio nacional a la estación individual</h2>
+    <p class="intro">Cada nivel incluye Magna, Premium y Diésel, con promedio, mínimo, máximo y desviación estándar, en corte diario, semanal o mensual.</p>
+    <div class="niveles">
+      <div class="nivel">
+        <div class="n">Estado</div>
+        <div class="m">32 mercados</div>
+        <p>Promedios diarios por entidad federativa. Ideal para índices, indexación de precios y análisis macro.</p>
+        <span class="badge badge--prod">● En producción con clientes</span>
+      </div>
+      <div class="nivel">
+        <div class="n">Municipio</div>
+        <div class="m">2,900+ mercados</div>
+        <p>El nivel plaza: donde se compite de verdad. Promedios y dispersión por municipio.</p>
+        <span class="badge badge--nuevo">Nuevo · 2026</span>
+      </div>
+      <div class="nivel">
+        <div class="n">Código postal</div>
+        <div class="m">4,900+ zonas</div>
+        <p>Granularidad de zona para plataformas de gasto, beneficios y verificación de tickets.</p>
+        <span class="badge badge--prod">● En producción con clientes</span>
+      </div>
+      <div class="nivel">
+        <div class="n">Estación</div>
+        <div class="m">14,194 puntos</div>
+        <p>El precio de cada estación con su ubicación, marca y antigüedad del dato. El nivel más fino.</p>
+        <span class="badge badge--premium">Premium</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="seccion" id="playground">
+    <div class="overline" style="color:var(--verde-600)">Pruébala ahora — sin registrarte</div>
+    <h2>Esta respuesta viene de la API real, en vivo</h2>
+    <p class="intro">Elige un mercado y ejecuta. Lo que ves es exactamente lo que recibiría tu sistema.</p>
+
+    <div class="playground">
+      <div class="pg-controles">
+        <select id="pg-nivel" aria-label="Nivel">
+          <option value="nacional">Nacional</option>
+          <option value="estado" selected>Estado</option>
+          <option value="municipio">Municipio</option>
+        </select>
+        <select id="pg-estado" aria-label="Estado"></select>
+        <select id="pg-municipio" aria-label="Municipio" hidden></select>
+        <button class="btn btn--primario" id="pg-run">Ejecutar request</button>
+      </div>
+      <div class="pg-request" id="pg-url"><span class="metodo">GET</span><span id="pg-url-txt">…</span></div>
+      <div class="pg-out">
+        <div class="pg-meta" id="pg-meta"></div>
+        <pre class="json" id="pg-json">Cargando…</pre>
+      </div>
+      <div class="pg-nota">Endpoint de demostración con los datos del día (days=1). La API completa incluye cortes de 7 y 30 días, series históricas diarias (/api/historico) y catálogos (/api/estados, /api/municipios). Producto solicitado para mín/máx/desviación: Magna.</div>
+    </div>
+  </section>
+
+  <section class="seccion">
+    <div class="overline" style="color:var(--verde-600)">Casos de uso</div>
+    <h2>Quiénes usan estos datos</h2>
+    <div class="casos" style="margin-top:16px">
+      <div class="caso">
+        <div class="t">Fintech y beneficios de empleados</div>
+        <p>Promedios diarios por estado para validar montos de gasto en combustible y calcular reembolsos justos.</p>
+        <span class="nivel-tag">nivel estado · en producción</span>
+      </div>
+      <div class="caso">
+        <div class="t">Plataformas de gasto y facturación</div>
+        <p>Precio de referencia por código postal para verificar tickets y detectar anomalías en comprobantes.</p>
+        <span class="nivel-tag">nivel código postal · en producción</span>
+      </div>
+      <div class="caso">
+        <div class="t">Flotillas y logística</div>
+        <p>Diésel por municipio sobre rutas: planeación de cargas, presupuesto y negociación con estaciones.</p>
+        <span class="nivel-tag">nivel municipio</span>
+      </div>
+      <div class="caso">
+        <div class="t">Grupos gasolineros y analistas</div>
+        <p>Posicionamiento competitivo por plaza, dispersión de precios e histórico de dos años para estudios de mercado.</p>
+        <span class="nivel-tag">nivel estación · premium</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="seccion">
+    <div class="overline" style="color:var(--verde-600)">Por qué confiar</div>
+    <h2>Datos serios, operación seria</h2>
+    <div class="confianza" style="margin-top:16px">
+      <div class="conf">
+        <div class="t">Fuente oficial, metodología declarada</div>
+        <p>Ingesta directa de la publicación de la Comisión Nacional de Energía, con rangos de validación y limpieza de atípicos documentados.</p>
+      </div>
+      <div class="conf">
+        <div class="t">Monitoreo continuo</div>
+        <p>Verificación automática cada hora de frescura y correctitud del dato servido, con alertas inmediatas al equipo.</p>
+      </div>
+      <div class="conf">
+        <div class="t">Integración a tu medida</div>
+        <p>Llaves por cliente, endpoints dedicados si los necesitas, y soporte directo con el equipo que construye la plataforma.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="cta-final">
+    <h2>Cuéntanos qué datos necesita tu operación</h2>
+    <p>Respondemos el mismo día. Si tu caso necesita un corte que no ves aquí — por marca, por zona, por periodo — lo evaluamos contigo.</p>
+    <a class="btn btn--primario" href="mailto:hola@gasgas.com.mx?subject=API%20de%20datos%20GasGas">Hablar con nosotros</a>
+  </div>
+
+  <div class="footer"><b>GasGas</b> · Datos de combustibles de México · Fuente: Comisión Nacional de Energía · gasgas.com.mx · © 2026</div>
+</main>
+
+<script>
+const API="https://api.gasgas.com.mx/api";
+const $=id=>document.getElementById(id);
+let t0=0;
+
+function urlActual(){
+  const nivel=$("pg-nivel").value;
+  if(nivel==="nacional") return `${API}/precios?market=nacional&value=all&days=1&product=regular`;
+  if(nivel==="estado") return `${API}/precios?market=estado&value=${encodeURIComponent($("pg-estado").value||"Jalisco")}&days=1&product=regular`;
+  const val=`${$("pg-estado").value||"Jalisco"}|${$("pg-municipio").value||""}`;
+  return `${API}/precios?market=municipio&value=${encodeURIComponent(val)}&days=1&product=regular`;
+}
+function pintaUrl(){$("pg-url-txt").textContent=urlActual().replace("https://","");}
+
+function colorea(json){
+  return json
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+    .replace(/"([^"]+)":/g,'"<span class="k">$1</span>":')
+    .replace(/: "([^"]*)"/g,': "<span class="s">$1</span>"')
+    .replace(/: (\d[\d.]*)/g,': <span class="n">$1</span>');
+}
+
+async function ejecutar(){
+  const url=urlActual();
+  pintaUrl();
+  $("pg-meta").innerHTML="";
+  $("pg-json").textContent="Consultando la API…";
+  t0=performance.now();
+  try{
+    const ctrl=new AbortController();const tm=setTimeout(()=>ctrl.abort(),8000);
+    const r=await fetch(url,{signal:ctrl.signal});
+    clearTimeout(tm);
+    const ms=Math.round(performance.now()-t0);
+    const data=await r.json();
+    $("pg-meta").innerHTML=`<span class="${r.ok?"ok":"err"}">${r.status} ${r.ok?"OK":""}</span><span>${ms} ms</span><span>content-type: application/json</span>`;
+    $("pg-json").innerHTML=colorea(JSON.stringify(data,null,2));
+  }catch(e){
+    const ms=Math.round(performance.now()-t0);
+    $("pg-meta").innerHTML=`<span class="err">Sin conexión</span><span>${ms} ms</span>`;
+    $("pg-json").textContent="No pudimos alcanzar la API desde tu red en este momento. Reintenta en unos segundos.";
+  }
+}
+
+async function cargarEstados(){
+  const sel=$("pg-estado");
+  const fallback=["Aguascalientes","Chiapas","Chihuahua","CDMX","Guanajuato","Jalisco","Nuevo León","Puebla","Querétaro","Veracruz"];
+  try{
+    const r=await fetch(`${API}/estados`).then(r=>r.json());
+    const lista=(Array.isArray(r)&&r.length)?r.map(e=>e.estado):fallback;
+    sel.innerHTML=lista.map(e=>`<option ${e==="Jalisco"?"selected":""}>${e}</option>`).join("");
+  }catch(e){sel.innerHTML=fallback.map(e=>`<option ${e==="Jalisco"?"selected":""}>${e}</option>`).join("");}
+}
+async function cargarMunicipios(){
+  const sel=$("pg-municipio");sel.innerHTML="";
+  try{
+    const r=await fetch(`${API}/municipios?estado=${encodeURIComponent($("pg-estado").value)}`).then(r=>r.json());
+    if(Array.isArray(r)&&r.length){
+      sel.innerHTML=r.map(m=>`<option value="${m.municipio.replace(/"/g,"&quot;")}">${m.municipio} (${m.estaciones})</option>`).join("");
+    }
+  }catch(e){sel.innerHTML="<option value=''>—</option>";}
+}
+
+$("pg-nivel").addEventListener("change",async()=>{
+  const n=$("pg-nivel").value;
+  $("pg-estado").hidden=(n==="nacional");
+  $("pg-municipio").hidden=(n!=="municipio");
+  if(n==="municipio") await cargarMunicipios();
+  pintaUrl();
+});
+$("pg-estado").addEventListener("change",async()=>{
+  if($("pg-nivel").value==="municipio") await cargarMunicipios();
+  pintaUrl();
+});
+$("pg-municipio").addEventListener("change",pintaUrl);
+$("pg-run").addEventListener("click",ejecutar);
+
+(async()=>{await cargarEstados();pintaUrl();ejecutar();})();
+</script>
+</body>
+</html>

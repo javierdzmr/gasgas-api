@@ -313,6 +313,13 @@ app.get("/api/vecinos", async (req, res) => {
 });
 
 // ==============================
+// 🔹 PÁGINA /datos (escaparate B2B de la API)
+// ==============================
+app.get("/datos", (req, res) => {
+  res.sendFile(__dirname + "/public/datos.html");
+});
+
+// ==============================
 // 🔹 HEALTH CHECK
 // ==============================
 app.get("/", (req, res) => {
