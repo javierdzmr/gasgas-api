@@ -194,6 +194,34 @@ app.get("/api/estados", async (req, res) => {
 });
 
 // ==============================
+// 🔹 MUNICIPIOS DE UN ESTADO
+// ==============================
+app.get("/api/municipios", async (req, res) => {
+  try {
+    const { estado } = req.query;
+    if (!estado) {
+      return res.status(400).json({ error: "Falta el parámetro estado" });
+    }
+
+    // Parametrizado ($1) — sin riesgo de SQL injection
+    const result = await pool.query(`
+      SELECT municipio, COUNT(*)::int AS estaciones
+      FROM gas_stations
+      WHERE LOWER(estado) = LOWER($1)
+        AND municipio IS NOT NULL AND municipio <> ''
+      GROUP BY municipio
+      ORDER BY municipio
+    `, [estado]);
+
+    res.json(result.rows);
+
+  } catch (err) {
+    console.error("ERROR /municipios:", err);
+    res.status(500).json({ error: "Error obteniendo municipios" });
+  }
+});
+
+// ==============================
 // 🔹 RANKING ESTADOS
 // ==============================
 app.get("/api/ranking-estados", async (req, res) => {

@@ -95,6 +95,33 @@ async function updateHistoricosDaily() {
           updated_at  = NOW()
       `);
       console.log("✅ 32 estados repoblados — 30 días");
+
+      // Municipios — 30 días (market_value = 'Estado|Municipio')
+      await client.query(`
+        INSERT INTO precios_historicos_agregados (market_type, market_value, date, regular, premium, diesel, estado_slug, updated_at)
+        SELECT
+          'municipio',
+          gs.estado || '|' || gs.municipio,
+          p.date::date AS date,
+          AVG(CASE WHEN p.regular BETWEEN ${RANGE.regular.min} AND ${RANGE.regular.max} THEN p.regular END) AS regular,
+          AVG(CASE WHEN p.premium BETWEEN ${RANGE.premium.min} AND ${RANGE.premium.max} THEN p.premium END) AS premium,
+          AVG(CASE WHEN p.diesel  BETWEEN ${RANGE.diesel.min}  AND ${RANGE.diesel.max}  THEN p.diesel  END) AS diesel,
+          LOWER(REGEXP_REPLACE(TRANSLATE(gs.estado, 'áéíóúÁÉÍÓÚüÜñÑ', 'aeiouAEIOUuUnN'), '[^a-zA-Z0-9]+', '-', 'g')),
+          NOW()
+        FROM prices p
+        JOIN prices_gas_station_links l ON l.price_id = p.id
+        JOIN gas_stations gs ON gs.id = l.gas_station_id
+        WHERE p.date >= NOW() - INTERVAL '30 days'
+          AND gs.municipio IS NOT NULL AND gs.municipio <> ''
+        GROUP BY gs.estado, gs.municipio, p.date::date
+        ON CONFLICT (market_type, market_value, date) DO UPDATE SET
+          regular     = EXCLUDED.regular,
+          premium     = EXCLUDED.premium,
+          diesel      = EXCLUDED.diesel,
+          estado_slug = EXCLUDED.estado_slug,
+          updated_at  = NOW()
+      `);
+      console.log("✅ Municipios repoblados — 30 días");
     }
 
     // ============================================================
@@ -183,6 +210,36 @@ async function updateHistoricosDaily() {
     }
 
     console.log(`✅ ${insertados} estados insertados para ${today}`);
+
+    // =========================
+    // 🏙️ MUNICIPIOS (set-based, ~3,000 mercados en un solo INSERT)
+    // =========================
+    const municipios = await client.query(`
+      INSERT INTO precios_historicos_agregados (market_type, market_value, date, regular, premium, diesel, estado_slug, updated_at)
+      SELECT
+        'municipio',
+        gs.estado || '|' || gs.municipio,
+        p.date::date,
+        AVG(CASE WHEN p.regular BETWEEN ${RANGE.regular.min} AND ${RANGE.regular.max} THEN p.regular END),
+        AVG(CASE WHEN p.premium BETWEEN ${RANGE.premium.min} AND ${RANGE.premium.max} THEN p.premium END),
+        AVG(CASE WHEN p.diesel  BETWEEN ${RANGE.diesel.min}  AND ${RANGE.diesel.max}  THEN p.diesel  END),
+        LOWER(REGEXP_REPLACE(TRANSLATE(gs.estado, 'áéíóúÁÉÍÓÚüÜñÑ', 'aeiouAEIOUuUnN'), '[^a-zA-Z0-9]+', '-', 'g')),
+        NOW()
+      FROM prices p
+      JOIN prices_gas_station_links l ON l.price_id = p.id
+      JOIN gas_stations gs ON gs.id = l.gas_station_id
+      WHERE p.date::date = $1
+        AND gs.municipio IS NOT NULL AND gs.municipio <> ''
+      GROUP BY gs.estado, gs.municipio, p.date::date
+      ON CONFLICT (market_type, market_value, date) DO UPDATE SET
+        regular     = EXCLUDED.regular,
+        premium     = EXCLUDED.premium,
+        diesel      = EXCLUDED.diesel,
+        estado_slug = EXCLUDED.estado_slug,
+        updated_at  = NOW()
+    `, [today]);
+
+    console.log(`✅ ${municipios.rowCount} municipios insertados para ${today}`);
     console.log("🚀 Históricos diarios completados");
 
   } catch (err) {

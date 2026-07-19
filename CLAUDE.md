@@ -87,8 +87,8 @@ Columnas: `market_type`, `market_value`, `days`, `regular`, `premium`, `diesel`,
 `min/max/std_regular`, `min/max/std_premium`, `min/max/std_diesel`,
 `stations_count`, `updated_at`.
 Índice único: `(market_type, market_value, days)`.
-Valores de `market_type`: `'nacional'` o `'estado'`.
-Valores de `market_value`: `'all'` para nacional, nombre del estado con capitalización normal (ej. `'Chiapas'`).
+Valores de `market_type`: `'nacional'`, `'estado'` o `'municipio'` (19 Jul 2026).
+Valores de `market_value`: `'all'` para nacional; nombre del estado con capitalización normal (ej. `'Chiapas'`); para municipio la llave compuesta `'Estado|Municipio'` (ej. `'Jalisco|Zapopan'`) — los nombres de municipio se repiten entre estados.
 **Periodos disponibles:** `days = 1` (hoy), `days = 7`, `days = 30`.
 **🛡️ Protección:** `updateAgregados.js` hace `CREATE TABLE IF NOT EXISTS` al inicio — si Strapi borra la tabla, el próximo cron la recrea automáticamente.
 
@@ -157,6 +157,14 @@ Retorna serie de tiempo diaria para gráficas.
 
 ### GET /api/estados
 Lista de los 32 estados disponibles.
+
+### GET /api/municipios ✅ IMPLEMENTADO (19 Jul 2026)
+Municipios de un estado con su número de estaciones (para el selector en cascada).
+| Parámetro | Valores |
+|---|---|
+| `estado` | nombre del estado |
+
+Respuesta: `[{ municipio, estaciones }]`. Nota: `/api/precios` y `/api/historico` ya aceptan `market=municipio&value=Estado|Municipio` sin cambios (el market va parametrizado). Recordar URL-encodear la barra vertical (`%7C`).
 
 ### GET /api/ranking-estados ✅ IMPLEMENTADO
 Ranking de 32 estados por precio de hoy (days=1).
