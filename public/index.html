@@ -88,6 +88,7 @@ svg.ic{width:16px;height:16px;flex:none}
 .chip--diesel{--dot:var(--fuel-diesel)}
 select.selector-estado{height:32px;padding:0 10px;border-radius:var(--radio-full);border:1px solid var(--gris-300);background:var(--bg-superficie);font-family:var(--font-ui);font-size:13px;font-weight:600;color:var(--texto-1);cursor:pointer}
 select.selector-estado[hidden]{display:none}
+.nota-pocas{margin:0 0 12px;padding:8px 12px;border-radius:var(--radio-md);background:var(--precio-medio-bg);font-size:12.5px;line-height:17px;color:var(--precio-medio);font-weight:600}
 
 /* Cards (§4.2) */
 .card{background:var(--bg-superficie);border:1px solid var(--borde);border-radius:var(--radio-lg);box-shadow:var(--sombra-sm);padding:16px}
@@ -202,6 +203,7 @@ svg.grafica{display:block;width:100%;height:150px}
       <button class="chip" id="chip-nacional" aria-pressed="true" onclick="setMercado('nacional')">Nacional</button>
       <button class="chip" id="chip-estado" aria-pressed="false" onclick="setMercado('estado')">Por estado</button>
       <select class="selector-estado" id="sel-estado" hidden aria-label="Estado"></select>
+      <select class="selector-estado" id="sel-municipio" hidden aria-label="Municipio"></select>
     </div>
 
     <div class="chips" role="group" aria-label="Combustible">
@@ -210,6 +212,7 @@ svg.grafica{display:block;width:100%;height:150px}
       <button class="chip chip--diesel" data-f="diesel" aria-pressed="false"><span class="dot"></span>Diésel</button>
     </div>
 
+    <p class="nota-pocas" id="nota-pocas" hidden></p>
     <div class="grid-precios" id="grid-precios">
       <div class="card card-precio card-precio--magna"><span class="fuel">Magna</span><div class="valor skeleton" style="width:70px;height:22px"></div></div>
       <div class="card card-precio card-precio--premium"><span class="fuel">Premium</span><div class="valor skeleton" style="width:70px;height:22px"></div></div>
@@ -300,7 +303,7 @@ function deltaInfo(serie){
 function render(){
   const s=DATA[fuel];
   const hoy=s[s.length-1];
-  const nombreMercado=mercado.tipo==="nacional"?"Nacional":mercado.valor;
+  const nombreMercado=mercado.tipo==="nacional"?"Nacional":(mercado.tipo==="municipio"?mercado.valor.split("|")[1]:mercado.valor);
 
   /* Hero */
   $("hero-overline").textContent=`${FUELS[fuel]} hoy · ${nombreMercado}`;
@@ -313,7 +316,13 @@ function render(){
   $("hero-antiguedad-txt").textContent=DATA.antiguedad;
 
   /* Título + estado del dato */
-  $("titulo-mercado").textContent=mercado.tipo==="nacional"?"Precio nacional hoy":`Precio en ${mercado.valor} hoy`;
+  $("titulo-mercado").textContent=mercado.tipo==="nacional"?"Precio nacional hoy":`Precio en ${nombreMercado} hoy`;
+  /* Honestidad (v1.1 §A): con pocas estaciones, el promedio es referencia, no mercado */
+  const np=$("nota-pocas");
+  if(mercado.tipo==="municipio"&&DATA.meta.stations>0&&DATA.meta.stations<5){
+    np.hidden=false;
+    np.textContent=`En ${nombreMercado} solo hay ${DATA.meta.stations} ${DATA.meta.stations===1?"estación":"estaciones"} con precio. Tómalo como referencia puntual, no como promedio de mercado.`;
+  }else{np.hidden=true;}
   const ed=$("estado-dato");
   if(DATA.origen==="vivo"){ed.textContent="● En vivo";ed.className="estado-dato estado-dato--vivo";}
   else{ed.textContent="Último dato: "+DATA.fechaTexto;ed.className="estado-dato estado-dato--cache";}
@@ -418,7 +427,7 @@ async function cargar(reintento){
   if(reintento){$("estado-dato").textContent="Cargando…";$("estado-dato").className="estado-dato";}
   try{
     const ctrl=new AbortController();const t=setTimeout(()=>ctrl.abort(),4500);
-    const q=mercado.tipo==="nacional"?"market=nacional&value=all":`market=estado&value=${encodeURIComponent(mercado.valor)}`;
+    const q=mercado.tipo==="nacional"?"market=nacional&value=all":`market=${mercado.tipo}&value=${encodeURIComponent(mercado.valor)}`;
     const [h,p]=await Promise.all([
       fetch(`${API}/historico?${q}&days=30`,{signal:ctrl.signal}).then(r=>r.json()),
       fetch(`${API}/precios?${q}&days=1&product=${fuel}&cb=${Date.now()}`,{signal:ctrl.signal}).then(r=>r.json())
@@ -443,7 +452,7 @@ async function cargar(reintento){
       /* Sin snapshot por estado: error honesto, sin números (v1.1 §B) */
       $("grid-precios").innerHTML=`<div class="card" style="grid-column:1/-1">
         <div class="estado-vacio" style="text-align:center;padding:24px 16px">
-          <h3 style="font-size:17px;font-weight:600">No pudimos cargar ${mercado.valor}</h3>
+          <h3 style="font-size:17px;font-weight:600">No pudimos cargar ${mercado.valor.split("|").pop()}</h3>
           <p style="color:var(--texto-2);margin:4px 0 12px">Revisa tu conexión o vuelve a intentarlo.</p>
           <button class="btn btn--secundario" onclick="cargar(true)">Reintentar</button>
         </div></div>`;
@@ -466,13 +475,39 @@ function antiguedadDe(updatedAt){
 }
 
 function setMercado(tipo){
-  const sel=$("sel-estado");
+  const sel=$("sel-estado"),selM=$("sel-municipio");
   $("chip-nacional").setAttribute("aria-pressed",String(tipo==="nacional"));
   $("chip-estado").setAttribute("aria-pressed",String(tipo==="estado"));
-  if(tipo==="estado"){sel.hidden=false;mercado={tipo:"estado",valor:sel.value||"Jalisco"};}
-  else{sel.hidden=true;mercado={tipo:"nacional",valor:"all"};}
+  if(tipo==="estado"){
+    sel.hidden=false;
+    mercado={tipo:"estado",valor:sel.value||"Jalisco"};
+    cargarMunicipios(mercado.valor);
+  }else{
+    sel.hidden=true;selM.hidden=true;
+    mercado={tipo:"nacional",valor:"all"};
+  }
   cargar();
 }
+/* Cascada estado → municipio (los nombres de municipio se repiten entre
+   estados, por eso la llave del mercado es "Estado|Municipio") */
+async function cargarMunicipios(estado){
+  const selM=$("sel-municipio");
+  selM.hidden=true;selM.innerHTML="";
+  try{
+    const r=await fetch(`${API}/municipios?estado=${encodeURIComponent(estado)}`).then(r=>r.json());
+    if(Array.isArray(r)&&r.length){
+      selM.innerHTML=`<option value="">Todo el estado</option>`+
+        r.map(m=>`<option value="${m.municipio.replace(/"/g,"&quot;")}">${m.municipio} (${m.estaciones})</option>`).join("");
+      selM.hidden=false;
+    }
+  }catch(e){/* sin lista de municipios: se queda el nivel estado, sin romper nada */}
+}
+$("sel-municipio").addEventListener("change",e=>{
+  const est=$("sel-estado").value;
+  if(e.target.value===""){mercado={tipo:"estado",valor:est};}
+  else{mercado={tipo:"municipio",valor:`${est}|${e.target.value}`};}
+  cargar();
+});
 async function cargarEstados(){
   const sel=$("sel-estado");
   const fallback=["Aguascalientes","Baja California","CDMX","Chihuahua","Guanajuato","Jalisco","Nuevo León","Puebla","Querétaro","Veracruz"];
@@ -481,7 +516,7 @@ async function cargarEstados(){
     sel.innerHTML=(Array.isArray(r)&&r.length?r.map(e=>e.estado):fallback).map(e=>`<option>${e}</option>`).join("");
   }catch(e){sel.innerHTML=fallback.map(e=>`<option>${e}</option>`).join("");}
 }
-$("sel-estado").addEventListener("change",e=>{mercado={tipo:"estado",valor:e.target.value};cargar();});
+$("sel-estado").addEventListener("change",e=>{mercado={tipo:"estado",valor:e.target.value};cargarMunicipios(e.target.value);cargar();});
 document.querySelectorAll("[data-f]").forEach(b=>b.addEventListener("click",()=>{fuel=b.dataset.f;if(DATA)render();}));
 function suscribir(ev){
   ev.preventDefault();
