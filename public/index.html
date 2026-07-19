@@ -348,9 +348,13 @@ function grafica(){
   svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
   const padL=40,padR=10,padT=12,padB=10;
   let min=Math.min(...s),max=Math.max(...s);
-  const MINSPAN=0.10;
-  if(max-min<MINSPAN){const c=(max+min)/2;min=c-MINSPAN/2;max=c+MINSPAN/2;}
-  const span=max-min;
+  /* Eje Y dinámico: la ventana es 2.5× el rango real de los datos (la curva
+     ocupa ~40% del alto — ni línea recta ni montaña rusa), con piso de
+     $0.02 para no amplificar ruido de milésimas. La escala siempre es
+     visible en el eje, así que nunca engaña. */
+  const rango=max-min;
+  const span=Math.max(rango*2.5,0.02);
+  const c=(max+min)/2;min=c-span/2;max=c+span/2;
   const x=i=>padL+i*(W-padL-padR)/(s.length-1);
   const y=v=>H-padB-((v-min)/span)*(H-padT-padB);
   let linea="";s.forEach((v,i)=>{linea+=(i?"L":"M")+x(i).toFixed(1)+" "+y(v).toFixed(1)+" ";});
