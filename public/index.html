@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="%230E2A47"/><rect x="8" y="20" width="48" height="24" rx="12" fill="%2300A94F"/><text x="32" y="37" text-anchor="middle" font-family="Figtree,Arial,sans-serif" font-size="17" font-weight="800" letter-spacing="-.5" fill="white">GG</text></svg>'>
 <style>
 /* ============ GasGas Design System v1.1-draft — tokens ============
    Canónico: tokens.css + componentes.css (aquí inline por ser artefacto) */
@@ -42,7 +43,9 @@ svg.ic{width:16px;height:16px;flex:none}
 /* Nav + hero (superficie de marca) */
 .marca{background:var(--azul-900);color:var(--texto-inverso)}
 .nav{display:flex;align-items:center;justify-content:space-between;height:56px}
-.wordmark{font-weight:800;font-size:20px;letter-spacing:-.01em}
+.lockup{display:flex;align-items:center;gap:8px}
+.logo-pill{background:var(--gris-0);color:var(--azul-900);font-weight:800;font-size:13px;line-height:18px;letter-spacing:-.04em;border-radius:var(--radio-full);padding:3px 9px}
+.wordmark{font-weight:800;font-size:20px;letter-spacing:-.02em}
 .nav .fuente-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--texto-inv-2)}
 .nav .fuente-badge svg{color:var(--verde-500)}
 .hero{padding:24px 0 32px}
@@ -169,7 +172,7 @@ svg.grafica{display:block;width:100%;height:150px}
 
 <header class="marca">
   <div class="wrap nav">
-    <span class="wordmark">GasGas</span>
+    <span class="lockup"><span class="logo-pill">GG</span><span class="wordmark">GasGas</span></span>
     <span class="fuente-badge"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.5-4.8 2.5.9-5.4L4.2 7.7l5.4-.8z" fill="currentColor" stroke="none" opacity="0"/><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>Datos oficiales CNE</span>
   </div>
 </header>
