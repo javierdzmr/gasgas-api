@@ -288,7 +288,7 @@ function deltaInfo(serie){
   const cent=d*100;
   if(Math.abs(cent)<0.5) return {clase:"sin-dato",dir:"igual",txt:"Sin cambio vs. ayer",txtCorto:"Sin cambio",icon:"M5 12h14"};
   const abs=Math.abs(d);
-  const monto=abs<1?`${Math.abs(cent).toFixed(cent%1?1:0)} ¢`:`$${f2(abs)}`;
+  const monto=`$${f2(abs)}`;
   return d<0?{clase:"barato",dir:"baja",txt:monto+" vs. ayer",txtCorto:monto,icon:"M12 5v14M6 13l6 6 6-6"}
             :{clase:"caro",dir:"sube",txt:monto+" vs. ayer",txtCorto:monto,icon:"M12 19V5M6 11l6-6 6 6"};
 }
