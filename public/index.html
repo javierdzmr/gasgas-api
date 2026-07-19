@@ -108,7 +108,10 @@ select.selector-estado[hidden]{display:none}
 .card-precio[aria-current="true"]{border-color:var(--azul-900);box-shadow:var(--sombra-md)}
 
 /* Gráfica (spec §5.3: línea 2px, sin degradados) */
-.card-grafica{margin-top:12px}
+.card-grafica{margin-top:12px;position:relative}
+.tooltip-grafica{position:absolute;display:none;background:var(--azul-900);color:var(--gris-0);font-size:12px;line-height:16px;padding:6px 9px;border-radius:var(--radio-sm);pointer-events:none;white-space:nowrap;box-shadow:var(--sombra-md);z-index:5;font-variant-numeric:tabular-nums}
+.tooltip-grafica b{font-weight:700}
+.tooltip-grafica .tt-delta{color:var(--gris-300)}
 .card-grafica .encabezado{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px}
 .card-grafica .encabezado .titulo{font-size:15px;font-weight:600}
 .card-grafica .encabezado .rango{font-family:var(--font-mono);font-size:12px;color:var(--texto-3)}
@@ -219,7 +222,8 @@ svg.grafica{display:block;width:100%;height:150px}
         <span class="rango tabular" id="grafica-rango"></span>
       </div>
       <svg class="grafica" id="grafica" viewBox="0 0 328 150" preserveAspectRatio="none" role="img" aria-label="Tendencia del precio en 30 días"></svg>
-      <div class="eje-x" id="eje-x"></div>
+      <div class="tooltip-grafica" id="tooltip"></div>
+      <div class="eje-x" id="eje-x" style="padding-left:40px"></div>
     </div>
 
     <div class="metabar" id="metabar"></div>
@@ -333,24 +337,71 @@ function render(){
   metabar();
 }
 
-/* Gráfica según spec: línea 2px verde-600, grid gris-200, SIN degradados */
+/* Gráfica según spec: línea 2px verde-600, grid gris-200, SIN degradados.
+   Eje Y con escala visible (ventana mínima de $0.10 para no exagerar
+   movimientos de centavos) + tooltip al pasar el cursor. */
+let CHART=null;
 function grafica(){
+  const svg=$("grafica");
   const s=DATA[fuel].filter(v=>v!=null&&!isNaN(v));
-  const W=328,H=150,padX=6,padT=12,padB=10;
-  const min=Math.min(...s),max=Math.max(...s);
-  const span=Math.max(max-min,0.02);
-  const x=i=>padX+i*(W-2*padX)/(s.length-1);
+  const W=Math.max(svg.clientWidth||328,260),H=150;
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+  const padL=40,padR=10,padT=12,padB=10;
+  let min=Math.min(...s),max=Math.max(...s);
+  const MINSPAN=0.10;
+  if(max-min<MINSPAN){const c=(max+min)/2;min=c-MINSPAN/2;max=c+MINSPAN/2;}
+  const span=max-min;
+  const x=i=>padL+i*(W-padL-padR)/(s.length-1);
   const y=v=>H-padB-((v-min)/span)*(H-padT-padB);
   let linea="";s.forEach((v,i)=>{linea+=(i?"L":"M")+x(i).toFixed(1)+" "+y(v).toFixed(1)+" ";});
-  const grid=[0.25,0.5,0.75].map(t=>{const gy=padT+t*(H-padT-padB);return `<line x1="0" x2="${W}" y1="${gy}" y2="${gy}" stroke="#DCE3EB" stroke-width="1"/>`;}).join("");
-  $("grafica").innerHTML=grid+
+  const ticks=[max,(min+max)/2,min];
+  const grid=ticks.map(t=>`<line x1="${padL}" x2="${W-padR}" y1="${y(t).toFixed(1)}" y2="${y(t).toFixed(1)}" stroke="#DCE3EB" stroke-width="1"/>
+    <text x="${padL-6}" y="${(y(t)+3.5).toFixed(1)}" text-anchor="end" font-family="'JetBrains Mono',monospace" font-size="10" fill="#7B8A9A">${f2(t)}</text>`).join("");
+  svg.innerHTML=grid+
     `<path d="${linea}" fill="none" stroke="#007A39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`+
-    `<circle cx="${x(s.length-1).toFixed(1)}" cy="${y(s[s.length-1]).toFixed(1)}" r="3.5" fill="#007A39"/>`;
+    `<circle cx="${x(s.length-1).toFixed(1)}" cy="${y(s[s.length-1]).toFixed(1)}" r="3.5" fill="#007A39"/>`+
+    `<line id="ch-l" y1="${padT}" y2="${H-padB}" stroke="#C3CDD8" stroke-width="1" stroke-dasharray="3 3" style="display:none"/>`+
+    `<circle id="ch-c" r="4" fill="#0E2A47" stroke="#fff" stroke-width="1.5" style="display:none"/>`;
+  CHART={s,x,y,W,padL,padR};
   $("grafica-titulo").textContent=`${FUELS[fuel]} · 30 días`;
-  $("grafica-rango").textContent=`${f2(min)} – ${f2(max)}`;
+  $("grafica-rango").textContent=`${f2(Math.min(...s))} – ${f2(Math.max(...s))}`;
   const ds=DATA.dates;
   $("eje-x").innerHTML=`<span>${fechaCorta(ds[0])}</span><span>${fechaCorta(ds[Math.floor(ds.length/2)])}</span><span>${fechaCorta(ds[ds.length-1])}</span>`;
 }
+/* Tooltip: fecha, precio y cambio vs el día anterior */
+(function(){
+  const svg=$("grafica"),tt=$("tooltip");
+  function mueve(ev){
+    if(!CHART)return;
+    const r=svg.getBoundingClientRect();
+    const fx=ev.clientX-r.left;
+    const rel=(fx-CHART.padL)/(CHART.W-CHART.padL-CHART.padR);
+    let i=Math.round(rel*(CHART.s.length-1));
+    i=Math.max(0,Math.min(CHART.s.length-1,i));
+    const px=CHART.x(i),py=CHART.y(CHART.s[i]);
+    const chl=$("ch-l"),chc=$("ch-c");
+    chl.setAttribute("x1",px);chl.setAttribute("x2",px);chl.style.display="";
+    chc.setAttribute("cx",px);chc.setAttribute("cy",py);chc.style.display="";
+    const fecha=new Date(DATA.dates[i]+"T12:00:00").toLocaleDateString("es-MX",{weekday:"short",day:"numeric",month:"short",timeZone:TZ}).replace(".","");
+    let deltaTxt="";
+    if(i>0){const dd=CHART.s[i]-CHART.s[i-1];
+      deltaTxt=Math.abs(dd)<0.005?`<span class="tt-delta">Sin cambio vs día anterior</span>`:`<span class="tt-delta">${dd<0?"↓":"↑"} $${f2(Math.abs(dd))} vs día anterior</span>`;}
+    tt.innerHTML=`${fecha} · <b>$${f2(CHART.s[i])}</b><br>${deltaTxt}`;
+    tt.style.display="block";
+    const cardR=tt.parentElement.getBoundingClientRect();
+    const sx=r.left-cardR.left,sy=r.top-cardR.top;
+    const cw=tt.parentElement.clientWidth,tw=tt.offsetWidth;
+    let left=sx+px*(r.width/CHART.W)-tw/2;
+    left=Math.max(4,Math.min(left,cw-tw-4));
+    tt.style.left=left+"px";
+    tt.style.top=(sy+py*(r.height/150)-tt.offsetHeight-12)+"px";
+  }
+  function fuera(){tt.style.display="none";const a=$("ch-l"),b=$("ch-c");if(a)a.style.display="none";if(b)b.style.display="none";}
+  svg.addEventListener("pointermove",mueve);
+  svg.addEventListener("pointerdown",mueve);
+  svg.addEventListener("pointerleave",fuera);
+  window.addEventListener("resize",()=>{if(DATA)grafica();});
+})();
 
 function metabar(){
   const m=DATA.meta;
