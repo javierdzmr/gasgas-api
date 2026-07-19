@@ -291,16 +291,21 @@ const f2=n=>Number(n).toFixed(2);
 const fmtMiles=n=>Number(n).toLocaleString("es-MX");
 function fechaCorta(iso){const d=new Date(iso+"T12:00:00");return d.toLocaleDateString("es-MX",{day:"numeric",month:"short",timeZone:TZ}).replace(".","");}
 
-/* Delta según formato v1.1 §D: ¢ hasta $0.99, "sin cambio" si |Δ|<0.5¢ */
+/* Delta de promedios agregados: contra el MISMO DÍA de la semana pasada
+   (D-7), no contra ayer — un promedio nacional/estatal casi no se mueve en
+   24 h, y D-7 elimina la estacionalidad de día de semana (regla Nielsen).
+   Si la serie no alcanza 8 puntos, cae con honestidad a "vs. ayer". */
 function deltaInfo(serie){
   if(!serie||serie.length<2) return null;
-  const d=serie[serie.length-1]-serie[serie.length-2];
+  const lag=serie.length>7?7:1;
+  const label=lag===7?"vs. hace una semana":"vs. ayer";
+  const d=serie[serie.length-1]-serie[serie.length-1-lag];
   const cent=d*100;
-  if(Math.abs(cent)<0.5) return {clase:"sin-dato",dir:"igual",txt:"Sin cambio vs. ayer",txtCorto:"Sin cambio",icon:"M5 12h14"};
+  if(Math.abs(cent)<0.5) return {clase:"sin-dato",dir:"igual",txt:"Sin cambio "+label,txtCorto:"Sin cambio",icon:"M5 12h14"};
   const abs=Math.abs(d);
   const monto=`$${f2(abs)}`;
-  return d<0?{clase:"barato",dir:"baja",txt:monto+" vs. ayer",txtCorto:monto,icon:"M12 5v14M6 13l6 6 6-6"}
-            :{clase:"caro",dir:"sube",txt:monto+" vs. ayer",txtCorto:monto,icon:"M12 19V5M6 11l6-6 6 6"};
+  return d<0?{clase:"barato",dir:"baja",txt:monto+" "+label,txtCorto:monto,icon:"M12 5v14M6 13l6 6 6-6"}
+            :{clase:"caro",dir:"sube",txt:monto+" "+label,txtCorto:monto,icon:"M12 19V5M6 11l6-6 6 6"};
 }
 
 function render(){
