@@ -319,6 +319,10 @@ app.get("/datos", (req, res) => {
   res.sendFile(__dirname + "/public/datos.html");
 });
 
+app.get("/docs", (req, res) => {
+  res.sendFile(__dirname + "/public/docs.html");
+});
+
 // ==============================
 // 🔹 HEALTH CHECK
 // ==============================

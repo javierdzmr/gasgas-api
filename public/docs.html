@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GasGas Datos · Documentación de la API</title>
+<meta name="description" content="Referencia completa de la API de precios de combustible de GasGas: endpoints, parámetros, ejemplos, errores y convenciones.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="%230E2A47"/><rect x="8" y="20" width="48" height="24" rx="12" fill="%2300A94F"/><text x="32" y="37" text-anchor="middle" font-family="Figtree,Arial,sans-serif" font-size="17" font-weight="800" letter-spacing="-.5" fill="white">GG</text></svg>'>
+<style>
+:root{
+  --verde-50:#E8F7EE;--verde-500:#00A94F;--verde-600:#007A39;--verde-700:#005C2B;
+  --azul-50:#EEF3F8;--azul-800:#163A5E;--azul-900:#0E2A47;
+  --gris-0:#FFF;--gris-50:#F7F9FB;--gris-100:#EDF1F5;--gris-200:#DCE3EB;--gris-300:#C3CDD8;
+  --gris-500:#7B8A9A;--gris-600:#5B6B7C;--gris-900:#111C28;
+  --alerta:#B45309;--alerta-bg:#FEF3E2;--caro:#B91C1C;
+  --ui:'Figtree',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;
+  --r-sm:6px;--r-md:10px;--r-lg:14px;--r-full:999px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--ui);font-size:15px;line-height:22px;color:var(--gris-900);background:var(--gris-50);-webkit-font-smoothing:antialiased}
+a{color:var(--verde-600);text-decoration:none}
+a:hover{text-decoration:underline}
+.mono{font-family:var(--mono)}
+:focus-visible{outline:2px solid var(--verde-600);outline-offset:2px}
+
+.top{background:var(--azul-900);color:#fff;position:sticky;top:0;z-index:50}
+.top-in{max-width:1140px;margin:0 auto;padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between}
+.lockup{display:flex;align-items:center;gap:8px}
+.logo-pill{background:#fff;color:var(--azul-900);font-weight:800;font-size:12px;letter-spacing:-.04em;border-radius:var(--r-full);padding:3px 9px}
+.wm{font-weight:800;font-size:17px;letter-spacing:-.02em;color:#fff}
+.wm small{font-weight:600;font-size:13px;color:var(--gris-300)}
+.top a.link{color:var(--gris-300);font-size:13px;font-weight:600}
+
+.layout{max-width:1140px;margin:0 auto;padding:0 20px;display:grid;grid-template-columns:220px 1fr;gap:36px}
+@media (max-width:860px){.layout{grid-template-columns:1fr}.sidebar{display:none}}
+.sidebar{position:sticky;top:76px;align-self:start;padding:28px 0}
+.sidebar .grupo{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gris-500);margin:18px 0 6px}
+.sidebar a{display:block;font-size:13.5px;line-height:20px;color:var(--gris-600);padding:4px 10px;border-radius:var(--r-sm);font-weight:500}
+.sidebar a:hover{background:var(--gris-100);text-decoration:none}
+.sidebar a.metodo{font-family:var(--mono);font-size:12.5px}
+
+.contenido{padding:28px 0 80px;min-width:0}
+h1{font-size:32px;line-height:40px;font-weight:800;letter-spacing:-.02em}
+.version{display:inline-flex;align-items:center;gap:6px;background:var(--verde-50);color:var(--verde-700);font-weight:700;font-size:12px;border-radius:var(--r-full);padding:3px 12px;margin-left:10px;vertical-align:middle}
+.lead{color:var(--gris-600);margin-top:8px;max-width:70ch}
+h2{font-size:22px;line-height:30px;font-weight:700;letter-spacing:-.01em;margin:44px 0 8px;padding-top:12px;border-top:1px solid var(--gris-200)}
+h3{font-size:16px;font-weight:700;margin:22px 0 6px}
+p{margin:8px 0;color:var(--gris-600);max-width:75ch}
+p b,li b{color:var(--gris-900)}
+ul{margin:8px 0 8px 20px;color:var(--gris-600)}
+li{margin:4px 0}
+
+.base-url{background:var(--azul-900);color:#A7F3D0;font-family:var(--mono);font-size:13px;border-radius:var(--r-md);padding:12px 16px;margin:14px 0;display:inline-block}
+.endpoint{background:var(--gris-0);border:1px solid var(--gris-200);border-radius:var(--r-lg);margin:16px 0;overflow:hidden}
+.endpoint .cab{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--gris-100);flex-wrap:wrap}
+.get{background:var(--verde-50);color:var(--verde-700);font-family:var(--mono);font-weight:700;font-size:12px;border-radius:var(--r-sm);padding:3px 9px}
+.ruta{font-family:var(--mono);font-size:14px;font-weight:500}
+.endpoint .cuerpo{padding:4px 16px 16px}
+
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13.5px}
+th{text-align:left;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--gris-500);padding:8px 10px 6px;border-bottom:1px solid var(--gris-200)}
+td{padding:8px 10px;border-bottom:1px solid var(--gris-100);vertical-align:top;color:var(--gris-600)}
+td:first-child{font-family:var(--mono);font-size:12.5px;color:var(--gris-900);white-space:nowrap}
+.req{color:var(--caro);font-size:11px;font-weight:700}
+.opc{color:var(--gris-500);font-size:11px;font-weight:600}
+
+pre{background:var(--azul-900);color:#D9E2EC;font-family:var(--mono);font-size:12.5px;line-height:19px;border-radius:var(--r-md);padding:14px 16px;overflow-x:auto;margin:10px 0}
+pre .c{color:var(--gris-500)}
+pre .g{color:#A7F3D0}
+pre .k{color:#7DD3FC}
+pre .n{color:#FDE68A}
+.etiqueta-code{font-family:var(--mono);font-size:11px;color:var(--gris-500);margin-top:14px}
+
+.tabs{display:flex;gap:6px;margin-top:14px}
+.tab{font-family:var(--ui);font-size:12.5px;font-weight:600;border:none;background:var(--gris-100);color:var(--gris-600);border-radius:var(--r-full);padding:5px 14px;cursor:pointer}
+.tab.on{background:var(--azul-900);color:#fff}
+.panel{display:none}
+.panel.on{display:block}
+
+.aviso{background:var(--azul-50);border-radius:var(--r-md);padding:12px 16px;font-size:13.5px;line-height:20px;color:var(--azul-800);margin:12px 0}
+.aviso b{color:var(--azul-900)}
+.aviso--alerta{background:var(--alerta-bg);color:var(--alerta)}
+
+.footer{border-top:1px solid var(--gris-200);margin-top:40px;padding:20px 0;font-size:12px;color:var(--gris-500)}
+</style>
+</head>
+<body>
+
+<header class="top"><div class="top-in">
+  <span class="lockup"><span class="logo-pill">GG</span><span class="wm">GasGas <small>· Documentación de la API</small></span></span>
+  <a class="link" href="/datos">← Volver a GasGas Datos</a>
+</div></header>
+
+<div class="layout">
+
+<nav class="sidebar">
+  <div class="grupo">Empezar</div>
+  <a href="#inicio">Inicio rápido</a>
+  <a href="#auth">Autenticación</a>
+  <a href="#convenciones">Convenciones</a>
+  <div class="grupo">Referencia</div>
+  <a class="metodo" href="#precios">GET /precios</a>
+  <a class="metodo" href="#historico">GET /historico</a>
+  <a class="metodo" href="#estados">GET /estados</a>
+  <a class="metodo" href="#municipios">GET /municipios</a>
+  <a class="metodo" href="#otros">Otros endpoints</a>
+  <div class="grupo">Operación</div>
+  <a href="#errores">Errores</a>
+  <a href="#versionado">Versionado</a>
+  <a href="#changelog">Changelog</a>
+</nav>
+
+<main class="contenido">
+
+  <h1>API de precios GasGas <span class="version">v1 · estable</span></h1>
+  <p class="lead">Precios de combustible de las 14,194 estaciones de México — promedio, mínimo, máximo y desviación estándar por nivel geográfico, con serie histórica diaria. Fuente: Comisión Nacional de Energía, con validación y limpieza de atípicos.</p>
+  <div class="base-url">https://api.gasgas.com.mx/api</div>
+
+  <h2 id="inicio">Inicio rápido</h2>
+  <p>Tu primera llamada en 60 segundos. Elige tu lenguaje:</p>
+  <div class="tabs">
+    <button class="tab on" data-t="curl">cURL</button>
+    <button class="tab" data-t="python">Python</button>
+    <button class="tab" data-t="js">JavaScript</button>
+  </div>
+  <div class="panel on" id="p-curl"><pre>curl "https://api.gasgas.com.mx/api/precios?market=estado&value=Jalisco&days=1&product=regular"</pre></div>
+  <div class="panel" id="p-python"><pre>import requests
+
+r = requests.get("https://api.gasgas.com.mx/api/precios",
+                 params={"market": "estado", "value": "Jalisco",
+                         "days": 1, "product": "regular"})
+print(r.json())</pre></div>
+  <div class="panel" id="p-js"><pre>const r = await fetch(
+  "https://api.gasgas.com.mx/api/precios?market=estado&value=Jalisco&days=1&product=regular"
+);
+console.log(await r.json());</pre></div>
+  <div class="etiqueta-code">Respuesta:</div>
+  <pre>{
+  <span class="k">"regular"</span>: <span class="g">"23.9295"</span>,  <span class="k">"premium"</span>: <span class="g">"29.0847"</span>,  <span class="k">"diesel"</span>: <span class="g">"27.0410"</span>,
+  <span class="k">"min"</span>: <span class="g">"22.9900"</span>,  <span class="k">"max"</span>: <span class="g">"24.4900"</span>,  <span class="k">"std"</span>: <span class="g">"0.2968"</span>,
+  <span class="k">"stations_count"</span>: <span class="n">333</span>,
+  <span class="k">"updated_at"</span>: <span class="g">"2026-07-20T12:00:46.227Z"</span>
+}</pre>
+
+  <h2 id="auth">Autenticación</h2>
+  <p>Los endpoints de esta referencia son de <b>consulta abierta con fines de evaluación</b> — los mismos que alimentan gasgas.com.mx.</p>
+  <p>Los <b>contratos comerciales</b> operan con una <b>API key por cliente</b> enviada en el encabezado <span class="mono">x-api-key</span>, con límites de uso definidos en tu contrato y, si tu caso lo requiere, endpoints dedicados (así operan nuestros clientes en producción). La llave se entrega en el setup y es rotable a solicitud.</p>
+  <pre>curl -H <span class="g">"x-api-key: TU_LLAVE"</span> "https://api.gasgas.com.mx/api/precios?..."</pre>
+
+  <h2 id="convenciones">Convenciones</h2>
+  <ul>
+    <li><b>Números como texto.</b> Los precios llegan como strings con 4 decimales (<span class="mono">"23.9295"</span>) para no perder precisión. Conviértelos a decimal en tu sistema; para mostrar, redondea a 2.</li>
+    <li><b><span class="mono">updated_at</span> en cada respuesta.</b> Timestamp UTC (ISO 8601) del último cálculo. La base se actualiza ~11 veces al día con la publicación de la CNE.</li>
+    <li><b>Fechas de negocio en hora de México.</b> El corte <span class="mono">days=1</span> corresponde al último día con datos publicados (zona America/Mexico_City), no al día UTC.</li>
+    <li><b>Niveles geográficos.</b> <span class="mono">nacional</span> · <span class="mono">estado</span> · <span class="mono">municipio</span> (llave compuesta <span class="mono">Estado|Municipio</span>, la barra se codifica <span class="mono">%7C</span>) · código postal y estación individual disponibles por contrato.</li>
+    <li><b>Nombres insensibles a mayúsculas.</b> <span class="mono">value=jalisco</span> y <span class="mono">value=Jalisco</span> son equivalentes.</li>
+    <li><b>Validación de datos.</b> Los promedios excluyen precios fuera de rangos plausibles (limpieza de atípicos documentada). <span class="mono">stations_count</span> declara la base muestral de cada cifra.</li>
+  </ul>
+
+  <h2 id="precios">Precios agregados</h2>
+  <div class="endpoint">
+    <div class="cab"><span class="get">GET</span><span class="ruta">/api/precios</span></div>
+    <div class="cuerpo">
+      <p>Promedio, mínimo, máximo y desviación estándar de un mercado en un periodo.</p>
+      <table>
+        <tr><th>Parámetro</th><th>Valores</th><th>Descripción</th></tr>
+        <tr><td>market <span class="req">requerido</span></td><td class="mono">nacional · estado · municipio</td><td>Nivel geográfico.</td></tr>
+        <tr><td>value <span class="req">requerido</span></td><td class="mono">all · Jalisco · Jalisco%7CZapopan</td><td><span class="mono">all</span> para nacional; nombre del estado; o <span class="mono">Estado|Municipio</span>.</td></tr>
+        <tr><td>days <span class="req">requerido</span></td><td class="mono">1 · 7 · 30</td><td>Hoy, últimos 7 o últimos 30 días.</td></tr>
+        <tr><td>product <span class="opc">opcional</span></td><td class="mono">regular · premium · diesel</td><td>A qué combustible corresponden <span class="mono">min/max/std</span>. Default: <span class="mono">regular</span>.</td></tr>
+      </table>
+      <div class="etiqueta-code">Ejemplo — Zapopan, hoy:</div>
+      <pre>curl "https://api.gasgas.com.mx/api/precios?market=municipio&value=Jalisco%7CZapopan&days=1&product=regular"</pre>
+      <table>
+        <tr><th>Campo</th><th>Tipo</th><th>Descripción</th></tr>
+        <tr><td>regular · premium · diesel</td><td>string</td><td>Precio promedio por litro del periodo (4 decimales).</td></tr>
+        <tr><td>min · max · std</td><td>string</td><td>Mínimo, máximo y desviación estándar del <b>producto solicitado</b>.</td></tr>
+        <tr><td>stations_count</td><td>int</td><td>Estaciones que respaldan la cifra (base muestral).</td></tr>
+        <tr><td>updated_at</td><td>string</td><td>Último cálculo (ISO 8601, UTC).</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <h2 id="historico">Serie histórica</h2>
+  <div class="endpoint">
+    <div class="cab"><span class="get">GET</span><span class="ruta">/api/historico</span></div>
+    <div class="cuerpo">
+      <p>Serie diaria de promedios de un mercado, para gráficas y análisis de tendencia. Histórico profundo (desde mayo 2024) disponible por contrato.</p>
+      <table>
+        <tr><th>Parámetro</th><th>Valores</th><th>Descripción</th></tr>
+        <tr><td>market <span class="req">requerido</span></td><td class="mono">nacional · estado · municipio</td><td>Nivel geográfico.</td></tr>
+        <tr><td>value <span class="req">requerido</span></td><td class="mono">all · Chiapas · …</td><td>Mercado.</td></tr>
+        <tr><td>days <span class="opc">opcional</span></td><td class="mono">7 · 30</td><td>Ventana de la serie. Default: 30.</td></tr>
+      </table>
+      <div class="etiqueta-code">Respuesta (arreglo ordenado por fecha):</div>
+      <pre>[
+  { <span class="k">"date"</span>: <span class="g">"2026-06-21T00:00:00.000Z"</span>, <span class="k">"regular"</span>: <span class="g">"23.8531"</span>, <span class="k">"premium"</span>: <span class="g">"28.5296"</span>, <span class="k">"diesel"</span>: <span class="g">"27.1566"</span> },
+  <span class="c">…un objeto por día…</span>
+]</pre>
+    </div>
+  </div>
+
+  <h2 id="estados">Catálogo de estados</h2>
+  <div class="endpoint">
+    <div class="cab"><span class="get">GET</span><span class="ruta">/api/estados</span></div>
+    <div class="cuerpo">
+      <p>Los 32 estados disponibles, para construir selectores.</p>
+      <pre>[ { <span class="k">"estado"</span>: <span class="g">"Aguascalientes"</span> }, { <span class="k">"estado"</span>: <span class="g">"Baja California"</span> }, <span class="c">…</span> ]</pre>
+    </div>
+  </div>
+
+  <h2 id="municipios">Catálogo de municipios</h2>
+  <div class="endpoint">
+    <div class="cab"><span class="get">GET</span><span class="ruta">/api/municipios</span></div>
+    <div class="cuerpo">
+      <table>
+        <tr><th>Parámetro</th><th>Valores</th><th>Descripción</th></tr>
+        <tr><td>estado <span class="req">requerido</span></td><td class="mono">Jalisco</td><td>Estado del que se listan municipios. Sin él: <span class="mono">400</span>.</td></tr>
+      </table>
+      <div class="etiqueta-code">Respuesta (incluye la base muestral de cada plaza):</div>
+      <pre>[ { <span class="k">"municipio"</span>: <span class="g">"Zapopan"</span>, <span class="k">"estaciones"</span>: <span class="n">108</span> }, { <span class="k">"municipio"</span>: <span class="g">"Guadalajara"</span>, <span class="k">"estaciones"</span>: <span class="n">…</span> } ]</pre>
+      <div class="aviso"><b>Sugerencia:</b> usa <span class="mono">estaciones</span> para decidir cómo presentar plazas chicas — un promedio de 1–2 estaciones es una referencia puntual, no un mercado.</div>
+    </div>
+  </div>
+
+  <h2 id="otros">Otros endpoints</h2>
+  <div class="endpoint">
+    <div class="cab"><span class="get">GET</span><span class="ruta">/api/ranking-estados</span><span style="font-size:12px;color:var(--gris-500)">?product=regular</span></div>
+    <div class="cuerpo"><p>Los 32 estados con sus precios de hoy, para rankings. Parámetro <span class="mono">product</span> opcional.</p></div>
+  </div>
+  <div class="endpoint">
+    <div class="cab"><span class="get">GET</span><span class="ruta">/api/vecinos</span><span style="font-size:12px;color:var(--gris-500)">?estado=Chiapas&product=regular</span></div>
+    <div class="cuerpo"><p>Estados vecinos de un estado con sus precios de hoy, para comparativos regionales.</p></div>
+  </div>
+  <div class="endpoint">
+    <div class="cab"><span class="get">GET</span><span class="ruta">/api/test</span></div>
+    <div class="cuerpo"><p>Health check. Responde <span class="mono">{"status":"ok"}</span>. Úsalo para verificar conectividad y monitoreo.</p></div>
+  </div>
+  <p>Por contrato: <b>nivel código postal</b> (promedios por CP, como operan nuestros clientes en producción), <b>nivel estación</b> (precio por estación con ubicación y marca) y <b>cortes a la medida</b> (por marca, por zona, por periodo).</p>
+
+  <h2 id="errores">Errores</h2>
+  <p>Los errores llegan en JSON con el código HTTP correspondiente: <span class="mono">{"error": "descripción"}</span></p>
+  <table>
+    <tr><th>Código</th><th>Significado</th><th>Qué hacer</th></tr>
+    <tr><td>400</td><td>Falta un parámetro o tiene formato inválido.</td><td>Revisa los parámetros requeridos del endpoint.</td></tr>
+    <tr><td>401</td><td>Llave ausente o inválida (endpoints con contrato).</td><td>Verifica el encabezado <span class="mono">x-api-key</span>.</td></tr>
+    <tr><td>404</td><td>El mercado solicitado no existe.</td><td>Valida el nombre contra <span class="mono">/estados</span> o <span class="mono">/municipios</span>.</td></tr>
+    <tr><td>429</td><td>Límite de uso excedido.</td><td>Espera y reintenta con backoff. Los límites están en tu contrato; nunca bloqueamos en silencio.</td></tr>
+    <tr><td>5xx</td><td>Error de nuestro lado.</td><td>Reintenta con backoff exponencial. Nuestro monitoreo lo detecta en ≤1 hora y el equipo es alertado.</td></tr>
+  </table>
+
+  <h2 id="versionado">Versionado y estabilidad</h2>
+  <ul>
+    <li>El esquema de respuesta es <b>estable</b>: los campos existentes no cambian de nombre ni de tipo sin nueva versión.</li>
+    <li><b>Agregar</b> campos nuevos no se considera cambio incompatible — programa tu parser para ignorar campos desconocidos.</li>
+    <li>Un cambio incompatible se publica como <b>versión nueva</b> con <b>90 días de aviso</b> a los clientes con contrato, y se anota en el changelog.</li>
+  </ul>
+
+  <h2 id="changelog">Changelog</h2>
+  <table>
+    <tr><th>Fecha</th><th>Cambio</th></tr>
+    <tr><td>2026-07-19</td><td>Nuevo nivel <b>municipio</b> (~2,900 plazas) en <span class="mono">/precios</span> y <span class="mono">/historico</span> + nuevo catálogo <span class="mono">/municipios</span>.</td></tr>
+    <tr><td>2026-07</td><td>Documentación pública v1. Esquema estable declarado.</td></tr>
+  </table>
+
+  <div class="footer">GasGas Datos · Fuente: Comisión Nacional de Energía · ¿Dudas de integración? <a href="mailto:hola@gasgas.com.mx">hola@gasgas.com.mx</a> — responde el equipo de ingeniería, el mismo día hábil.</div>
+
+</main>
+</div>
+
+<script>
+document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
+  document.querySelectorAll(".panel").forEach(x=>x.classList.remove("on"));
+  t.classList.add("on");
+  document.getElementById("p-"+t.dataset.t).classList.add("on");
+}));
+</script>
+</body>
+</html>
