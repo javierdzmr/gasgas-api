@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>GasGas · Datos y API de precios de combustible en México</title>
+<title>GasGas Datos · La API de precios de combustible de México</title>
 <meta name="description" content="La API de precios de gasolina de México: 14,194 estaciones, datos oficiales CNE, histórico desde 2024, por estado, municipio, código postal y estación.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -197,6 +197,53 @@ pre.json .n{color:#FDE68A}
     </div>
   </section>
 
+  <section class="seccion" id="tecnico">
+    <div class="overline" style="color:var(--verde-600)">Para tu equipo técnico</div>
+    <h2>Lo que tu CTO va a preguntar, contestado</h2>
+    <p class="intro">Integración en minutos, contrato de datos estable y operación monitoreada. Esto es lo que firmamos con cada cliente.</p>
+
+    <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:14px;margin-top:8px;align-items:start" class="tec-grid">
+      <div style="background:var(--azul-900);border-radius:var(--r-lg);padding:18px;overflow:hidden">
+        <div style="font-family:var(--mono);font-size:11px;color:var(--gris-300);margin-bottom:8px">La primera llamada de tu equipo (copiar y pegar):</div>
+        <pre style="font-family:var(--mono);font-size:12px;line-height:18px;color:#A7F3D0;white-space:pre-wrap;word-break:break-all">curl "https://api.gasgas.com.mx/api/precios?market=estado&value=Jalisco&days=1&product=regular"</pre>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--gris-300);margin:12px 0 6px">Respuesta (campos fijos, tipados):</div>
+        <pre style="font-family:var(--mono);font-size:11.5px;line-height:17px;color:#D9E2EC;white-space:pre">{
+  "regular": "23.93",  "premium": "29.08",  "diesel": "27.04",
+  "min": "22.99",  "max": "24.49",  "std": "0.29",
+  "stations_count": 333,
+  "updated_at": "2026-07-20T12:00:46.227Z"
+}</pre>
+        <div style="font-family:var(--mono);font-size:11px;color:#A7F3D0;margin-top:8px">↑ updated_at: cada respuesta declara la hora de su dato</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="background:var(--gris-0);border:1px solid var(--gris-200);border-radius:var(--r-lg);padding:14px 16px">
+          <div style="font-weight:700;font-size:14px">Esquema estable, versionado</div>
+          <p style="font-size:12.5px;line-height:18px;color:var(--gris-600);margin-top:4px">Los campos no cambian sin aviso. Un cambio incompatible se publica como versión nueva con <b>90 días de aviso</b> y changelog.</p>
+        </div>
+        <div style="background:var(--gris-0);border:1px solid var(--gris-200);border-radius:var(--r-lg);padding:14px 16px">
+          <div style="font-weight:700;font-size:14px">Llaves por cliente + TLS</div>
+          <p style="font-size:12.5px;line-height:18px;color:var(--gris-600);margin-top:4px">Acceso con API key propia, rotable a solicitud. Límites de uso <b>publicados en tu contrato</b>: al excederlos respondemos 429, nunca bloqueo silencioso.</p>
+        </div>
+        <div style="background:var(--gris-0);border:1px solid var(--gris-200);border-radius:var(--r-lg);padding:14px 16px">
+          <div style="font-weight:700;font-size:14px">Operación vigilada, no prometida</div>
+          <p style="font-size:12.5px;line-height:18px;color:var(--gris-600);margin-top:4px">Monitoreo automático <b>cada hora</b> de frescura y correctitud, con alertas al equipo. La prueba está arriba: el playground pega a producción real.</p>
+        </div>
+        <div style="background:var(--gris-0);border:1px solid var(--gris-200);border-radius:var(--r-lg);padding:14px 16px">
+          <div style="font-weight:700;font-size:14px">Canal directo de ingeniería</div>
+          <p style="font-size:12.5px;line-height:18px;color:var(--gris-600);margin-top:4px">Hablas con quien construye la plataforma, no con un call center. Respuesta el mismo día hábil.</p>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:12px;background:var(--gris-0);border:1px solid var(--gris-200);border-radius:var(--r-lg);padding:12px 16px;font-size:12.5px;line-height:19px;color:var(--gris-600)">
+      <b style="color:var(--gris-900)">Endpoints:</b>
+      <span style="font-family:var(--mono);font-size:11.5px">GET /api/precios</span> (promedio, mín, máx, σ por mercado) ·
+      <span style="font-family:var(--mono);font-size:11.5px">GET /api/historico</span> (serie diaria) ·
+      <span style="font-family:var(--mono);font-size:11.5px">GET /api/estados</span> y <span style="font-family:var(--mono);font-size:11.5px">GET /api/municipios</span> (catálogos) ·
+      niveles <b>nacional / estado / municipio / código postal / estación</b> · errores estándar 400 · 401 · 404 · 429 · 5xx con mensaje en JSON.
+    </div>
+  </section>
+
   <section class="seccion">
     <div class="overline" style="color:var(--verde-600)">Casos de uso</div>
     <h2>Quiénes usan estos datos</h2>
@@ -256,6 +303,38 @@ pre.json .n{color:#FDE68A}
       </div>
     </div>
     <p style="margin-top:14px;font-size:12.5px;line-height:18px;color:var(--gris-500)">Precios en MXN + IVA. Implementación inicial (setup) equivalente a una mensualidad: incluye llaves, pruebas de integración y acompañamiento técnico. Facturamos CFDI desde el día uno. El histórico desde mayo 2024 se cotiza como complemento.</p>
+
+    <div style="margin-top:20px;background:var(--gris-0);border:2px solid var(--verde-600);border-radius:var(--r-lg);overflow:hidden" id="estimador">
+      <div style="background:var(--verde-600);color:#fff;padding:12px 18px;font-weight:700;font-size:15px">Estima tu inversión en 3 clics</div>
+      <div style="padding:18px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <select id="est-nivel" style="height:38px;padding:0 12px;border-radius:var(--r-full);border:1px solid var(--gris-300);background:var(--gris-0);font-family:var(--ui);font-size:13px;font-weight:600;cursor:pointer">
+          <option value="estado">Nivel estado (incluye nacional)</option>
+          <option value="municipio">Nivel municipio</option>
+          <option value="cp" selected>Nivel código postal</option>
+          <option value="estacion">Nivel estación</option>
+        </select>
+        <select id="est-cobertura" style="height:38px;padding:0 12px;border-radius:var(--r-full);border:1px solid var(--gris-300);background:var(--gris-0);font-family:var(--ui);font-size:13px;font-weight:600;cursor:pointer">
+          <option value="1">Una región del país</option>
+          <option value="1.3">Dos o tres regiones</option>
+          <option value="1.5" selected>Cobertura nacional</option>
+        </select>
+        <select id="est-hist" style="height:38px;padding:0 12px;border-radius:var(--r-full);border:1px solid var(--gris-300);background:var(--gris-0);font-family:var(--ui);font-size:13px;font-weight:600;cursor:pointer">
+          <option value="0" selected>Datos desde la contratación</option>
+          <option value="1">+ Histórico completo (desde may 2024)</option>
+        </select>
+      </div>
+      <div style="padding:0 18px 18px">
+        <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap">
+          <div><span style="font-size:12px;color:var(--gris-500);font-weight:600">RANGO ESTIMADO</span><br>
+            <span id="est-rango" class="tabular" style="font-size:32px;font-weight:800;letter-spacing:-.01em">$52,500 – $63,000</span>
+            <span style="font-size:13px;color:var(--gris-500);font-weight:600"> /mes + IVA</span>
+          </div>
+          <div style="font-size:12.5px;line-height:18px;color:var(--gris-600)" id="est-setup">+ setup único equivalente a una mensualidad</div>
+        </div>
+        <div id="est-nota" style="margin-top:8px;font-size:12px;line-height:17px;color:var(--gris-500)">Estimado orientativo. La cotización formal —ajustada por volumen de llamadas y alcance— te llega en 24 horas hábiles.</div>
+        <a id="est-cta" class="btn btn--primario" style="margin-top:14px" href="mailto:hola@gasgas.com.mx">Solicitar cotización con este estimado</a>
+      </div>
+    </div>
   </section>
 
   <section class="seccion">
@@ -363,6 +442,38 @@ $("pg-municipio").addEventListener("change",pintaUrl);
 $("pg-run").addEventListener("click",ejecutar);
 
 (async()=>{await cargarEstados();pintaUrl();ejecutar();})();
+
+/* ── Estimador de inversión (política comercial jul 2026) ──
+   Base por nivel; multiplicador por cobertura (solo niveles finos);
+   histórico completo ≈ +10%. Rango = estimado a estimado×1.2
+   (colchón por volumen). Estación → cotización a medida. */
+const EST_BASE={estado:15000,municipio:25000,cp:35000,estacion:null};
+const NIVEL_NOMBRE={estado:"Estado",municipio:"Municipio",cp:"Código postal",estacion:"Estación"};
+function fmtMXN(n){return "$"+(Math.round(n/500)*500).toLocaleString("es-MX");}
+function estima(){
+  const nivel=$("est-nivel").value;
+  const cob=$("est-cobertura");
+  cob.disabled=(nivel==="estado");
+  const rango=$("est-rango"),setup=$("est-setup"),cta=$("est-cta");
+  if(nivel==="estacion"){
+    rango.textContent="Cotización a medida";
+    rango.style.fontSize="24px";
+    setup.textContent="El nivel más fino se arma según tu caso: número de estaciones, marcas y zonas.";
+    cta.href="mailto:hola@gasgas.com.mx?subject="+encodeURIComponent("Cotización API GasGas — nivel estación");
+    return;
+  }
+  rango.style.fontSize="32px";
+  const mult=(nivel==="estado")?1:parseFloat(cob.value);
+  const hist=($("est-hist").value==="1")?1.10:1;
+  const base=EST_BASE[nivel]*mult*hist;
+  const tope=base*1.2;
+  rango.textContent=`${fmtMXN(base)} – ${fmtMXN(tope)}`;
+  setup.textContent="+ setup único equivalente a una mensualidad ("+fmtMXN(base)+" aprox.)";
+  const cobTxt=(nivel==="estado")?"nacional incluida":cob.options[cob.selectedIndex].text.toLowerCase();
+  cta.href="mailto:hola@gasgas.com.mx?subject="+encodeURIComponent(`Cotización API GasGas — nivel ${NIVEL_NOMBRE[nivel]}`)+"&body="+encodeURIComponent(`Hola, usé el estimador de gasgas.com.mx/datos.\n\nNivel: ${NIVEL_NOMBRE[nivel]}\nCobertura: ${cobTxt}\nHistórico: ${$("est-hist").value==="1"?"completo desde may 2024":"desde contratación"}\nRango estimado: ${rango.textContent} /mes + IVA\n\nMe interesa una cotización formal para:\n[cuéntanos brevemente tu caso]`);
+}
+["est-nivel","est-cobertura","est-hist"].forEach(id=>$(id).addEventListener("change",estima));
+estima();
 </script>
 </body>
 </html>
