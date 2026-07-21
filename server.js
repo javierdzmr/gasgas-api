@@ -82,7 +82,14 @@ async function initTables() {
     `);
     console.log("🛡️ Tablas verificadas al arrancar");
   } catch (err) {
-    console.error("❌ Error en initTables:", err);
+    // 42501 = permission denied: el servicio web corre con usuario de SOLO LECTURA.
+    // Es lo esperado y correcto — la creación/protección de tablas la hacen los
+    // cron jobs (que sí escriben). No es un error, se omite en silencio.
+    if (err.code === "42501") {
+      console.log("ℹ️ Modo solo-lectura: se omite initTables (las tablas las protegen los crons).");
+    } else {
+      console.error("❌ Error en initTables:", err);
+    }
   } finally {
     client.release();
   }
