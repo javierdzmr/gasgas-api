@@ -30,6 +30,15 @@ app.use((req, res, next) => {
 // 🧾 Parser de JSON (para POST /api/lead)
 app.use(express.json({ limit: '16kb' }));
 
+// 🧊 Cache-Control: los GET de /api son de LECTURA y pueden cachearse en el
+//    borde (Cloudflare) y navegador ~5 min. Un millón de llamadas idénticas las
+//    contesta la caché, no la base. POST (leads) nunca se cachea.
+app.use('/api', (req, res, next) => {
+  if (req.method === 'GET') res.set('Cache-Control', 'public, max-age=300, s-maxage=300');
+  else res.set('Cache-Control', 'no-store');
+  next();
+});
+
 // 📄 Servir el dashboard desde public/ (gasgas-api-dev.onrender.com)
 app.use(express.static('public'));
 
