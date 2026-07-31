@@ -46,6 +46,22 @@ a{color:inherit;text-decoration:none}
 .btn--primario{background:var(--verde-600);color:#fff}
 .btn--primario:hover{background:var(--verde-700)}
 .btn--inverso{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.35)}
+.hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center}
+@media(max-width:860px){.hero-grid{grid-template-columns:1fr;gap:28px}}
+.limpieza{background:var(--azul-800);border:1px solid rgba(255,255,255,.1);border-radius:var(--r-lg);padding:16px 16px 14px}
+.lp-head{font-size:11px;font-weight:700;letter-spacing:.06em;color:#fff;margin-bottom:12px;text-transform:uppercase}
+.lp-head b{color:var(--verde-500)}
+.lp-cols{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center}
+.lp-t{font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
+.lp-crudo .lp-t{color:#F87171}
+.lp-limpio .lp-t{color:var(--verde-500)}
+.lp-row{font-family:var(--mono);font-size:11px;line-height:16px;padding:3px 0;color:var(--gris-300)}
+.lp-row.bad{color:#FCA5A5}
+.lp-row.bad s{text-decoration-color:rgba(252,165,165,.5)}
+.lp-row.ok{color:#A7F3D0;position:relative;padding-left:15px}
+.lp-row.ok::before{content:"✓";position:absolute;left:0;color:var(--verde-500);font-weight:800;font-size:10px}
+.lp-arrow{color:var(--gris-500);font-size:18px;font-weight:800;text-align:center}
+@media(max-width:520px){.lp-cols{grid-template-columns:1fr}.lp-arrow{transform:rotate(90deg);margin:2px 0}}
 
 /* Stats de cobertura */
 .stats{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--gris-200);border-radius:var(--r-lg);overflow:hidden;margin:-28px auto 0;box-shadow:var(--sombra-md);position:relative}
@@ -138,15 +154,43 @@ pre.json .n{color:#FDE68A}
     <a class="volver" href="/">Ver el sitio para conductores →</a>
   </div>
   <div class="wrap hero">
-    <div class="overline">API y datos para empresas</div>
-    <h1>Precios listos para decidir, no un archivo que limpiar.</h1>
-    <p class="sub">La Comisión Nacional de Energía publica el dato crudo. Nosotros lo volvemos infraestructura: 14,194 estaciones validadas cada día, histórico desde mayo de 2024 que no se puede reconstruir, y el contexto para saber si un precio es caro o barato. Por estado, municipio, código postal o estación.</p>
-    <div class="ctas">
-      <a class="btn btn--primario" href="mailto:hola@gasgas.com.mx?subject=API%20de%20datos%20GasGas">Hablar con nosotros</a>
-      <a class="btn btn--inverso" href="#playground">Probar la API en vivo ↓</a>
-      <a class="btn btn--inverso" href="/docs">Ver documentación</a>
+    <div class="hero-grid">
+      <div class="hero-col">
+        <div class="overline">API y datos para empresas</div>
+        <h1>Precios listos para decidir, no un archivo que limpiar.</h1>
+        <p class="sub">La Comisión Nacional de Energía publica el dato crudo. Nosotros lo volvemos infraestructura: 14,194 estaciones validadas cada día, histórico desde mayo de 2024 que no se puede reconstruir, y el contexto para saber si un precio es caro o barato. Por estado, municipio, código postal o estación.</p>
+        <div class="ctas">
+          <a class="btn btn--primario" href="mailto:hola@gasgas.com.mx?subject=API%20de%20datos%20GasGas">Hablar con nosotros</a>
+          <a class="btn btn--inverso" href="#playground">Probar la API en vivo ↓</a>
+          <a class="btn btn--inverso" href="/docs">Ver documentación</a>
+        </div>
+        <div class="live" id="live"><span class="dot"></span><span id="live-txt">Verificando datos en vivo…</span></div>
+      </div>
+      <div class="hero-visual">
+        <div class="limpieza">
+          <div class="lp-head">Cada precio pasa por <b>nuestra limpieza</b></div>
+          <div class="lp-cols">
+            <div class="lp-crudo">
+              <div class="lp-t">Dato crudo · CNE</div>
+              <div class="lp-row bad"><s>Estación duplicada ×3</s></div>
+              <div class="lp-row bad"><s>Magna $0.00</s></div>
+              <div class="lp-row bad"><s>Premium $999.00</s></div>
+              <div class="lp-row bad"><s>Sin municipio ni coords</s></div>
+              <div class="lp-row bad"><s>Precio de hace 3 semanas</s></div>
+            </div>
+            <div class="lp-arrow">→</div>
+            <div class="lp-limpio">
+              <div class="lp-t">Dato GasGas</div>
+              <div class="lp-row ok">1 estación única</div>
+              <div class="lp-row ok">Magna $23.93 validado</div>
+              <div class="lp-row ok">Rango verificado</div>
+              <div class="lp-row ok">CP + municipio geolocalizado</div>
+              <div class="lp-row ok">Fecha con sello de hora</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="live" id="live"><span class="dot"></span><span id="live-txt">Verificando datos en vivo…</span></div>
   </div>
 </header>
 
