@@ -76,6 +76,7 @@ a{color:inherit;text-decoration:none}
 .marca-row.max .marca-bar i{background:#B91C1C} .marca-row.max .pr{color:#B91C1C}
 .marcas-load{color:var(--gris-500);font-size:13px;padding:8px 0}
 @media(max-width:600px){.marca-row{grid-template-columns:96px 1fr 58px;gap:8px}}
+@media(max-width:760px){.tec-grid{grid-template-columns:1fr!important}}
 
 /* Stats de cobertura */
 .stats{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--gris-200);border-radius:var(--r-lg);overflow:hidden;margin:-28px auto 0;box-shadow:var(--sombra-md);position:relative}
@@ -314,11 +315,20 @@ pre.json .n{color:#FDE68A}
         <div style="font-family:var(--mono);font-size:11px;color:var(--gris-300);margin-bottom:8px">La primera llamada de tu equipo (copiar y pegar):</div>
         <pre style="font-family:var(--mono);font-size:12px;line-height:18px;color:#A7F3D0;white-space:pre-wrap;word-break:break-all">curl "https://api.gasgas.com.mx/api/precios?market=estado&value=Jalisco&days=1&product=regular"</pre>
         <div style="font-family:var(--mono);font-size:11px;color:var(--gris-300);margin:12px 0 6px">Respuesta (campos fijos, tipados):</div>
-        <pre style="font-family:var(--mono);font-size:11.5px;line-height:17px;color:#D9E2EC;white-space:pre">{
-  "regular": "23.93",  "premium": "29.08",  "diesel": "27.04",
-  "min": "22.99",  "max": "24.49",  "std": "0.29",
+        <pre style="font-family:var(--mono);font-size:11.5px;line-height:17px;color:#D9E2EC;white-space:pre;overflow-x:auto">{
+  "regular": "23.93",
+  "premium": "29.08",
+  "diesel": "27.04",
+  "min": "22.99",
+  "max": "24.49",
+  "std": "0.29",
   "stations_count": 333,
-  "semaforo": { "estado": "medio", "delta_pct": 0.5, "referencia": "nacional", "icono": "↔" },
+  "semaforo": {
+    "estado": "medio",
+    "delta_pct": 0.5,
+    "referencia": "nacional",
+    "icono": "↔"
+  },
   "updated_at": "2026-07-20T12:00:46.227Z"
 }</pre>
         <div style="font-family:var(--mono);font-size:11px;color:#A7F3D0;margin-top:8px">↑ updated_at: cada respuesta declara la hora de su dato</div>
