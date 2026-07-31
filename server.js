@@ -21,11 +21,14 @@ app.use((req, res, next) => {
   if (ALLOWED_ORIGINS.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
   }
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.sendStatus(204);
   next();
 });
+
+// 🧾 Parser de JSON (para POST /api/lead)
+app.use(express.json({ limit: '16kb' }));
 
 // 📄 Servir el dashboard desde public/ (gasgas-api-dev.onrender.com)
 app.use(express.static('public'));
@@ -303,6 +306,45 @@ app.get("/api/marcas", async (req, res) => {
   } catch (err) {
     console.error("ERROR /marcas:", err);
     res.status(500).json({ error: "Error obteniendo marcas" });
+  }
+});
+
+// ==============================
+// 🔹 CAPTURA DE LEADS (llave de prueba / contacto B2B)
+//    Loguea SIEMPRE antes de escribir → el lead no se pierde ni aunque la DB falle.
+//    Tabla 'leads' append-only; gasgas_ro solo tiene INSERT.
+// ==============================
+app.post("/api/lead", async (req, res) => {
+  try {
+    const b = req.body || {};
+    const email = String(b.email || "").trim().slice(0, 200);
+    const contexto = String(b.contexto || "").slice(0, 500);
+    const fuente = String(b.fuente || "web").slice(0, 80);
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ ok: false, error: "Correo inválido" });
+    }
+
+    const ip = String(req.headers["x-forwarded-for"] || req.ip || "").split(",")[0].trim().slice(0, 60);
+    const ua = String(req.headers["user-agent"] || "").slice(0, 300);
+
+    // 1) Captura garantizada en el log de Render (aunque la DB no escriba)
+    console.log(`[LEAD] ${email} | fuente=${fuente} | ${contexto} | ip=${ip}`);
+
+    // 2) Persistencia en tabla append-only
+    try {
+      await pool.query(
+        `INSERT INTO leads (email, contexto, fuente, ip, user_agent) VALUES ($1,$2,$3,$4,$5)`,
+        [email, contexto, fuente, ip, ua]
+      );
+    } catch (e) {
+      console.error("[LEAD] no se pudo guardar en DB (queda en el log):", e.message);
+    }
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("ERROR /lead:", err);
+    res.status(500).json({ ok: false, error: "Error registrando el lead" });
   }
 });
 

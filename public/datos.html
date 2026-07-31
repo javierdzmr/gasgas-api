@@ -579,16 +579,29 @@ frescura();
 
 /* ── Llave de prueba: valida correo y abre solicitud (lead B2B) ── */
 const reEmail=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-$("llave-btn").addEventListener("click",()=>{
+$("llave-btn").addEventListener("click",async()=>{
   const el=$("llave-email");const email=el.value.trim();
   if(!reEmail.test(email)){el.classList.add("err");el.focus();return;}
   el.classList.remove("err");
-  const asunto="Solicito llave de prueba de la API GasGas";
-  const cuerpo=`Hola, quiero una llave de prueba de la API.\n\nCorreo: ${email}\nCaso de uso: [cuéntanos brevemente]\nNivel de interés: [estado / municipio / código postal / estación]\n\nGracias.`;
-  window.location.href="mailto:hola@gasgas.com.mx?subject="+encodeURIComponent(asunto)+"&body="+encodeURIComponent(cuerpo);
+  const btn=$("llave-btn");const label=btn.textContent;btn.disabled=true;btn.textContent="Enviando…";
   const ok=$("llave-ok");
-  ok.hidden=false;
-  ok.textContent="✓ ¡Listo! Abrimos tu correo con la solicitud. Si no se abrió, escríbenos a hola@gasgas.com.mx — te enviamos la llave en menos de 24 h hábiles.";
+  try{
+    const base=location.protocol.startsWith("http")?location.origin+"/api":API;
+    const ctrl=new AbortController();const tm=setTimeout(()=>ctrl.abort(),8000);
+    const r=await fetch(`${base}/lead`,{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({email,fuente:"datos-llave-prueba",contexto:"Solicita llave de prueba"}),signal:ctrl.signal});
+    clearTimeout(tm);
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok||!d.ok) throw new Error("fail");
+    ok.hidden=false;
+    ok.textContent="✓ ¡Listo! Recibimos tu solicitud. Te enviamos la llave de prueba a "+email+" en menos de 24 h hábiles.";
+    el.value="";
+  }catch(e){
+    const cuerpo=`Hola, quiero una llave de prueba de la API.\n\nCorreo: ${email}\n\nGracias.`;
+    window.location.href="mailto:hola@gasgas.com.mx?subject="+encodeURIComponent("Solicito llave de prueba de la API GasGas")+"&body="+encodeURIComponent(cuerpo);
+    ok.hidden=false;
+    ok.textContent="Abrimos tu correo para enviar la solicitud. Si no se abrió, escríbenos a hola@gasgas.com.mx.";
+  }finally{ btn.disabled=false;btn.textContent=label; }
 });
 $("llave-email").addEventListener("keydown",e=>{if(e.key==="Enter")$("llave-btn").click();});
 
