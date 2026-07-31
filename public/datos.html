@@ -33,7 +33,7 @@ a{color:inherit;text-decoration:none}
 .marca{background:var(--azul-900);color:#fff}
 .nav{display:flex;align-items:center;justify-content:space-between;height:60px}
 .lockup{display:flex;align-items:center;gap:8px}
-.logo-pill{background:#fff;color:var(--azul-900);font-weight:800;font-size:13px;line-height:18px;letter-spacing:-.04em;border-radius:var(--r-full);padding:3px 9px}
+.logo-pill{background:#fff;color:var(--azul-900);font-weight:800;font-size:14px;line-height:18px;letter-spacing:-.04em;border-radius:var(--r-full);padding:4px 10px}
 .wordmark{font-weight:800;font-size:20px;letter-spacing:-.02em}
 .wordmark small{font-weight:600;font-size:14px;color:var(--gris-300)}
 .nav a.volver{font-size:13px;font-weight:600;color:var(--gris-300)}
@@ -109,6 +109,25 @@ pre.json .n{color:#FDE68A}
 
 .footer{text-align:center;padding:32px 0 40px;color:var(--gris-500);font-size:12px}
 .footer b{color:var(--gris-600)}
+
+/* Chip de frescura en vivo (hero) */
+.live{display:inline-flex;align-items:center;gap:8px;margin-top:20px;font-size:13px;font-weight:600;color:#A7F3D0;background:rgba(0,169,79,.14);border:1px solid rgba(0,169,79,.35);border-radius:var(--r-full);padding:6px 14px}
+.live .dot{width:8px;height:8px;border-radius:50%;background:var(--verde-500);animation:pulso 2s infinite}
+.live .tabular{color:#fff}
+@keyframes pulso{0%{box-shadow:0 0 0 0 rgba(0,169,79,.5)}70%{box-shadow:0 0 0 6px rgba(0,169,79,0)}100%{box-shadow:0 0 0 0 rgba(0,169,79,0)}}
+
+/* Barra de prueba social */
+.prueba-social{display:flex;align-items:center;justify-content:center;gap:10px 18px;flex-wrap:wrap;margin:22px auto 0;padding:0 4px}
+.prueba-social .ps-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gris-500)}
+.prueba-social .ps-item{font-size:13px;font-weight:600;color:var(--gris-600);display:inline-flex;align-items:center;gap:7px}
+.prueba-social .ps-item::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--verde-500)}
+
+/* Llave de prueba */
+.llave-form{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:4px}
+.llave-form input{flex:1;min-width:220px;height:44px;padding:0 16px;border-radius:var(--r-md);border:1px solid var(--gris-300);background:var(--gris-0);font-family:var(--ui);font-size:15px;color:var(--gris-900)}
+.llave-form input.err{border-color:var(--alerta);background:var(--alerta-bg)}
+.llave-ok{margin-top:12px;background:var(--verde-50);color:var(--verde-700);border-radius:var(--r-md);padding:12px 16px;font-size:13.5px;line-height:20px;font-weight:600}
+.mini{margin-top:10px;font-size:12px;line-height:17px;color:var(--gris-500)}
 </style>
 </head>
 <body>
@@ -127,6 +146,7 @@ pre.json .n{color:#FDE68A}
       <a class="btn btn--inverso" href="#playground">Probar la API en vivo ↓</a>
       <a class="btn btn--inverso" href="/docs">Ver documentación</a>
     </div>
+    <div class="live" id="live"><span class="dot"></span><span id="live-txt">Verificando datos en vivo…</span></div>
   </div>
 </header>
 
@@ -139,6 +159,13 @@ pre.json .n{color:#FDE68A}
     <div class="stat"><b class="tabular">2,900+</b><span>municipios</span></div>
     <div class="stat"><b class="tabular">4,900+</b><span>códigos postales</span></div>
     <div class="stat"><b class="tabular">may 2024</b><span>histórico desde</span></div>
+  </div>
+
+  <div class="prueba-social">
+    <span class="ps-label">Ya en producción con</span>
+    <span class="ps-item">Fintechs de beneficios</span>
+    <span class="ps-item">Plataformas de gasto y facturación</span>
+    <span class="ps-item">Flotillas y logística</span>
   </div>
 
   <section class="seccion">
@@ -196,6 +223,18 @@ pre.json .n{color:#FDE68A}
       </div>
       <div class="pg-nota">Endpoint de demostración con los datos del día (days=1). La API completa incluye cortes de 7 y 30 días, series históricas diarias (/api/historico) y catálogos (/api/estados, /api/municipios). Producto solicitado para mín/máx/desviación: Magna.</div>
     </div>
+  </section>
+
+  <section class="seccion" id="llave">
+    <div class="overline" style="color:var(--verde-600)">Empieza hoy</div>
+    <h2>Solicita una llave de prueba</h2>
+    <p class="intro">Te damos una llave con un tope de llamadas para que integres la API y la pruebes con datos reales — sin costo y sin tarjeta. La conviertes en producción cuando estés listo.</p>
+    <div class="llave-form">
+      <input type="email" id="llave-email" placeholder="tu@empresa.com" aria-label="Tu correo de trabajo" autocomplete="email">
+      <button class="btn btn--primario" id="llave-btn">Solicitar llave de prueba</button>
+    </div>
+    <div class="llave-ok" id="llave-ok" hidden></div>
+    <p class="mini">La llave de prueba cubre los niveles estado y municipio con un límite de llamadas. Para producción pasamos a un plan con tu volumen y cobertura.</p>
   </section>
 
   <section class="seccion" id="tecnico">
@@ -476,6 +515,40 @@ function estima(){
 }
 ["est-nivel","est-cobertura","est-hist"].forEach(id=>$(id).addEventListener("change",estima));
 estima();
+
+/* ── Frescura en vivo: lee updated_at del dato nacional de hoy ── */
+async function frescura(){
+  const el=$("live-txt");
+  try{
+    const ctrl=new AbortController();const tm=setTimeout(()=>ctrl.abort(),8000);
+    const r=await fetch(`${API}/precios?market=nacional&value=all&days=1&product=regular`,{signal:ctrl.signal});
+    clearTimeout(tm);
+    const d=await r.json();
+    const iso=d.updated_at||d.date;
+    if(!iso) throw 0;
+    const f=new Date(iso);
+    const fecha=f.toLocaleString("es-MX",{timeZone:"America/Mexico_City",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit",hour12:true});
+    el.innerHTML=`Datos en vivo · última actualización <span class="tabular">${fecha}</span>`;
+  }catch(e){
+    el.textContent="Datos oficiales CNE · actualizados a diario";
+  }
+}
+frescura();
+
+/* ── Llave de prueba: valida correo y abre solicitud (lead B2B) ── */
+const reEmail=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+$("llave-btn").addEventListener("click",()=>{
+  const el=$("llave-email");const email=el.value.trim();
+  if(!reEmail.test(email)){el.classList.add("err");el.focus();return;}
+  el.classList.remove("err");
+  const asunto="Solicito llave de prueba de la API GasGas";
+  const cuerpo=`Hola, quiero una llave de prueba de la API.\n\nCorreo: ${email}\nCaso de uso: [cuéntanos brevemente]\nNivel de interés: [estado / municipio / código postal / estación]\n\nGracias.`;
+  window.location.href="mailto:hola@gasgas.com.mx?subject="+encodeURIComponent(asunto)+"&body="+encodeURIComponent(cuerpo);
+  const ok=$("llave-ok");
+  ok.hidden=false;
+  ok.textContent="✓ ¡Listo! Abrimos tu correo con la solicitud. Si no se abrió, escríbenos a hola@gasgas.com.mx — te enviamos la llave en menos de 24 h hábiles.";
+});
+$("llave-email").addEventListener("keydown",e=>{if(e.key==="Enter")$("llave-btn").click();});
 </script>
 </body>
 </html>
