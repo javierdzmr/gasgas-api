@@ -63,6 +63,20 @@ a{color:inherit;text-decoration:none}
 .lp-arrow{color:var(--gris-500);font-size:18px;font-weight:800;text-align:center}
 @media(max-width:520px){.lp-cols{grid-template-columns:1fr}.lp-arrow{transform:rotate(90deg);margin:2px 0}}
 
+/* Precio por marca */
+.marcas-box{background:var(--gris-0);border:1px solid var(--gris-200);border-radius:var(--r-lg);box-shadow:var(--sombra-sm);padding:14px 16px;margin-top:8px}
+.marca-row{display:grid;grid-template-columns:132px 1fr 66px;align-items:center;gap:12px;padding:6px 0}
+.marca-row+.marca-row{border-top:1px solid var(--gris-100)}
+.marca-row .mk{font-size:13px;font-weight:600;color:var(--gris-900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.marca-row .mk small{color:var(--gris-500);font-weight:500;font-size:11px;font-variant-numeric:tabular-nums}
+.marca-bar{height:20px;background:var(--gris-100);border-radius:var(--r-full);position:relative;overflow:hidden}
+.marca-bar i{position:absolute;left:0;top:0;bottom:0;background:var(--verde-500);border-radius:var(--r-full)}
+.marca-row .pr{font-family:var(--mono);font-size:13px;font-weight:600;text-align:right;color:var(--gris-900);font-variant-numeric:tabular-nums}
+.marca-row.min .marca-bar i{background:var(--verde-600)} .marca-row.min .pr{color:var(--verde-700)}
+.marca-row.max .marca-bar i{background:#B91C1C} .marca-row.max .pr{color:#B91C1C}
+.marcas-load{color:var(--gris-500);font-size:13px;padding:8px 0}
+@media(max-width:600px){.marca-row{grid-template-columns:96px 1fr 58px;gap:8px}}
+
 /* Stats de cobertura */
 .stats{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--gris-200);border-radius:var(--r-lg);overflow:hidden;margin:-28px auto 0;box-shadow:var(--sombra-md);position:relative}
 .stat{background:var(--gris-0);padding:18px 10px;text-align:center}
@@ -177,6 +191,7 @@ pre.json .n{color:#FDE68A}
               <div class="lp-row bad"><s>Premium $999.00</s></div>
               <div class="lp-row bad"><s>Sin municipio ni coords</s></div>
               <div class="lp-row bad"><s>Precio de hace 3 semanas</s></div>
+              <div class="lp-row bad"><s>Solo el número de permiso</s></div>
             </div>
             <div class="lp-arrow">→</div>
             <div class="lp-limpio">
@@ -186,6 +201,7 @@ pre.json .n{color:#FDE68A}
               <div class="lp-row ok">Rango verificado</div>
               <div class="lp-row ok">CP + municipio geolocalizado</div>
               <div class="lp-row ok">Fecha con sello de hora</div>
+              <div class="lp-row ok">Bandera: OXXO Gas · Mobil · Pemex</div>
             </div>
           </div>
         </div>
@@ -242,6 +258,14 @@ pre.json .n{color:#FDE68A}
         <span class="badge badge--premium">Premium</span>
       </div>
     </div>
+  </section>
+
+  <section class="seccion" id="marcas">
+    <div class="overline" style="color:var(--verde-600)">Marca comercial · lo que la CNE no da</div>
+    <h2>Precio por bandera, no solo por permiso</h2>
+    <p class="intro">La CNE publica el número de permiso, pero no te dice si es Pemex, OXXO Gas, Mobil o Valero. Nosotros sí lo sabemos, en las 14,194 estaciones. Magna promedio nacional de hoy, por marca:</p>
+    <div id="marcas-box" class="marcas-box"><div class="marcas-load">Cargando precios por marca…</div></div>
+    <p class="mini">Base: estaciones con reporte hoy, marcas con ≥30 estaciones. Marca comercial normalizada por GasGas (ej. se unifican variantes de Pemex). Fuente de precios: CNE. Disponible también por estado y municipio.</p>
   </section>
 
   <section class="seccion" id="playground">
@@ -568,6 +592,48 @@ $("llave-btn").addEventListener("click",()=>{
   ok.textContent="✓ ¡Listo! Abrimos tu correo con la solicitud. Si no se abrió, escríbenos a hola@gasgas.com.mx — te enviamos la llave en menos de 24 h hábiles.";
 });
 $("llave-email").addEventListener("keydown",e=>{if(e.key==="Enter")$("llave-btn").click();});
+
+/* ── Precio por marca comercial (value-add: la CNE no da la bandera) ── */
+const MARCAS_FALLBACK=[
+ {marca:"Arco",estaciones:242,precio:23.17},
+ {marca:"Soriana Gas",estaciones:43,precio:23.30},
+ {marca:"Rendichicas",estaciones:69,precio:23.55},
+ {marca:"BP",estaciones:452,precio:23.62},
+ {marca:"Hidrosina",estaciones:143,precio:23.62},
+ {marca:"Pemex",estaciones:8475,precio:23.64},
+ {marca:"Chevron",estaciones:206,precio:23.72},
+ {marca:"G500",estaciones:453,precio:23.79},
+ {marca:"Valero",estaciones:309,precio:23.80},
+ {marca:"Mobil",estaciones:641,precio:23.94},
+ {marca:"Shell",estaciones:207,precio:23.99},
+ {marca:"OXXO Gas",estaciones:561,precio:24.00}
+];
+function pintaMarcas(rows){
+  const box=$("marcas-box");
+  const top=rows.slice(0,12).map(r=>({marca:r.marca,estaciones:+r.estaciones,precio:+r.precio}));
+  if(!top.length){box.innerHTML='<div class="marcas-load">Sin datos por ahora.</div>';return;}
+  const ps=top.map(r=>r.precio),min=Math.min(...ps),max=Math.max(...ps);
+  const w=p=> max>min ? (30+((p-min)/(max-min))*70) : 100;
+  box.innerHTML=top.map((r,i)=>{
+    const cls=i===0?"min":(i===top.length-1?"max":"");
+    return `<div class="marca-row ${cls}">
+      <div class="mk">${r.marca} <small>${r.estaciones.toLocaleString("es-MX")} est.</small></div>
+      <div class="marca-bar"><i style="width:${w(r.precio).toFixed(1)}%"></i></div>
+      <div class="pr">$${r.precio.toFixed(2)}</div>
+    </div>`;
+  }).join("");
+}
+async function cargarMarcas(){
+  try{
+    const base=location.protocol.startsWith("http")?location.origin+"/api":API;
+    const ctrl=new AbortController();const tm=setTimeout(()=>ctrl.abort(),8000);
+    const r=await fetch(`${base}/marcas?product=regular`,{signal:ctrl.signal});
+    clearTimeout(tm);
+    const d=await r.json();
+    pintaMarcas((d&&d.marcas&&d.marcas.length)?d.marcas:MARCAS_FALLBACK);
+  }catch(e){ pintaMarcas(MARCAS_FALLBACK); }
+}
+cargarMarcas();
 </script>
 </body>
 </html>

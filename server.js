@@ -267,6 +267,46 @@ app.get("/api/municipios", async (req, res) => {
 });
 
 // ==============================
+// 🔹 PRECIO POR MARCA COMERCIAL (value-add: la CNE no da la bandera)
+// ==============================
+app.get("/api/marcas", async (req, res) => {
+  try {
+    const { estado } = req.query;
+    // 🛡️ Whitelist de columna (evita SQL injection)
+    const prod = ['regular', 'premium', 'diesel'].includes(req.query.product) ? req.query.product : 'regular';
+
+    let filtro = "";
+    const params = [];
+    if (estado) { filtro = "AND LOWER(gs.estado) = LOWER($1)"; params.push(estado); }
+
+    const query = `
+      WITH hoy AS (SELECT MAX(date) AS d FROM prices)
+      SELECT
+        CASE WHEN gs.titulo_1 IN ('Pemex','Pemex1') THEN 'Pemex' ELSE gs.titulo_1 END AS marca,
+        COUNT(*)::int AS estaciones,
+        ROUND(AVG(p.${prod})::numeric, 2) AS precio
+      FROM prices p
+      JOIN prices_gas_station_links l ON l.price_id = p.id
+      JOIN gas_stations gs ON gs.id = l.gas_station_id
+      WHERE p.date = (SELECT d FROM hoy)
+        AND p.${prod} IS NOT NULL AND p.${prod} > 0
+        AND gs.titulo_1 IS NOT NULL AND gs.titulo_1 NOT IN ('', 'Otras Marcas')
+        ${filtro}
+      GROUP BY 1
+      HAVING COUNT(*) >= 30
+      ORDER BY precio ASC
+    `;
+
+    const result = await pool.query(query, params);
+    res.json({ producto: prod, estado: estado || "nacional", marcas: result.rows });
+
+  } catch (err) {
+    console.error("ERROR /marcas:", err);
+    res.status(500).json({ error: "Error obteniendo marcas" });
+  }
+});
+
+// ==============================
 // 🔹 RANKING ESTADOS
 // ==============================
 app.get("/api/ranking-estados", async (req, res) => {
