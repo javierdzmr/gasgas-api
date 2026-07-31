@@ -139,8 +139,8 @@ pre.json .n{color:#FDE68A}
   </div>
   <div class="wrap hero">
     <div class="overline">API y datos para empresas</div>
-    <h1>Los precios de todas las estaciones de México, en tu sistema.</h1>
-    <p class="sub">Datos oficiales de la Comisión Nacional de Energía, procesados y servidos vía API: por estado, municipio, código postal o estación, con histórico desde mayo de 2024. En producción con clientes de fintech y análisis de mercado.</p>
+    <h1>Precios listos para decidir, no un archivo que limpiar.</h1>
+    <p class="sub">La Comisión Nacional de Energía publica el dato crudo. Nosotros lo volvemos infraestructura: 14,194 estaciones validadas cada día, histórico desde mayo de 2024 que no se puede reconstruir, y el contexto para saber si un precio es caro o barato. Por estado, municipio, código postal o estación.</p>
     <div class="ctas">
       <a class="btn btn--primario" href="mailto:hola@gasgas.com.mx?subject=API%20de%20datos%20GasGas">Hablar con nosotros</a>
       <a class="btn btn--inverso" href="#playground">Probar la API en vivo ↓</a>
@@ -251,9 +251,11 @@ pre.json .n{color:#FDE68A}
   "regular": "23.93",  "premium": "29.08",  "diesel": "27.04",
   "min": "22.99",  "max": "24.49",  "std": "0.29",
   "stations_count": 333,
+  "semaforo": { "estado": "medio", "delta_pct": 0.5, "referencia": "nacional", "icono": "↔" },
   "updated_at": "2026-07-20T12:00:46.227Z"
 }</pre>
         <div style="font-family:var(--mono);font-size:11px;color:#A7F3D0;margin-top:8px">↑ updated_at: cada respuesta declara la hora de su dato</div>
+        <div style="font-family:var(--mono);font-size:11px;color:#A7F3D0;margin-top:4px">↑ semaforo: barato / medio / caro vs su referencia — la decisión, no solo el número</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:10px">
         <div style="background:var(--gris-0);border:1px solid var(--gris-200);border-radius:var(--r-lg);padding:14px 16px">

@@ -139,7 +139,45 @@ app.get("/api/precios", async (req, res) => {
     }
 
     const result = await pool.query(query, params);
-    res.json(result.rows[0] || {});
+    const row = result.rows[0] || {};
+
+    // 🚦 Semáforo (valor agregado): clasifica el promedio de este mercado
+    //    vs su referencia — estado vs nacional, municipio vs su estado.
+    //    Umbral ±3% (GasGas Design System). Campo NUEVO y aditivo: no rompe
+    //    a ningún consumidor existente.
+    if (row[prod] != null && market !== "nacional") {
+      try {
+        let refType = null, refValue = null;
+        if (market === "estado") { refType = "nacional"; refValue = "all"; }
+        else if (market === "municipio") { refType = "estado"; refValue = String(value || "").split("|")[0]; }
+
+        if (refType && refValue) {
+          const refQ = await pool.query(
+            `SELECT ${prod} AS ref FROM precios_agregados
+             WHERE market_type = $1 AND LOWER(market_value) = LOWER($2) AND days = $3 LIMIT 1`,
+            [refType, refValue, days]
+          );
+          const ref = refQ.rows[0] ? parseFloat(refQ.rows[0].ref) : null;
+          const val = parseFloat(row[prod]);
+          if (ref && val) {
+            const deltaPct = ((val - ref) / ref) * 100;
+            const estado = deltaPct <= -3 ? "barato" : deltaPct >= 3 ? "caro" : "medio";
+            row.semaforo = {
+              producto: prod,
+              referencia: refType,
+              promedio_referencia: Number(ref.toFixed(2)),
+              delta_pct: Number(deltaPct.toFixed(1)),
+              estado,
+              icono: estado === "barato" ? "↓" : estado === "caro" ? "↑" : "↔"
+            };
+          }
+        }
+      } catch (e) {
+        console.error("semaforo:", e.message); // nunca tumba la respuesta principal
+      }
+    }
+
+    res.json(row);
 
   } catch (err) {
     console.error("ERROR /precios:", err);
