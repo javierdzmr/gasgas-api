@@ -287,6 +287,11 @@ app.get("/api/marcas", async (req, res) => {
     // 🛡️ Whitelist de columna (evita SQL injection)
     const prod = ['regular', 'premium', 'diesel'].includes(req.query.product) ? req.query.product : 'regular';
 
+    // 🛡️ Filtros de calidad — mismos rangos que el dashboard (updateAgregados.js)
+    // Excluye precios basura (0.01, 1.00, 2.99, etc.) del promedio por marca.
+    const RANGE = { regular: { min: 21, max: 27 }, premium: { min: 23, max: 32 }, diesel: { min: 25, max: 33 } };
+    const r = RANGE[prod];
+
     let filtro = "";
     const params = [];
     if (estado) { filtro = "AND LOWER(gs.estado) = LOWER($1)"; params.push(estado); }
@@ -301,7 +306,7 @@ app.get("/api/marcas", async (req, res) => {
       JOIN prices_gas_station_links l ON l.price_id = p.id
       JOIN gas_stations gs ON gs.id = l.gas_station_id
       WHERE p.date = (SELECT d FROM hoy)
-        AND p.${prod} IS NOT NULL AND p.${prod} > 0
+        AND p.${prod} BETWEEN ${r.min} AND ${r.max}
         AND gs.titulo_1 IS NOT NULL AND gs.titulo_1 NOT IN ('', 'Otras Marcas')
         ${filtro}
       GROUP BY 1
