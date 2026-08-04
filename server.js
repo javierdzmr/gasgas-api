@@ -40,7 +40,7 @@ app.use('/api', (req, res, next) => {
 });
 
 // 📄 Servir el dashboard desde public/ (gasgas-api-dev.onrender.com)
-app.use(express.static('public'));
+app.use(express.static('public', { extensions: ['html'] }));
 
 // 🗄️ conexión a la base de datos
 const pool = new Pool({
