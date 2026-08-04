@@ -2,797 +2,524 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GasGas Analytics</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>GasGas · El precio de la gasolina hoy en México</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="%230E2A47"/><rect x="8" y="20" width="48" height="24" rx="12" fill="%2300A94F"/><text x="32" y="37" text-anchor="middle" font-family="Figtree,Arial,sans-serif" font-size="17" font-weight="800" letter-spacing="-.5" fill="white">GG</text></svg>'>
 <style>
-body { margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:#f7f8fa; }
-.container { max-width:1100px; margin:auto; padding:20px; }
-.hero { text-align:center; padding:40px 20px 10px; }
-.logo { width:140px; }
-.dashboard { background:white; border-radius:20px; padding:20px; box-shadow:0 20px 60px rgba(0,0,0,0.08); }
+/* ============ GasGas Design System v1.1-draft — tokens ============
+   Canónico: tokens.css + componentes.css (aquí inline por ser artefacto) */
+:root{
+  --verde-50:#E8F7EE;--verde-500:#00A94F;--verde-600:#007A39;--verde-700:#005C2B;
+  --azul-50:#EEF3F8;--azul-800:#163A5E;--azul-900:#0E2A47;
+  --gris-0:#FFFFFF;--gris-50:#F7F9FB;--gris-100:#EDF1F5;--gris-200:#DCE3EB;
+  --gris-300:#C3CDD8;--gris-500:#7B8A9A;--gris-600:#5B6B7C;--gris-900:#111C28;
+  --precio-barato:#007A39;--precio-medio:#B45309;--precio-caro:#B91C1C;
+  --precio-barato-bg:#E8F7EE;--precio-medio-bg:#FEF3E2;--precio-caro-bg:#FDECEC;
+  --precio-barato-inv:var(--verde-500);--precio-medio-inv:#F59E0B;--precio-caro-inv:#F87171;
+  --texto-inv-2:var(--gris-300);
+  --fuel-magna:#16A34A;--fuel-premium:#DC2626;--fuel-diesel:#334155;
+  --exito:#007A39;--alerta:#B45309;--error:#B91C1C;--info:#163A5E;
+  --bg-pagina:var(--gris-50);--bg-superficie:var(--gris-0);--bg-hundido:var(--gris-100);
+  --borde:var(--gris-200);--texto-1:var(--gris-900);--texto-2:var(--gris-600);--texto-3:var(--gris-500);
+  --texto-inverso:var(--gris-0);--accion:var(--verde-600);--accion-hover:var(--verde-700);--foco:var(--verde-600);
+  --skeleton-base:var(--gris-100);--skeleton-shimmer:var(--gris-200);
+  --font-ui:'Figtree',system-ui,-apple-system,sans-serif;--font-mono:'JetBrains Mono',ui-monospace,monospace;
+  --radio-sm:6px;--radio-md:10px;--radio-lg:14px;--radio-xl:20px;--radio-full:999px;
+  --sombra-sm:0 1px 2px rgba(14,42,71,.06);--sombra-md:0 2px 8px rgba(14,42,71,.08);
+  --dur-rapido:120ms;--dur-base:200ms;--dur-lento:320ms;--easing:cubic-bezier(.2,.8,.2,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-ui);font-size:15px;line-height:22px;color:var(--texto-1);background:var(--bg-pagina);-webkit-font-smoothing:antialiased}
+.tabular{font-variant-numeric:tabular-nums}
+:focus-visible{outline:2px solid var(--foco);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:560px;margin:0 auto;padding:0 16px}
+svg.ic{width:16px;height:16px;flex:none}
 
-/* CHIPS BASE */
-.chips { display:flex; gap:8px; justify-content:center; margin:10px 0 16px; flex-wrap:wrap; }
-.chip {
-  padding:7px 16px;
-  border-radius:999px;
-  cursor:pointer;
-  font-size:14px;
-  font-weight:500;
-  transition: all 0.15s ease;
-  background:#f0f0f0;
-  color:#bbb;
-  border: 1.5px solid transparent;
-}
-.chip.active { background:black; color:white; }
-.chip.active-regular { background:#1a6b2f; color:white; }
-.chip.active-premium { background:#8b1a1a; color:white; }
-.chip.active-diesel  { background:#111; color:white; }
+/* Nav + hero (superficie de marca) */
+.marca{background:var(--azul-900);color:var(--texto-inverso)}
+.nav{display:flex;align-items:center;justify-content:space-between;height:56px}
+.lockup{display:flex;align-items:center;gap:8px}
+.logo-pill{background:var(--gris-0);color:var(--azul-900);font-weight:800;font-size:13px;line-height:18px;letter-spacing:-.04em;border-radius:var(--radio-full);padding:3px 9px}
+.wordmark{font-weight:800;font-size:20px;letter-spacing:-.02em}
+.nav .fuente-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--texto-inv-2)}
+.nav .fuente-badge svg{color:var(--verde-500)}
+.hero{padding:24px 0 32px}
+.overline{font-size:11px;line-height:14px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--verde-500)}
+.precio-hero{display:flex;align-items:flex-start;gap:2px;margin-top:12px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
+.precio-hero .simbolo{font-size:34px;margin-top:4px;font-weight:700}
+.precio-hero .num{font-size:56px}
+.precio-hero .litro{font-size:12px;font-weight:500;color:var(--texto-inv-2);align-self:flex-end;margin:0 0 6px 6px}
+.hero .delta{margin-top:16px}
+.hero .fuente{margin-top:16px;font-size:12px;line-height:16px;color:var(--texto-inv-2)}
+.hero .antiguedad{margin-top:6px}
 
-/* CHIPS BLOQUEADOS */
-.chip.locked {
-  background:#f7f7f7;
-  color:#ccc;
-  border: 1.5px solid #e8e8e8;
-  cursor:pointer;
-  display:inline-flex;
-  align-items:center;
-  gap:5px;
-}
-.chip.locked:hover { background:#f0f0f0; }
-.chip.locked .lock-icon { font-size:11px; }
-.excel-download-row {
-  display: flex;
-  justify-content: flex-end;
-  margin: 8px 0 4px;
-}
-.btn-excel-download {
-  display: inline-flex; align-items: center; gap: 7px;
-  padding: 7px 16px; border-radius: 999px;
-  font-size: 13px; font-family: inherit;
-  background: transparent;
-  color: #888; border: 0.5px solid #ccc;
-  cursor: pointer;
-}
-.btn-excel-download:hover { background: #f5f5f5; }
-.excel-xls-icon {
-  width: 16px; height: 16px;
-  background: #1a6b2f; border-radius: 3px;
-  font-size: 9px; font-weight: 700; color: #fff;
-  display: inline-flex; align-items: center; justify-content: center;
-  letter-spacing: -0.5px; flex-shrink: 0;
-}
+/* Píldora de precio (§4.1) */
+.pildora{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:var(--radio-full);font-weight:700;font-variant-numeric:tabular-nums;font-size:15px}
+.pildora--barato{color:var(--precio-barato);background:var(--precio-barato-bg)}
+.pildora--medio{color:var(--precio-medio);background:var(--precio-medio-bg)}
+.pildora--caro{color:var(--precio-caro);background:var(--precio-caro-bg)}
+.pildora--sin-dato{color:var(--texto-3);background:var(--bg-hundido);font-weight:600}
+.sobre-azul .pildora--barato{color:var(--precio-barato-inv);background:rgba(0,169,79,.14)}
+.sobre-azul .pildora--medio{color:var(--precio-medio-inv);background:rgba(245,158,11,.16)}
+.sobre-azul .pildora--caro{color:var(--precio-caro-inv);background:rgba(248,113,113,.14)}
+.sobre-azul .pildora--sin-dato{color:var(--texto-inv-2);background:rgba(255,255,255,.08)}
 
-/* CARDS */
-.grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:20px; }
-.card {
-  padding:14px;
-  border-radius:12px;
-  border:1px solid #eee;
-  border-top-width: 3px;
-  transition: border-color 0.2s ease;
-}
-.card-label { font-size:12px; color:#555; margin-bottom:2px; }
-.card-period { font-size:11px; color:#aaa; margin-bottom:6px; }
-.price { font-size:22px; font-weight:600; color:#111; }
-.card.highlight-regular { border-top-color: #1a6b2f; }
-.card.highlight-premium { border-top-color: #8b1a1a; }
-.card.highlight-diesel  { border-top-color: #111; }
-.card.highlight-none    { border-top-color: #eee; }
+/* Chip de antigüedad (v1.1 §C) */
+.antiguedad{display:inline-flex;align-items:center;gap:6px;font-size:12px;line-height:16px;font-weight:500;color:var(--texto-2)}
+.antiguedad--inv{color:var(--texto-inv-2)}
+.antiguedad--vieja{color:var(--alerta);font-weight:600}
 
-.chart-container { position:relative; width:100%; }
-canvas { width:100% !important; }
-.skeleton {
-  position:absolute; inset:0;
-  background:linear-gradient(90deg,#eee,#f5f5f5,#eee);
-  background-size:400% 100%;
-  animation:shimmer 1.2s infinite;
-  border-radius:8px;
-}
-.chart-footer {
-  margin-top:14px;
-  padding:10px 4px 0;
-  border-top:1px solid #f0f0f0;
-  display:flex;
-  flex-wrap:wrap;
-  gap:6px 14px;
-  font-size:12px;
-  color:#888;
-  align-items:center;
-}
-.footer-item { display:flex; align-items:center; gap:4px; }
-.footer-label { color:#aaa; }
-.footer-value { color:#555; font-weight:500; }
-.footer-divider { color:#ddd; }
-#inputContainer select {
-  padding:7px 14px; border-radius:999px;
-  border:1px solid #ccc; font-size:14px; margin-bottom:10px;
-}
-.page-footer { text-align:center; padding:24px; color:#aaa; font-size:12px; }
+/* Secciones */
+.seccion{padding:24px 0 0}
+.titulo-seccion{font-size:20px;line-height:28px;font-weight:600;margin-bottom:12px;display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 8px}
+.titulo-seccion .estado-dato{font-size:12px;font-weight:600;white-space:nowrap}
+.estado-dato--vivo{color:var(--verde-600)}
+.estado-dato--cache{color:var(--alerta)}
 
-/* MODAL PRO */
-.modal-overlay {
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,0.45);
-  z-index:1000;
-  align-items:center;
-  justify-content:center;
-}
-.modal-overlay.show { display:flex; }
-.modal-box {
-  background:white;
-  border-radius:20px;
-  padding:32px 28px;
-  max-width:320px;
-  width:90%;
-  text-align:center;
-  box-shadow:0 20px 60px rgba(0,0,0,0.15);
-}
-.modal-lock { font-size:32px; margin-bottom:12px; }
-.modal-title { font-size:18px; font-weight:600; color:#111; margin-bottom:8px; }
-.modal-desc { font-size:14px; color:#666; line-height:1.6; margin-bottom:14px; }
-.modal-badge {
-  display:inline-block;
-  background:#fef3c7;
-  color:#92400e;
-  font-size:11px;
-  font-weight:600;
-  padding:4px 12px;
-  border-radius:999px;
-  margin-bottom:20px;
-  letter-spacing:0.03em;
-}
-.modal-btn-primary {
-  display:block;
-  width:100%;
-  padding:11px;
-  background:#111;
-  color:white;
-  border:none;
-  border-radius:999px;
-  font-size:14px;
-  font-weight:500;
-  cursor:pointer;
-  margin-bottom:10px;
-  text-decoration:none;
-}
-.modal-btn-primary:hover { background:#333; }
-.modal-close {
-  font-size:13px;
-  color:#aaa;
-  cursor:pointer;
-  background:none;
-  border:none;
-  padding:4px;
-}
-.modal-close:hover { color:#666; }
+/* Chips (§4.6) */
+.chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin-bottom:12px}
+.chip{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:var(--radio-full);background:var(--bg-hundido);color:var(--texto-2);border:none;font-family:var(--font-ui);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background var(--dur-rapido) var(--easing),color var(--dur-rapido) var(--easing)}
+.chip[aria-pressed="true"]{background:var(--azul-900);color:var(--texto-inverso)}
+.chip .dot{width:8px;height:8px;border-radius:50%;background:var(--dot,transparent)}
+.chip--magna{--dot:var(--fuel-magna)}
+.chip--premium{--dot:var(--fuel-premium)}
+.chip--diesel{--dot:var(--fuel-diesel)}
+select.selector-estado{height:32px;padding:0 10px;border-radius:var(--radio-full);border:1px solid var(--gris-300);background:var(--bg-superficie);font-family:var(--font-ui);font-size:13px;font-weight:600;color:var(--texto-1);cursor:pointer}
+select.selector-estado[hidden]{display:none}
+.nota-pocas{margin:0 0 12px;padding:8px 12px;border-radius:var(--radio-md);background:var(--precio-medio-bg);font-size:12.5px;line-height:17px;color:var(--precio-medio);font-weight:600}
 
-/* VISTA HOY */
-.hoy-container { display:none; margin-top:4px; }
+/* Cards (§4.2) */
+.card{background:var(--bg-superficie);border:1px solid var(--borde);border-radius:var(--radio-lg);box-shadow:var(--sombra-sm);padding:16px}
+.grid-precios{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.card-precio .fuel{display:inline-flex;align-items:center;gap:6px;font-size:13px;line-height:18px;font-weight:600;color:var(--texto-2)}
+.card-precio .fuel::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--fuel-dot)}
+.card-precio--magna{--fuel-dot:var(--fuel-magna)}
+.card-precio--premium{--fuel-dot:var(--fuel-premium)}
+.card-precio--diesel{--fuel-dot:var(--fuel-diesel)}
+.card-precio .valor{display:flex;align-items:flex-start;font-weight:700;font-variant-numeric:tabular-nums;line-height:1;margin:8px 0 6px}
+.card-precio .valor .simbolo{font-size:13px;margin-top:2px;font-weight:600;color:var(--texto-2)}
+.card-precio .valor .num{font-size:22px}
+.card-precio .delta{display:inline-flex;align-items:center;gap:3px;font-size:12px;line-height:16px;font-weight:600;white-space:nowrap}
+.card-precio .delta svg{width:14px;height:14px;flex:none}
+.delta--baja{color:var(--precio-barato)}
+.delta--sube{color:var(--precio-caro)}
+.delta--igual{color:var(--texto-3)}
+.card-precio[aria-current="true"]{border-color:var(--azul-900);box-shadow:var(--sombra-md)}
 
-/* Cards métricas estado */
-.hoy-metrics { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
-.hoy-metric { background:#f7f8fa; border-radius:12px; padding:14px 16px; }
-.hoy-metric-label { font-size:11px; color:#aaa; margin-bottom:6px; }
-.hoy-metric-value { font-size:22px; font-weight:600; color:#111; }
-.hoy-metric-sub { font-size:11px; color:#aaa; margin-top:3px; }
-.hoy-up   { color:#a32d2d; font-size:18px; font-weight:600; }
-.hoy-down { color:#1a6b2f; font-size:18px; font-weight:600; }
-.hoy-flat { font-size:18px; font-weight:600; color:#aaa; }
-.range-bar { margin-top:6px; position:relative; height:5px; background:#e8e8e8; border-radius:999px; }
-.range-fill { position:absolute; height:5px; border-radius:999px; left:0; top:0; width:100%; }
-.range-labels { display:flex; justify-content:space-between; font-size:10px; color:#aaa; margin-top:3px; }
+/* Gráfica (spec §5.3: línea 2px, sin degradados) */
+.card-grafica{margin-top:12px;position:relative}
+.tooltip-grafica{position:absolute;display:none;background:var(--azul-900);color:var(--gris-0);font-size:12px;line-height:16px;padding:6px 9px;border-radius:var(--radio-sm);pointer-events:none;white-space:nowrap;box-shadow:var(--sombra-md);z-index:5;font-variant-numeric:tabular-nums}
+.tooltip-grafica b{font-weight:700}
+.tooltip-grafica .tt-delta{color:var(--gris-300)}
+.card-grafica .encabezado{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px}
+.card-grafica .encabezado .titulo{font-size:15px;font-weight:600}
+.card-grafica .encabezado .rango{font-family:var(--font-mono);font-size:12px;color:var(--texto-3)}
+svg.grafica{display:block;width:100%;height:150px}
+.eje-x{display:flex;justify-content:space-between;font-size:12px;color:var(--texto-3);margin-top:4px}
 
-/* Sparkline */
-.sparkline-wrap { margin-top:6px; }
+/* Metabar */
+.metabar{display:flex;flex-wrap:wrap;gap:6px 0;margin-top:12px;padding:12px 0;border-top:1px solid var(--borde);font-size:12px;line-height:16px;color:var(--texto-2)}
+.metabar .m{display:inline-flex;align-items:center;gap:5px;padding:0 10px;border-right:1px solid var(--borde);white-space:nowrap}
+.metabar .m:first-child{padding-left:0}
+.metabar .m:last-child{border-right:none}
+.metabar .m b{font-family:var(--font-mono);font-weight:500;color:var(--texto-1);font-variant-numeric:tabular-nums}
 
-/* Vecinos */
-.vecino-row { display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:0.5px solid #f0f0f0; }
-.vecino-row:last-child { border-bottom:none; }
-.vecino-name { font-size:12px; color:#333; }
-.vecino-price { font-size:12px; font-weight:500; }
-.vecino-diff { font-size:11px; }
-.vecino-up { color:#a32d2d; }
-.vecino-down { color:#1a6b2f; }
+/* Aviso "último dato conocido" (v1.1 §B) */
+.aviso-cache{display:none;align-items:flex-start;gap:8px;margin-bottom:12px;padding:10px 12px;border-radius:var(--radio-md);background:var(--precio-medio-bg);color:var(--precio-medio);font-size:13px;line-height:18px;font-weight:500}
+.aviso-cache svg{width:16px;height:16px;flex:none;margin-top:1px}
+.aviso-cache button{margin-left:auto;border:none;background:transparent;color:var(--precio-medio);font-family:var(--font-ui);font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap}
+.aviso-cache.visible{display:flex}
 
-/* Ranking nacional */
-.ranking-wrap { margin-top:4px; }
-.ranking-cols { display:grid; grid-template-columns:1fr 1fr; gap:0 20px; }
-.ranking-row { display:flex; justify-content:space-between; align-items:center; padding:5px 6px; border-bottom:0.5px solid #f0f0f0; border-radius:6px; }
-.ranking-row:last-child { border-bottom:none; }
-.ranking-row.top-cheap { background:#eaf3de; border-bottom-color:#c0dd97; }
-.ranking-row.top-exp   { background:#fcebeb; border-bottom-color:#f7c1c1; }
-.ranking-left { display:flex; align-items:center; gap:6px; overflow:hidden; }
-.ranking-num { font-size:11px; color:#aaa; width:18px; flex-shrink:0; }
-.ranking-num.cheap { color:#27500a; }
-.ranking-num.exp   { color:#791f1f; }
-.ranking-name { font-size:12px; color:#333; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.ranking-name.cheap { color:#27500a; }
-.ranking-name.exp   { color:#791f1f; }
-.ranking-price { font-size:12px; font-weight:500; flex-shrink:0; }
+/* Skeleton (v1.1 §B) */
+.skeleton{position:relative;overflow:hidden;background:var(--skeleton-base);border-radius:var(--radio-sm);color:transparent!important}
+.skeleton::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,var(--skeleton-shimmer),transparent);animation:gg-shimmer 1.4s infinite}
+@keyframes gg-shimmer{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
 
-@keyframes shimmer {
-  0%{background-position:200% 0;}
-  100%{background-position:-200% 0;}
-}
-@media (max-width: 600px) and (orientation: portrait) {
-  .container { padding:12px; }
-  .hero { padding:24px 12px 8px; }
-  .hero h1 { font-size:20px; }
-  .logo { width:110px; }
-  .dashboard { padding:14px; border-radius:16px; }
-  .grid { gap:8px; }
-  .card { padding:10px; }
-  .price { font-size:18px; }
-  .chart-footer { font-size:11px; gap:4px 10px; }
-}
+/* Correo */
+.card-correo{margin-top:24px}
+.card-correo h3{font-size:20px;line-height:28px;font-weight:600}
+.card-correo p{color:var(--texto-2);margin:4px 0 16px}
+.campo label{display:block;margin-bottom:4px;font-size:13px;line-height:18px;font-weight:600;color:var(--texto-2)}
+.fila-correo{display:flex;gap:8px}
+.fila-correo input{flex:1;min-width:0;height:44px;padding:0 12px;background:var(--bg-hundido);border:1px solid var(--borde);border-radius:var(--radio-md);font-family:var(--font-ui);font-size:15px;color:var(--texto-1)}
+.fila-correo input:focus{border-color:var(--foco)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 20px;border-radius:var(--radio-md);border:none;font-family:var(--font-ui);font-size:13px;font-weight:600;cursor:pointer;transition:background var(--dur-rapido) var(--easing),transform var(--dur-rapido) var(--easing)}
+.btn:active{transform:scale(.98)}
+.btn--primario{background:var(--accion);color:var(--texto-inverso)}
+.btn--primario:hover{background:var(--accion-hover)}
+.btn--secundario{background:transparent;color:var(--azul-900);border:1px solid var(--gris-300)}
+
+/* Footer */
+.footer{background:var(--azul-900);color:var(--texto-inv-2);margin-top:32px;padding:24px 0 34px;font-size:12px;line-height:18px}
+.footer b{color:var(--texto-inverso);font-weight:700}
+.footer .linea{margin-top:4px}
 </style>
 </head>
 <body>
 
-<section class="hero container">
-  <img src="GasGasNew.png" class="logo" onerror="this.style.display='none'">
-  <h1>Precios de gasolina en tiempo real</h1>
-  <p style="color:#777;margin-top:4px;">Consulta tendencias por zona</p>
-</section>
-
-<section class="container">
-<div class="dashboard">
-
-  <div class="chips">
-    <div class="chip active" id="btn-nacional" onclick="setMarket('nacional')">Nacional</div>
-    <div class="chip" id="btn-estado" onclick="setMarket('estado')">Estado</div>
-    <div class="chip locked" onclick="showProModal('ciudad')"><span class="lock-icon">&#128274;</span> Ciudad</div>
-    <div class="chip locked" onclick="showProModal('cp')"><span class="lock-icon">&#128274;</span> C.P.</div>
-    <div class="chip locked" onclick="showProModal('es')"><span class="lock-icon">&#128274;</span> E.S.</div>
+<header class="marca">
+  <div class="wrap nav">
+    <span class="lockup"><span class="logo-pill">GG</span><span class="wordmark">GasGas</span></span>
+    <span class="fuente-badge"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.5-4.8 2.5.9-5.4L4.2 7.7l5.4-.8z" fill="currentColor" stroke="none" opacity="0"/><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>Datos oficiales CNE</span>
   </div>
+</header>
 
-  <div id="inputContainer" style="display:none; text-align:center;">
-    <select id="estadoSelect" onchange="loadData()"></select>
-  </div>
-
-  <div class="chips">
-    <div class="chip" id="btn-hoy" onclick="setPeriodo('hoy')">Hoy</div>
-    <div class="chip" id="btn-7" onclick="setPeriodo(7)">7 d&#237;as</div>
-    <div class="chip active" id="btn-30" onclick="setPeriodo(30)">30 d&#237;as</div>
-    <div class="chip locked" onclick="showProModal('personalizado')"><span class="lock-icon">&#128274;</span> Personalizado</div>
-  </div>
-
-  <div style="display:flex; justify-content:center; margin: 4px 0 8px;">
-    <div class="chip locked" onclick="showProModal('marca')" style="border-radius:999px;"><span class="lock-icon">&#128274;</span> Filtrar por marca</div>
-  </div>
-
-  <div class="grid">
-    <div class="card highlight-regular" id="card-regular">
-      <div class="card-label">Regular</div>
-      <div class="card-period" id="period-regular">Promedio 30 d&#237;as</div>
-      <div class="price" id="regular">$0.00</div>
+<section class="marca sobre-azul">
+  <div class="wrap hero">
+    <div class="overline" id="hero-overline">Magna hoy · Nacional</div>
+    <div class="precio-hero" aria-live="polite">
+      <span class="simbolo">$</span><span class="num tabular" id="hero-precio">--.--</span><span class="litro">/L</span>
     </div>
-    <div class="card highlight-none" id="card-premium">
-      <div class="card-label">Premium</div>
-      <div class="card-period" id="period-premium">Promedio 30 d&#237;as</div>
-      <div class="price" id="premium">$0.00</div>
-    </div>
-    <div class="card highlight-none" id="card-diesel">
-      <div class="card-label">Diesel</div>
-      <div class="card-period" id="period-diesel">Promedio 30 d&#237;as</div>
-      <div class="price" id="diesel">$0.00</div>
-    </div>
-  </div>
-
-  <div class="excel-download-row">
-    <button class="btn-excel-download" onclick="showProModal('excel')">
-      <span class="excel-xls-icon">XLS</span>
-      Descargar Excel
-      <span style="font-size:11px;">&#128274;</span>
-    </button>
-  </div>
-
-  <div class="chips">
-    <div class="chip active-regular" id="btn-regular" onclick="setProduct('regular')">Regular</div>
-    <div class="chip" id="btn-premium" onclick="setProduct('premium')">Premium</div>
-    <div class="chip" id="btn-diesel" onclick="setProduct('diesel')">Diesel</div>
-  </div>
-
-  <div class="chart-container">
-    <canvas id="chart"></canvas>
-    <div class="skeleton" id="skeleton"></div>
-  </div>
-
-  <!-- VISTA HOY -->
-  <div class="hoy-container" id="hoyContainer">
-    <div id="hoyContent"></div>
-  </div>
-
-  <div class="chart-footer" id="chartFooter" style="display:none;">
-    <div class="footer-item">
-      <span class="footer-label">Actualizado:</span>
-      <span class="footer-value" id="footer-updated">—</span>
-    </div>
-    <span class="footer-divider">|</span>
-    <div class="footer-item">
-      <span class="footer-value" id="footer-estaciones">—</span>
-      <span class="footer-label">estaciones</span>
-    </div>
-    <span class="footer-divider">|</span>
-    <div class="footer-item">
-      <span class="footer-value" id="footer-cobertura">—</span>
-      <span class="footer-label">cobertura</span>
-    </div>
-    <span class="footer-divider">|</span>
-    <div class="footer-item">
-      <span class="footer-label">Min:</span>
-      <span class="footer-value" id="footer-min">—</span>
-    </div>
-    <span class="footer-divider">|</span>
-    <div class="footer-item">
-      <span class="footer-label">Max:</span>
-      <span class="footer-value" id="footer-max">—</span>
-    </div>
-    <span class="footer-divider">|</span>
-    <div class="footer-item">
-      <span class="footer-label">Std:</span>
-      <span class="footer-value" id="footer-std">—</span>
-    </div>
-  </div>
-
-  <div style="text-align:center; margin-top:14px; font-size:13px; color:#1a6b2f;">
-    <strong>GasGas Analytics</strong> &middot; gasgas.com.mx
-  </div>
-
-</div>
-</section>
-
-<section class="container" style="margin-top:0; padding-top:0;">
-  <div style="background:white; border-radius:16px; padding:24px; text-align:center; box-shadow:0 4px 20px rgba(0,0,0,0.05);">
-    <p style="color:#555; margin:0 0 14px; font-size:15px;">&#191;Necesitas acceso a nuestra API o m&#225;s informaci&#243;n sobre precios?</p>
-    <a href="mailto:hola@gasgas.com.mx" style="display:inline-block; background:#111; color:white; padding:12px 28px; border-radius:999px; text-decoration:none; font-size:14px; font-weight:500;">
-      &#9993; Cont&#225;ctanos
-    </a>
+    <div class="delta"><span class="pildora" id="hero-delta"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/></svg><span id="hero-delta-txt">Cargando…</span></span></div>
+    <p class="fuente" id="hero-fuente">Fuente: Comisión Nacional de Energía · promedio de las estaciones del país</p>
+    <div class="antiguedad antiguedad--inv" id="hero-antiguedad"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span id="hero-antiguedad-txt">Consultando…</span></div>
   </div>
 </section>
 
-<div class="page-footer">&copy; Plataforma Digital GasGas 2026</div>
+<main class="wrap">
+  <section class="seccion">
+    <div class="aviso-cache" id="aviso-cache" role="status">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
+      <span>No pudimos conectar en vivo. Estás viendo el último dato confirmado (<b id="aviso-fecha">18 jul, 6:00 a.m.</b>).</span>
+      <button onclick="cargar(true)">Reintentar</button>
+    </div>
 
-<div class="modal-overlay" id="proModal">
-  <div class="modal-box">
-    <div class="modal-lock">&#128274;</div>
-    <div class="modal-title" id="modal-title">Nivel Ciudad</div>
-    <div class="modal-desc" id="modal-desc">Consulta promedios por municipio — ideal para flotas, distribuidores y análisis competitivo.</div>
-    <div class="modal-badge">GasGas Pro</div>
-    <a class="modal-btn-primary" href="mailto:hola@gasgas.com.mx">Conocer GasGas Pro</a>
-    <button class="modal-close" onclick="hideProModal()">cerrar</button>
+    <div class="titulo-seccion">
+      <span id="titulo-mercado">Precio nacional hoy</span>
+      <span class="estado-dato" id="estado-dato"></span>
+    </div>
+
+    <div class="chips" role="group" aria-label="Mercado">
+      <button class="chip" id="chip-nacional" aria-pressed="true" onclick="setMercado('nacional')">Nacional</button>
+      <button class="chip" id="chip-estado" aria-pressed="false" onclick="setMercado('estado')">Por estado</button>
+      <select class="selector-estado" id="sel-estado" hidden aria-label="Estado"></select>
+      <select class="selector-estado" id="sel-municipio" hidden aria-label="Municipio"></select>
+    </div>
+
+    <div class="chips" role="group" aria-label="Combustible">
+      <button class="chip chip--magna" data-f="regular" aria-pressed="true"><span class="dot"></span>Magna</button>
+      <button class="chip chip--premium" data-f="premium" aria-pressed="false"><span class="dot"></span>Premium</button>
+      <button class="chip chip--diesel" data-f="diesel" aria-pressed="false"><span class="dot"></span>Diésel</button>
+    </div>
+
+    <p class="nota-pocas" id="nota-pocas" hidden></p>
+    <div class="grid-precios" id="grid-precios">
+      <div class="card card-precio card-precio--magna"><span class="fuel">Magna</span><div class="valor skeleton" style="width:70px;height:22px"></div></div>
+      <div class="card card-precio card-precio--premium"><span class="fuel">Premium</span><div class="valor skeleton" style="width:70px;height:22px"></div></div>
+      <div class="card card-precio card-precio--diesel"><span class="fuel">Diésel</span><div class="valor skeleton" style="width:70px;height:22px"></div></div>
+    </div>
+
+    <div class="card card-grafica">
+      <div class="encabezado">
+        <span class="titulo" id="grafica-titulo">Magna · 30 días</span>
+        <span class="rango tabular" id="grafica-rango"></span>
+      </div>
+      <svg class="grafica" id="grafica" viewBox="0 0 328 150" preserveAspectRatio="none" role="img" aria-label="Tendencia del precio en 30 días"></svg>
+      <div class="tooltip-grafica" id="tooltip"></div>
+      <div class="eje-x" id="eje-x" style="padding-left:40px"></div>
+    </div>
+
+    <div class="metabar" id="metabar"></div>
+
+    <div class="card card-correo">
+      <h3>El precio, en tu correo</h3>
+      <p>Un resumen semanal de cómo se movió la gasolina en tu estado. Sin spam.</p>
+      <form onsubmit="return suscribir(event)">
+        <div class="campo"><label for="correo">Tu correo</label></div>
+        <div class="fila-correo">
+          <input id="correo" type="email" required placeholder="tu@correo.com" autocomplete="email">
+          <button type="submit" class="btn btn--primario">Recibir resumen</button>
+        </div>
+      </form>
+    </div>
+
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <b>GasGas</b> · El precio de la gasolina en México
+    <div class="linea">Fuente: Comisión Nacional de Energía · gasgas.com.mx · © 2026</div>
+    <div class="linea"><a href="/datos" style="text-decoration:underline">Datos y API para empresas</a></div>
   </div>
-</div>
+</footer>
 
 <script>
-const API = "https://api.gasgas.com.mx";
+/* ─────────────────────────────────────────────────────────────────
+   Política de dato (Design System v1.1 §B): NUNCA números inventados.
+   1) Skeletons → 2) API en vivo → 3) si falla, ÚLTIMO DATO REAL
+   (snapshot de Supabase, 18 jul 2026 6:00 a.m.) con aviso visible.   */
+const FUELS={regular:"Magna",premium:"Premium",diesel:"Diésel"};
+const API="https://api.gasgas.com.mx/api";
+const TZ="America/Mexico_City";
 
-const PRODUCT_COLORS = {
-  regular: "#1a6b2f",
-  premium: "#8b1a1a",
-  diesel:  "#111111"
+/* Último dato confirmado (real, precios_historicos_agregados nacional) */
+const SNAPSHOT={
+  fechaTexto:"18 jul, 6:00 a.m.",
+  fecha:"2026-07-18",
+  meta:{stations:13410,min:21.00,max:27.00,std:0.58},
+  dates:["2026-06-18","2026-06-19","2026-06-20","2026-06-21","2026-06-22","2026-06-23","2026-06-24","2026-06-25","2026-06-26","2026-06-27","2026-06-28","2026-06-29","2026-06-30","2026-07-01","2026-07-02","2026-07-03","2026-07-04","2026-07-05","2026-07-06","2026-07-07","2026-07-08","2026-07-09","2026-07-10","2026-07-11","2026-07-12","2026-07-13","2026-07-14","2026-07-15","2026-07-16","2026-07-17","2026-07-18"],
+  regular:[23.8553,23.8558,23.8539,23.8531,23.8533,23.8546,23.8524,23.8527,23.8491,23.8517,23.8508,23.8516,23.8535,23.8549,23.8551,23.8552,23.8559,23.8552,23.8554,23.8556,23.8527,23.8534,23.8523,23.8547,23.8558,23.8560,23.8527,23.8500,23.8494,23.8495,23.8493],
+  premium:[28.5298,28.5305,28.5318,28.5296,28.5295,28.5278,28.5271,28.5249,28.5240,28.4988,28.4978,28.4982,28.4960,28.4949,28.4935,28.4937,28.4929,28.4948,28.4950,28.4944,28.4937,28.4933,28.4927,28.4899,28.4942,28.4950,28.4972,28.5000,28.5012,28.5014,28.5008],
+  diesel:[27.1684,27.1619,27.1591,27.1566,27.1563,27.1592,27.1536,27.1390,27.1380,27.1359,27.1448,27.1445,27.1407,27.1392,27.1381,27.1400,27.1337,27.1350,27.1349,27.1342,27.1353,27.1341,27.1295,27.1270,27.1308,27.1253,27.1045,27.0964,27.0913,27.0874,27.0843]
 };
 
-let currentMarket = "nacional";
-let currentProduct = "regular";
-let periodo = 30;
-let chart;
-let estadosLoaded = false;
+let fuel="regular";
+let mercado={tipo:"nacional",valor:"all"};
+let DATA=null;       /* {dates,regular,premium,diesel,meta,origen:'vivo'|'cache',antiguedad} */
 
-function isPortraitMobile(){
-  return window.innerWidth < 600 && window.innerHeight > window.innerWidth;
+const $=id=>document.getElementById(id);
+const f2=n=>Number(n).toFixed(2);
+const fmtMiles=n=>Number(n).toLocaleString("es-MX");
+function fechaCorta(iso){const d=new Date(iso+"T12:00:00");return d.toLocaleDateString("es-MX",{day:"numeric",month:"short",timeZone:TZ}).replace(".","");}
+
+/* Delta de promedios agregados: contra el MISMO DÍA de la semana pasada
+   (D-7), no contra ayer — un promedio nacional/estatal casi no se mueve en
+   24 h, y D-7 elimina la estacionalidad de día de semana (regla Nielsen).
+   Si la serie no alcanza 8 puntos, cae con honestidad a "vs. ayer". */
+function deltaInfo(serie){
+  if(!serie||serie.length<2) return null;
+  const lag=serie.length>7?7:1;
+  const label=lag===7?"vs. hace una semana":"vs. ayer";
+  const d=serie[serie.length-1]-serie[serie.length-1-lag];
+  const cent=d*100;
+  if(Math.abs(cent)<0.5) return {clase:"sin-dato",dir:"igual",txt:"Sin cambio "+label,txtCorto:"Sin cambio",icon:"M5 12h14"};
+  const abs=Math.abs(d);
+  const monto=`$${f2(abs)}`;
+  return d<0?{clase:"barato",dir:"baja",txt:monto+" "+label,txtCorto:monto,icon:"M12 5v14M6 13l6 6 6-6"}
+            :{clase:"caro",dir:"sube",txt:monto+" "+label,txtCorto:monto,icon:"M12 19V5M6 11l6-6 6 6"};
 }
 
-function formatMoney(n){
-  const v = Number(n);
-  return isNaN(v) ? "—" : "$" + v.toFixed(2);
-}
+function render(){
+  const s=DATA[fuel];
+  const hoy=s[s.length-1];
+  const nombreMercado=mercado.tipo==="nacional"?"Nacional":(mercado.tipo==="municipio"?mercado.valor.split("|")[1]:mercado.valor);
 
-function formatDate(d){
-  if(!d) return "—";
-  return new Date(d).toLocaleString("es-MX",{
-    day:"2-digit", month:"short", year:"numeric",
-    hour:"2-digit", minute:"2-digit"
-  });
-}
+  /* Hero */
+  $("hero-overline").textContent=`${FUELS[fuel]} hoy · ${nombreMercado}`;
+  $("hero-precio").textContent=f2(hoy);
+  const d=deltaInfo(s);
+  const pill=$("hero-delta");
+  pill.className="pildora pildora--"+(d?d.clase:"sin-dato");
+  pill.innerHTML=`<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="${d?d.icon:"M5 12h14"}"/></svg><span>${d?d.txt:"Sin dato"}</span>`;
+  $("hero-fuente").textContent=`Fuente: Comisión Nacional de Energía · ${fmtMiles(DATA.meta.stations)} estaciones`;
+  $("hero-antiguedad-txt").textContent=DATA.antiguedad;
 
-function getNiceScale(min, max){
-  const range = max - min;
-  let step = 0.10;
-  if(range < 0.5) step = 0.05;
-  else if(range > 1) step = 0.20;
-  const niceMin = Math.floor((min - step) / step) * step;
-  const niceMax = Math.ceil((max + step) / step) * step;
-  return { niceMin, niceMax, step };
-}
+  /* Título + estado del dato */
+  $("titulo-mercado").textContent=mercado.tipo==="nacional"?"Precio nacional hoy":`Precio en ${nombreMercado} hoy`;
+  /* Honestidad (v1.1 §A): con pocas estaciones, el promedio es referencia, no mercado */
+  const np=$("nota-pocas");
+  if(mercado.tipo==="municipio"&&DATA.meta.stations>0&&DATA.meta.stations<5){
+    np.hidden=false;
+    np.textContent=`En ${nombreMercado} solo hay ${DATA.meta.stations} ${DATA.meta.stations===1?"estación":"estaciones"} con precio. Tómalo como referencia puntual, no como promedio de mercado.`;
+  }else{np.hidden=true;}
+  const ed=$("estado-dato");
+  if(DATA.origen==="vivo"){ed.textContent="● En vivo";ed.className="estado-dato estado-dato--vivo";}
+  else{ed.textContent="Último dato: "+DATA.fechaTexto;ed.className="estado-dato estado-dato--cache";}
+  $("aviso-cache").classList.toggle("visible",DATA.origen!=="vivo");
 
-function updateProductUI(product){
-  ["regular","premium","diesel"].forEach(p => {
-    const chip = document.getElementById("btn-"+p);
-    chip.className = "chip";
-    if(p === product) chip.classList.add("active-"+p);
-  });
-  ["regular","premium","diesel"].forEach(p => {
-    const card = document.getElementById("card-"+p);
-    card.className = "card " + (p === product ? "highlight-"+p : "highlight-none");
-  });
-}
-
-function updateFooter(precios){
-  if(!precios || !precios.updated_at){
-    document.getElementById("chartFooter").style.display = "none";
-    return;
+  /* Cards de precio */
+  const grid=$("grid-precios");grid.innerHTML="";
+  for(const key of ["regular","premium","diesel"]){
+    const serie=DATA[key];const v=serie[serie.length-1];const di=deltaInfo(serie);
+    const deltaHtml=di?`<span class="delta delta--${di.dir}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="${di.icon}"/></svg>${di.txtCorto}</span>`
+                      :`<span class="delta delta--igual">Sin dato</span>`;
+    grid.insertAdjacentHTML("beforeend",
+      `<div class="card card-precio card-precio--${key==="regular"?"magna":key}" aria-current="${key===fuel}">
+        <span class="fuel">${FUELS[key]}</span>
+        <div class="valor"><span class="simbolo">$</span><span class="num tabular">${v!=null?f2(v):"—"}</span></div>
+        ${deltaHtml}
+      </div>`);
   }
-  const total = precios.total_estaciones ? Number(precios.total_estaciones) : null;
-  const count = precios.stations_count   ? Number(precios.stations_count)   : null;
-  const cobertura = (total && count) ? ((count / total) * 100).toFixed(2) + "%" : "—";
-
-  document.getElementById("footer-updated").innerText    = formatDate(precios.updated_at);
-  document.getElementById("footer-estaciones").innerText = total ? total.toLocaleString("es-MX") : "—";
-  document.getElementById("footer-cobertura").innerText  = cobertura;
-  document.getElementById("footer-min").innerText        = precios.min ? formatMoney(precios.min) : "—";
-  document.getElementById("footer-max").innerText        = precios.max ? formatMoney(precios.max) : "—";
-  document.getElementById("footer-std").innerText        = precios.std ? Number(precios.std).toFixed(2) : "—";
-
-  document.getElementById("chartFooter").style.display = "flex";
+  document.querySelectorAll('[data-f]').forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.f===fuel)));
+  grafica();
+  metabar();
 }
 
-async function loadEstados(){
-  if(estadosLoaded) return;
-  const estados = await fetch(`${API}/api/estados`).then(r => r.json());
-  const sel = document.getElementById("estadoSelect");
-  sel.innerHTML = estados.map(e => `<option value="${e.estado}">${e.estado}</option>`).join("");
-  if(estados.length > 0) sel.value = estados[0].estado;
-  estadosLoaded = true;
+/* Gráfica según spec: línea 2px verde-600, grid gris-200, SIN degradados.
+   Eje Y con escala visible (ventana mínima de $0.10 para no exagerar
+   movimientos de centavos) + tooltip al pasar el cursor. */
+let CHART=null;
+function grafica(){
+  const svg=$("grafica");
+  const s=DATA[fuel].filter(v=>v!=null&&!isNaN(v));
+  const W=Math.max(svg.clientWidth||328,260),H=150;
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+  const padL=40,padR=10,padT=12,padB=10;
+  let min=Math.min(...s),max=Math.max(...s);
+  /* Eje Y dinámico: la ventana es 2.5× el rango real de los datos (la curva
+     ocupa ~40% del alto — ni línea recta ni montaña rusa), con piso de
+     $0.02 para no amplificar ruido de milésimas. La escala siempre es
+     visible en el eje, así que nunca engaña. */
+  const rango=max-min;
+  const span=Math.max(rango*2.5,0.02);
+  const c=(max+min)/2;min=c-span/2;max=c+span/2;
+  const x=i=>padL+i*(W-padL-padR)/(s.length-1);
+  const y=v=>H-padB-((v-min)/span)*(H-padT-padB);
+  let linea="";s.forEach((v,i)=>{linea+=(i?"L":"M")+x(i).toFixed(1)+" "+y(v).toFixed(1)+" ";});
+  const ticks=[max,(min+max)/2,min];
+  const grid=ticks.map(t=>`<line x1="${padL}" x2="${W-padR}" y1="${y(t).toFixed(1)}" y2="${y(t).toFixed(1)}" stroke="#DCE3EB" stroke-width="1"/>
+    <text x="${padL-6}" y="${(y(t)+3.5).toFixed(1)}" text-anchor="end" font-family="'JetBrains Mono',monospace" font-size="10" fill="#7B8A9A">${f2(t)}</text>`).join("");
+  svg.innerHTML=grid+
+    `<path d="${linea}" fill="none" stroke="#007A39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`+
+    `<circle cx="${x(s.length-1).toFixed(1)}" cy="${y(s[s.length-1]).toFixed(1)}" r="3.5" fill="#007A39"/>`+
+    `<line id="ch-l" y1="${padT}" y2="${H-padB}" stroke="#C3CDD8" stroke-width="1" stroke-dasharray="3 3" style="display:none"/>`+
+    `<circle id="ch-c" r="4" fill="#0E2A47" stroke="#fff" stroke-width="1.5" style="display:none"/>`;
+  CHART={s,x,y,W,padL,padR};
+  $("grafica-titulo").textContent=`${FUELS[fuel]} · 30 días`;
+  $("grafica-rango").textContent=`${f2(Math.min(...s))} – ${f2(Math.max(...s))}`;
+  const ds=DATA.dates;
+  $("eje-x").innerHTML=`<span>${fechaCorta(ds[0])}</span><span>${fechaCorta(ds[Math.floor(ds.length/2)])}</span><span>${fechaCorta(ds[ds.length-1])}</span>`;
 }
-
-async function loadData(){
-  const esHoy = periodo === 'hoy';
-
-  document.getElementById("chart").parentElement.style.display = esHoy ? "none" : "block";
-  document.getElementById("hoyContainer").style.display = esHoy ? "block" : "none";
-  document.getElementById("chartFooter").style.display = "none";
-
-  if(!esHoy) {
-    document.getElementById("skeleton").style.display = "block";
+/* Tooltip: fecha, precio y cambio vs el día anterior */
+(function(){
+  const svg=$("grafica"),tt=$("tooltip");
+  function mueve(ev){
+    if(!CHART)return;
+    const r=svg.getBoundingClientRect();
+    const fx=ev.clientX-r.left;
+    const rel=(fx-CHART.padL)/(CHART.W-CHART.padL-CHART.padR);
+    let i=Math.round(rel*(CHART.s.length-1));
+    i=Math.max(0,Math.min(CHART.s.length-1,i));
+    const px=CHART.x(i),py=CHART.y(CHART.s[i]);
+    const chl=$("ch-l"),chc=$("ch-c");
+    chl.setAttribute("x1",px);chl.setAttribute("x2",px);chl.style.display="";
+    chc.setAttribute("cx",px);chc.setAttribute("cy",py);chc.style.display="";
+    const fecha=new Date(DATA.dates[i]+"T12:00:00").toLocaleDateString("es-MX",{weekday:"short",day:"numeric",month:"short",timeZone:TZ}).replace(".","");
+    let deltaTxt="";
+    if(i>0){const dd=CHART.s[i]-CHART.s[i-1];
+      deltaTxt=Math.abs(dd)<0.005?`<span class="tt-delta">Sin cambio vs día anterior</span>`:`<span class="tt-delta">${dd<0?"↓":"↑"} $${f2(Math.abs(dd))} vs día anterior</span>`;}
+    tt.innerHTML=`${fecha} · <b>$${f2(CHART.s[i])}</b><br>${deltaTxt}`;
+    tt.style.display="block";
+    const cardR=tt.parentElement.getBoundingClientRect();
+    const sx=r.left-cardR.left,sy=r.top-cardR.top;
+    const cw=tt.parentElement.clientWidth,tw=tt.offsetWidth;
+    let left=sx+px*(r.width/CHART.W)-tw/2;
+    left=Math.max(4,Math.min(left,cw-tw-4));
+    tt.style.left=left+"px";
+    tt.style.top=(sy+py*(r.height/150)-tt.offsetHeight-12)+"px";
   }
+  function fuera(){tt.style.display="none";const a=$("ch-l"),b=$("ch-c");if(a)a.style.display="none";if(b)b.style.display="none";}
+  svg.addEventListener("pointermove",mueve);
+  svg.addEventListener("pointerdown",mueve);
+  svg.addEventListener("pointerleave",fuera);
+  window.addEventListener("resize",()=>{if(DATA)grafica();});
+})();
 
-  const label = esHoy ? "Precio hoy" : `Promedio ${periodo} d&#237;as`;
-  document.getElementById("period-regular").innerHTML = label;
-  document.getElementById("period-premium").innerHTML = label;
-  document.getElementById("period-diesel").innerHTML  = label;
-
-  const value = currentMarket === "estado"
-    ? (document.getElementById("estadoSelect").value || "")
-    : "all";
-
-  try {
-    const days = esHoy ? 1 : periodo;
-    const precios = await fetch(
-      `${API}/api/precios?market=${currentMarket}&value=${encodeURIComponent(value)}&days=${days}&product=${currentProduct}`
-    ).then(r => r.json());
-
-    const noData = !precios || (!precios.regular && !precios.premium && !precios.diesel);
-    document.getElementById("regular").innerText = noData ? "Sin datos" : formatMoney(precios.regular);
-    document.getElementById("premium").innerText = noData ? "Sin datos" : formatMoney(precios.premium);
-    document.getElementById("diesel").innerText  = noData ? "Sin datos" : formatMoney(precios.diesel);
-
-    if(!esHoy) {
-      updateFooter(precios);
-      const hist = await fetch(
-        `${API}/api/historico?market=${currentMarket}&value=${encodeURIComponent(value)}&days=${periodo}&product=${currentProduct}`
-      ).then(r => r.json());
-      drawChart(hist);
-    } else {
-      await renderHoy(precios, value);
-    }
-
-  } catch(e){
-    console.error("Error:", e);
-  } finally {
-    document.getElementById("skeleton").style.display = "none";
-  }
+function metabar(){
+  const m=DATA.meta;
+  const filas=[["Estaciones",fmtMiles(m.stations)],["Mín","$"+f2(m.min)],["Máx","$"+f2(m.max)],["Desv. est.",f2(m.std)],["Fuente","CNE"]];
+  $("metabar").innerHTML=filas.map(([k,v])=>`<span class="m">${k}: <b>${v}</b></span>`).join("");
 }
 
-function drawChart(data){
-  if(chart) chart.destroy();
-
-  const portrait = isPortraitMobile();
-  const labels = data.map(d => d.date.split("T")[0]);
-  const values = data.map(d => Number(d[currentProduct]));
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const { niceMin, niceMax, step } = getNiceScale(min, max);
-  const color = PRODUCT_COLORS[currentProduct];
-
-  const tickCallback = portrait
-    ? function(val, index) {
-        if(index === 0 || index === labels.length - 1) return labels[index];
-        return null;
-      }
-    : function(val, index) {
-        return labels[index];
+/* Carga: API en vivo → si falla, último dato real (nunca inventar) */
+async function cargar(reintento){
+  if(reintento){$("estado-dato").textContent="Cargando…";$("estado-dato").className="estado-dato";}
+  try{
+    const ctrl=new AbortController();const t=setTimeout(()=>ctrl.abort(),4500);
+    const q=mercado.tipo==="nacional"?"market=nacional&value=all":`market=${mercado.tipo}&value=${encodeURIComponent(mercado.valor)}`;
+    const [h,p]=await Promise.all([
+      fetch(`${API}/historico?${q}&days=30`,{signal:ctrl.signal}).then(r=>r.json()),
+      fetch(`${API}/precios?${q}&days=1&product=${fuel}&cb=${Date.now()}`,{signal:ctrl.signal}).then(r=>r.json())
+    ]);
+    clearTimeout(t);
+    if(Array.isArray(h)&&h.length>1&&p&&p.regular){
+      DATA={
+        dates:h.map(r=>(r.date||"").slice(0,10)),
+        regular:h.map(r=>+r.regular),premium:h.map(r=>+r.premium),diesel:h.map(r=>+r.diesel),
+        meta:{stations:p.stations_count||p.total_estaciones||0,min:+p.min||0,max:+p.max||0,std:+p.std||0},
+        origen:"vivo",fechaTexto:"",antiguedad:antiguedadDe(p.updated_at)
       };
-
-  chart = new Chart(document.getElementById("chart"), {
-    type: "line",
-    data: {
-      labels,
-      datasets:[{
-        data: values,
-        borderColor: color,
-        backgroundColor: color + "18",
-        borderWidth: 2.5,
-        tension: 0.35,
-        pointRadius: portrait ? 2 : 3,
-        pointBackgroundColor: color
-      }]
-    },
-    options:{
-      responsive: true,
-      maintainAspectRatio: true,
-      aspectRatio: portrait ? 1.4 : 2.5,
-      plugins:{
-        legend:{ display:false },
-        tooltip:{ callbacks:{ label: ctx => formatMoney(ctx.raw) }}
-      },
-      scales:{
-        y:{
-          min: niceMin,
-          max: niceMax,
-          ticks:{ stepSize: step, callback: v => "$"+Number(v).toFixed(2) }
-        },
-        x:{
-          ticks:{
-            maxRotation: 45,
-            autoSkip: false,
-            callback: tickCallback,
-            font: { size: portrait ? 10 : 11 }
-          }
-        }
-      }
+      render();return;
     }
-  });
+    throw new Error("respuesta incompleta");
+  }catch(e){
+    if(mercado.tipo==="nacional"){
+      DATA={...SNAPSHOT,origen:"cache",antiguedad:"Último dato: "+SNAPSHOT.fechaTexto};
+      $("aviso-fecha").textContent=SNAPSHOT.fechaTexto;
+      render();
+    }else{
+      /* Sin snapshot por estado: error honesto, sin números (v1.1 §B) */
+      $("grid-precios").innerHTML=`<div class="card" style="grid-column:1/-1">
+        <div class="estado-vacio" style="text-align:center;padding:24px 16px">
+          <h3 style="font-size:17px;font-weight:600">No pudimos cargar ${mercado.valor.split("|").pop()}</h3>
+          <p style="color:var(--texto-2);margin:4px 0 12px">Revisa tu conexión o vuelve a intentarlo.</p>
+          <button class="btn btn--secundario" onclick="cargar(true)">Reintentar</button>
+        </div></div>`;
+      $("estado-dato").textContent="Sin conexión";$("estado-dato").className="estado-dato estado-dato--cache";
+    }
+  }
 }
 
-window.addEventListener("orientationchange", () => {
-  setTimeout(() => { loadData(); }, 300);
+/* Chip de antigüedad v1.1 §C (relativo <6h, luego hora absoluta) */
+function antiguedadDe(updatedAt){
+  if(!updatedAt) return "Actualizado hoy";
+  const then=new Date(updatedAt.replace(" ","T")+(updatedAt.includes("Z")?"":"Z"));
+  const mins=Math.max(0,Math.round((Date.now()-then)/60000));
+  if(mins<60) return `Actualizado hace ${mins} min`;
+  const h=Math.round(mins/60);
+  if(h<6) return `Actualizado hace ${h} h`;
+  const esHoy=then.toLocaleDateString("en-CA",{timeZone:TZ})===new Date().toLocaleDateString("en-CA",{timeZone:TZ});
+  const hora=then.toLocaleTimeString("es-MX",{hour:"numeric",minute:"2-digit",hour12:true,timeZone:TZ});
+  return esHoy?`Actualizado hoy, ${hora}`:"Actualizado ayer";
+}
+
+function setMercado(tipo){
+  const sel=$("sel-estado"),selM=$("sel-municipio");
+  $("chip-nacional").setAttribute("aria-pressed",String(tipo==="nacional"));
+  $("chip-estado").setAttribute("aria-pressed",String(tipo==="estado"));
+  if(tipo==="estado"){
+    sel.hidden=false;
+    mercado={tipo:"estado",valor:sel.value||"Jalisco"};
+    cargarMunicipios(mercado.valor);
+  }else{
+    sel.hidden=true;selM.hidden=true;
+    mercado={tipo:"nacional",valor:"all"};
+  }
+  cargar();
+}
+/* Cascada estado → municipio (los nombres de municipio se repiten entre
+   estados, por eso la llave del mercado es "Estado|Municipio") */
+async function cargarMunicipios(estado){
+  const selM=$("sel-municipio");
+  selM.hidden=true;selM.innerHTML="";
+  try{
+    const r=await fetch(`${API}/municipios?estado=${encodeURIComponent(estado)}`).then(r=>r.json());
+    if(Array.isArray(r)&&r.length){
+      selM.innerHTML=`<option value="">Todo el estado</option>`+
+        r.map(m=>`<option value="${m.municipio.replace(/"/g,"&quot;")}">${m.municipio} (${m.estaciones})</option>`).join("");
+      selM.hidden=false;
+    }
+  }catch(e){/* sin lista de municipios: se queda el nivel estado, sin romper nada */}
+}
+$("sel-municipio").addEventListener("change",e=>{
+  const est=$("sel-estado").value;
+  if(e.target.value===""){mercado={tipo:"estado",valor:est};}
+  else{mercado={tipo:"municipio",valor:`${est}|${e.target.value}`};}
+  cargar();
 });
-
-function setPeriodo(p){
-  periodo = p;
-  ["hoy","7","30"].forEach(x => {
-    const el = document.getElementById("btn-"+x);
-    if(el) el.classList.remove("active");
-  });
-  document.getElementById("btn-"+p).classList.add("active");
-  loadData();
+async function cargarEstados(){
+  const sel=$("sel-estado");
+  const fallback=["Aguascalientes","Baja California","CDMX","Chihuahua","Guanajuato","Jalisco","Nuevo León","Puebla","Querétaro","Veracruz"];
+  try{
+    const r=await fetch(`${API}/estados`).then(r=>r.json());
+    sel.innerHTML=(Array.isArray(r)&&r.length?r.map(e=>e.estado):fallback).map(e=>`<option>${e}</option>`).join("");
+  }catch(e){sel.innerHTML=fallback.map(e=>`<option>${e}</option>`).join("");}
 }
-
-async function setMarket(m){
-  currentMarket = m;
-  ["nacional","estado"].forEach(x => {
-    document.getElementById("btn-"+x).classList.remove("active");
-  });
-  document.getElementById("btn-"+m).classList.add("active");
-  document.getElementById("inputContainer").style.display = m === "estado" ? "block" : "none";
-  if(m === "estado") await loadEstados();
-  await loadData();
+$("sel-estado").addEventListener("change",e=>{mercado={tipo:"estado",valor:e.target.value};cargarMunicipios(e.target.value);cargar();});
+document.querySelectorAll("[data-f]").forEach(b=>b.addEventListener("click",()=>{fuel=b.dataset.f;if(DATA)render();}));
+function suscribir(ev){
+  ev.preventDefault();
+  const card=ev.target.closest(".card-correo");
+  card.innerHTML=`<h3>Listo</h3><p>Te llegará el resumen semanal a <b>${$("correo").value}</b>. Puedes darte de baja desde el propio correo.</p>`;
+  return false;
 }
-
-function setProduct(p){
-  currentProduct = p;
-  updateProductUI(p);
-  loadData();
-}
-
-// ==============================
-// VISTA HOY
-// ==============================
-const PRODUCT_COLOR = { regular:"#1a6b2f", premium:"#8b1a1a", diesel:"#111" };
-
-async function renderHoy(preciosHoy, value) {
-  if(currentMarket === "nacional") {
-    await renderRankingNacional();
-  } else {
-    await renderEstadoHoy(preciosHoy, value);
-  }
-}
-
-async function renderRankingNacional() {
-  const data = await fetch(`${API}/api/ranking-estados?product=${currentProduct}`).then(r => r.json());
-  const total = data.length;
-  const mid = Math.ceil(total / 2);
-  const col1 = data.slice(0, mid);
-  const col2 = data.slice(mid);
-  const color = PRODUCT_COLOR[currentProduct];
-
-  function makeRow(e, rank) {
-    const isExp   = rank <= 5;
-    const isCheap = rank > total - 5;
-    const rowClass = isExp ? "ranking-row top-exp" : isCheap ? "ranking-row top-cheap" : "ranking-row";
-    const numClass = isExp ? "ranking-num exp" : isCheap ? "ranking-num cheap" : "ranking-num";
-    const nameClass = isExp ? "ranking-name exp" : isCheap ? "ranking-name cheap" : "ranking-name";
-    const priceColor = isExp ? "#a32d2d" : isCheap ? "#1a6b2f" : color;
-    const price = Number(e[currentProduct]);
-    return `<div class="${rowClass}">
-      <div class="ranking-left">
-        <span class="${numClass}">${rank}</span>
-        <span class="${nameClass}">${e.estado}</span>
-      </div>
-      <span class="ranking-price" style="color:${priceColor}">${formatMoney(price)}</span>
-    </div>`;
-  }
-
-  document.getElementById("hoyContent").innerHTML = `
-    <p style="font-size:11px;color:#aaa;text-align:center;margin-bottom:10px;">
-      Ranking de estados &middot; ${currentProduct} &middot; hoy
-    </p>
-    <div class="ranking-cols">
-      <div>${col1.map((e,i) => makeRow(e, i+1)).join("")}</div>
-      <div>${col2.map((e,i) => makeRow(e, mid+i+1)).join("")}</div>
-    </div>`;
-}
-
-async function renderEstadoHoy(preciosHoy, estado) {
-  const color = PRODUCT_COLOR[currentProduct];
-
-  // Ranking posición
-  const ranking = await fetch(`${API}/api/ranking-estados?product=${currentProduct}`).then(r => r.json());
-  const pos = ranking.findIndex(e => e.estado.toLowerCase() === estado.toLowerCase()) + 1;
-  const total = ranking.length;
-
-  // Variación vs ayer (último punto del histórico de 7 días)
-  const hist = await fetch(`${API}/api/historico?market=estado&value=${encodeURIComponent(estado)}&days=7`).then(r => r.json());
-  let deltaHtml = '<span class="hoy-flat">—</span>';
-  let ayerStr = "—";
-  if(hist.length >= 2) {
-    const ayer = Number(hist[hist.length - 2][currentProduct]);
-    const hoy  = Number(preciosHoy[currentProduct]);
-    const diff = hoy - ayer;
-    ayerStr = formatMoney(ayer);
-    if(diff > 0.005)       deltaHtml = `<span class="hoy-up">&#9650; +${formatMoney(diff)}</span>`;
-    else if(diff < -0.005) deltaHtml = `<span class="hoy-down">&#9660; ${formatMoney(diff)}</span>`;
-    else                   deltaHtml = `<span class="hoy-flat">Sin cambio</span>`;
-  }
-
-  // Distancia al promedio nacional
-  const nacional = await fetch(`${API}/api/precios?market=nacional&value=all&days=1&product=${currentProduct}`).then(r => r.json());
-  const promNacional = Number(nacional[currentProduct]);
-  const distancia = Number(preciosHoy[currentProduct]) - promNacional;
-  const distColor = distancia > 0 ? "#a32d2d" : "#1a6b2f";
-  const distSign  = distancia > 0 ? "+" : "";
-
-  // Rango interno del estado (de precios de hoy, days=1)
-  const minVal = preciosHoy.min ? formatMoney(preciosHoy.min) : "—";
-  const maxVal = preciosHoy.max ? formatMoney(preciosHoy.max) : "—";
-
-  // Sparkline 7 días
-  let sparkHtml = "";
-  if(hist.length > 1) {
-    const vals = hist.map(d => Number(d[currentProduct]));
-    const minS = Math.min(...vals), maxS = Math.max(...vals);
-    const range = maxS - minS || 1;
-    const pts = vals.map((v, i) => {
-      const x = (i / (vals.length - 1)) * 200;
-      const y = 44 - ((v - minS) / range) * 36;
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    }).join(" ");
-    const last = vals[vals.length-1];
-    const lx = 200, ly = (44 - ((last - minS)/range)*36).toFixed(1);
-    const trend = vals[vals.length-1] > vals[0];
-    sparkHtml = `
-      <div class="sparkline-wrap">
-        <svg width="100%" height="50" viewBox="0 0 200 50" preserveAspectRatio="none">
-          <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
-          <circle cx="${lx}" cy="${ly}" r="3.5" fill="${color}"/>
-        </svg>
-        <div style="display:flex;justify-content:space-between;font-size:10px;color:#aaa;margin-top:2px;">
-          <span>hace 7 d&#237;as ${formatMoney(vals[0])}</span><span>hoy ${formatMoney(last)}</span>
-        </div>
-        <div style="font-size:11px;margin-top:3px;color:${trend ? '#a32d2d':'#1a6b2f'}">
-          ${trend ? "&#9650; tendencia alcista" : "&#9660; tendencia a la baja"}
-        </div>
-      </div>`;
-  }
-
-  // Vecinos
-  const vecinos = await fetch(`${API}/api/vecinos?estado=${encodeURIComponent(estado)}&product=${currentProduct}`).then(r => r.json());
-  const vecinosHtml = vecinos.length
-    ? vecinos.map(v => {
-        const vp = Number(v[currentProduct]);
-        const hp = Number(preciosHoy[currentProduct]);
-        const d  = vp - hp;
-        const dc = d > 0.005 ? "vecino-up" : d < -0.005 ? "vecino-down" : "";
-        const ds = d > 0.005 ? `&#9650; +${formatMoney(d)}` : d < -0.005 ? `&#9660; ${formatMoney(d)}` : "—";
-        return `<div class="vecino-row">
-          <span class="vecino-name">${v.estado}</span>
-          <span class="vecino-price">${formatMoney(vp)}</span>
-          <span class="vecino-diff ${dc}">${ds}</span>
-        </div>`;
-      }).join("")
-    : '<p style="font-size:12px;color:#aaa;">Sin datos de vecinos</p>';
-
-  document.getElementById("hoyContent").innerHTML = `
-    <div class="hoy-metrics">
-      <div class="hoy-metric">
-        <div class="hoy-metric-label">Posici&#243;n nacional</div>
-        <div class="hoy-metric-value">#${pos} <span style="font-size:14px;font-weight:400;color:#aaa">de ${total}</span></div>
-        <div class="hoy-metric-sub">de m&#225;s caro a m&#225;s barato</div>
-      </div>
-      <div class="hoy-metric">
-        <div class="hoy-metric-label">Variaci&#243;n vs ayer</div>
-        <div>${deltaHtml}</div>
-        <div class="hoy-metric-sub">ayer: ${ayerStr}</div>
-      </div>
-      <div class="hoy-metric">
-        <div class="hoy-metric-label">Distancia al promedio nacional</div>
-        <div class="hoy-metric-value" style="color:${distColor}">${distSign}${formatMoney(distancia)}</div>
-        <div class="hoy-metric-sub">promedio nacional: ${formatMoney(promNacional)}</div>
-      </div>
-      <div class="hoy-metric">
-        <div class="hoy-metric-label">Rango interno del estado</div>
-        <div style="font-size:13px;color:#333;margin-top:2px;">${minVal} &mdash; ${maxVal}</div>
-        <div class="range-bar"><div class="range-fill" style="background:${color};"></div></div>
-        <div class="range-labels"><span>m&#237;n ${minVal}</span><span>m&#225;x ${maxVal}</span></div>
-      </div>
-      <div class="hoy-metric">
-        <div class="hoy-metric-label">Tendencia 7 d&#237;as</div>
-        ${sparkHtml}
-      </div>
-      <div class="hoy-metric">
-        <div class="hoy-metric-label">Estados vecinos hoy</div>
-        <div style="margin-top:6px;">${vecinosHtml}</div>
-      </div>
-    </div>`;
-}
-
-// Init
-updateProductUI(currentProduct);
-loadData();
-
-// Modal Pro
-const PRO_CONTENT = {
-  ciudad: {
-    title: "Nivel Ciudad",
-    desc: "Consulta promedios por municipio — ideal para flotas, distribuidores y análisis competitivo."
-  },
-  cp: {
-    title: "Nivel Código Postal",
-    desc: "Granularidad máxima por código postal — perfecto para pricing localizado y estudios de mercado."
-  },
-  excel: {
-    title: "Descargar Excel",
-    desc: "Exporta los datos de precios a Excel — ideal para análisis, reportes y seguimiento histórico."
-  },
-  personalizado: {
-    title: "Periodo Personalizado",
-    desc: "Define un rango de fechas a la medida — Tendencia de 8 años disponible."
-  },
-  es: {
-    title: "Estación de Servicio",
-    desc: "Consulta precios y analiticos por estación de servicio específica"
-  },
-  marca: {
-    title: "Filtrar por Marca",
-    desc: "Filtra precios por marca comercial — PEMEX, Mobil, Valero, OXXOGas y más. Ideal para análisis competitivo por cadena."
-  }
-};
-
-function showProModal(type) {
-  const content = PRO_CONTENT[type];
-  document.getElementById("modal-title").innerText = content.title;
-  document.getElementById("modal-desc").innerText  = content.desc;
-  document.getElementById("proModal").classList.add("show");
-}
-
-function hideProModal() {
-  document.getElementById("proModal").classList.remove("show");
-}
+cargarEstados();cargar();
 </script>
 </body>
 </html>

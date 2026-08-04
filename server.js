@@ -21,9 +21,21 @@ app.use((req, res, next) => {
   if (ALLOWED_ORIGINS.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
   }
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
+
+// 🧾 Parser de JSON (para POST /api/lead)
+app.use(express.json({ limit: '16kb' }));
+
+// 🧊 Cache-Control: los GET de /api son de LECTURA y pueden cachearse en el
+//    borde (Cloudflare) y navegador ~5 min. Un millón de llamadas idénticas las
+//    contesta la caché, no la base. POST (leads) nunca se cachea.
+app.use('/api', (req, res, next) => {
+  if (req.method === 'GET') res.set('Cache-Control', 'public, max-age=300, s-maxage=300');
+  else res.set('Cache-Control', 'no-store');
   next();
 });
 
@@ -139,7 +151,45 @@ app.get("/api/precios", async (req, res) => {
     }
 
     const result = await pool.query(query, params);
-    res.json(result.rows[0] || {});
+    const row = result.rows[0] || {};
+
+    // 🚦 Semáforo (valor agregado): clasifica el promedio de este mercado
+    //    vs su referencia — estado vs nacional, municipio vs su estado.
+    //    Umbral ±3% (GasGas Design System). Campo NUEVO y aditivo: no rompe
+    //    a ningún consumidor existente.
+    if (row[prod] != null && market !== "nacional") {
+      try {
+        let refType = null, refValue = null;
+        if (market === "estado") { refType = "nacional"; refValue = "all"; }
+        else if (market === "municipio") { refType = "estado"; refValue = String(value || "").split("|")[0]; }
+
+        if (refType && refValue) {
+          const refQ = await pool.query(
+            `SELECT ${prod} AS ref FROM precios_agregados
+             WHERE market_type = $1 AND LOWER(market_value) = LOWER($2) AND days = $3 LIMIT 1`,
+            [refType, refValue, days]
+          );
+          const ref = refQ.rows[0] ? parseFloat(refQ.rows[0].ref) : null;
+          const val = parseFloat(row[prod]);
+          if (ref && val) {
+            const deltaPct = ((val - ref) / ref) * 100;
+            const estado = deltaPct <= -3 ? "barato" : deltaPct >= 3 ? "caro" : "medio";
+            row.semaforo = {
+              producto: prod,
+              referencia: refType,
+              promedio_referencia: Number(ref.toFixed(2)),
+              delta_pct: Number(deltaPct.toFixed(1)),
+              estado,
+              icono: estado === "barato" ? "↓" : estado === "caro" ? "↑" : "↔"
+            };
+          }
+        }
+      } catch (e) {
+        console.error("semaforo:", e.message); // nunca tumba la respuesta principal
+      }
+    }
+
+    res.json(row);
 
   } catch (err) {
     console.error("ERROR /precios:", err);
@@ -225,6 +275,90 @@ app.get("/api/municipios", async (req, res) => {
   } catch (err) {
     console.error("ERROR /municipios:", err);
     res.status(500).json({ error: "Error obteniendo municipios" });
+  }
+});
+
+// ==============================
+// 🔹 PRECIO POR MARCA COMERCIAL (value-add: la CNE no da la bandera)
+// ==============================
+app.get("/api/marcas", async (req, res) => {
+  try {
+    const { estado } = req.query;
+    // 🛡️ Whitelist de columna (evita SQL injection)
+    const prod = ['regular', 'premium', 'diesel'].includes(req.query.product) ? req.query.product : 'regular';
+
+    // 🛡️ Filtros de calidad — mismos rangos que el dashboard (updateAgregados.js)
+    // Excluye precios basura (0.01, 1.00, 2.99, etc.) del promedio por marca.
+    const RANGE = { regular: { min: 21, max: 27 }, premium: { min: 23, max: 32 }, diesel: { min: 25, max: 33 } };
+    const r = RANGE[prod];
+
+    let filtro = "";
+    const params = [];
+    if (estado) { filtro = "AND LOWER(gs.estado) = LOWER($1)"; params.push(estado); }
+
+    const query = `
+      WITH hoy AS (SELECT MAX(date) AS d FROM prices)
+      SELECT
+        CASE WHEN gs.titulo_1 IN ('Pemex','Pemex1') THEN 'Pemex' ELSE gs.titulo_1 END AS marca,
+        COUNT(*)::int AS estaciones,
+        ROUND(AVG(p.${prod})::numeric, 2) AS precio
+      FROM prices p
+      JOIN prices_gas_station_links l ON l.price_id = p.id
+      JOIN gas_stations gs ON gs.id = l.gas_station_id
+      WHERE p.date = (SELECT d FROM hoy)
+        AND p.${prod} BETWEEN ${r.min} AND ${r.max}
+        AND gs.titulo_1 IS NOT NULL AND gs.titulo_1 NOT IN ('', 'Otras Marcas')
+        ${filtro}
+      GROUP BY 1
+      HAVING COUNT(*) >= 30
+      ORDER BY precio ASC
+    `;
+
+    const result = await pool.query(query, params);
+    res.json({ producto: prod, estado: estado || "nacional", marcas: result.rows });
+
+  } catch (err) {
+    console.error("ERROR /marcas:", err);
+    res.status(500).json({ error: "Error obteniendo marcas" });
+  }
+});
+
+// ==============================
+// 🔹 CAPTURA DE LEADS (llave de prueba / contacto B2B)
+//    Loguea SIEMPRE antes de escribir → el lead no se pierde ni aunque la DB falle.
+//    Tabla 'leads' append-only; gasgas_ro solo tiene INSERT.
+// ==============================
+app.post("/api/lead", async (req, res) => {
+  try {
+    const b = req.body || {};
+    const email = String(b.email || "").trim().slice(0, 200);
+    const contexto = String(b.contexto || "").slice(0, 500);
+    const fuente = String(b.fuente || "web").slice(0, 80);
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ ok: false, error: "Correo inválido" });
+    }
+
+    const ip = String(req.headers["x-forwarded-for"] || req.ip || "").split(",")[0].trim().slice(0, 60);
+    const ua = String(req.headers["user-agent"] || "").slice(0, 300);
+
+    // 1) Captura garantizada en el log de Render (aunque la DB no escriba)
+    console.log(`[LEAD] ${email} | fuente=${fuente} | ${contexto} | ip=${ip}`);
+
+    // 2) Persistencia en tabla append-only
+    try {
+      await pool.query(
+        `INSERT INTO leads (email, contexto, fuente, ip, user_agent) VALUES ($1,$2,$3,$4,$5)`,
+        [email, contexto, fuente, ip, ua]
+      );
+    } catch (e) {
+      console.error("[LEAD] no se pudo guardar en DB (queda en el log):", e.message);
+    }
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("ERROR /lead:", err);
+    res.status(500).json({ ok: false, error: "Error registrando el lead" });
   }
 });
 
@@ -317,6 +451,17 @@ app.get("/api/vecinos", async (req, res) => {
     console.error("ERROR /vecinos:", err);
     res.status(500).json({ error: "Error obteniendo vecinos" });
   }
+});
+
+// ==============================
+// 🔹 PÁGINA /datos (escaparate B2B de la API)
+// ==============================
+app.get("/datos", (req, res) => {
+  res.sendFile(__dirname + "/public/datos.html");
+});
+
+app.get("/docs", (req, res) => {
+  res.sendFile(__dirname + "/public/docs.html");
 });
 
 // ==============================
