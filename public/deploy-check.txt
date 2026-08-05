@@ -1,2 +1,1 @@
-2026-08-04 21:13:40 CST
-test push directo desde Cowork local
+2026-08-05 07:12:01 CST — push directo con token OK
