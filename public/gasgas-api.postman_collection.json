@@ -1,0 +1,140 @@
+{
+  "info": {
+    "name": "GasGas API — Precios de combustible de México",
+    "description": "API de precios de gasolina de México. Datos oficiales CNE con limpieza y validación de GasGas.\n\nEndpoints de consulta abierta con fines de evaluación. Los contratos comerciales operan con API key por cliente en el encabezado `x-api-key`.\n\nDocumentación: https://gasgas.com.mx/docs\nContacto: hola@gasgas.com.mx",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "https://api.gasgas.com.mx/api" },
+    { "key": "api_key", "value": "TU_LLAVE_OPCIONAL" }
+  ],
+  "item": [
+    {
+      "name": "Health check",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{base_url}}/test", "host": ["{{base_url}}"], "path": ["test"] },
+        "description": "Verifica conectividad. Responde {\"status\":\"ok\"}."
+      }
+    },
+    {
+      "name": "Precios agregados — Nacional hoy",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/precios?market=nacional&value=all&days=1&product=regular",
+          "host": ["{{base_url}}"],
+          "path": ["precios"],
+          "query": [
+            { "key": "market", "value": "nacional", "description": "nacional · estado · municipio" },
+            { "key": "value", "value": "all", "description": "all · nombre de estado · Estado|Municipio" },
+            { "key": "days", "value": "1", "description": "1 · 7 · 30" },
+            { "key": "product", "value": "regular", "description": "regular · premium · diesel (a qué producto corresponden min/max/std)" }
+          ]
+        },
+        "description": "Promedio, mínimo, máximo y desviación estándar de un mercado en un periodo."
+      }
+    },
+    {
+      "name": "Precios agregados — Estado (Jalisco)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/precios?market=estado&value=Jalisco&days=1&product=regular",
+          "host": ["{{base_url}}"],
+          "path": ["precios"],
+          "query": [
+            { "key": "market", "value": "estado" },
+            { "key": "value", "value": "Jalisco" },
+            { "key": "days", "value": "1" },
+            { "key": "product", "value": "regular" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Precios agregados — Municipio (Jalisco|Zapopan)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/precios?market=municipio&value=Jalisco%7CZapopan&days=1&product=regular",
+          "host": ["{{base_url}}"],
+          "path": ["precios"],
+          "query": [
+            { "key": "market", "value": "municipio" },
+            { "key": "value", "value": "Jalisco%7CZapopan", "description": "Llave compuesta Estado|Municipio — la barra vertical se codifica %7C" },
+            { "key": "days", "value": "1" },
+            { "key": "product", "value": "regular" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Serie histórica — Nacional 30 días",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/historico?market=nacional&value=all&days=30",
+          "host": ["{{base_url}}"],
+          "path": ["historico"],
+          "query": [
+            { "key": "market", "value": "nacional" },
+            { "key": "value", "value": "all" },
+            { "key": "days", "value": "30", "description": "7 · 30. Histórico profundo desde mayo 2024 por contrato." }
+          ]
+        },
+        "description": "Serie diaria de promedios, ordenada por fecha."
+      }
+    },
+    {
+      "name": "Catálogo de estados",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{base_url}}/estados", "host": ["{{base_url}}"], "path": ["estados"] },
+        "description": "Los 32 estados disponibles."
+      }
+    },
+    {
+      "name": "Catálogo de municipios (Jalisco)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/municipios?estado=Jalisco",
+          "host": ["{{base_url}}"],
+          "path": ["municipios"],
+          "query": [ { "key": "estado", "value": "Jalisco", "description": "Requerido. Sin él: 400." } ]
+        },
+        "description": "Municipios de un estado con su número de estaciones (base muestral)."
+      }
+    },
+    {
+      "name": "Ranking de estados (hoy)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/ranking-estados?product=regular",
+          "host": ["{{base_url}}"],
+          "path": ["ranking-estados"],
+          "query": [ { "key": "product", "value": "regular", "description": "Opcional: regular · premium · diesel" } ]
+        },
+        "description": "Los 32 estados con sus precios de hoy, ordenados."
+      }
+    },
+    {
+      "name": "Estados vecinos (Chiapas)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/vecinos?estado=Chiapas&product=regular",
+          "host": ["{{base_url}}"],
+          "path": ["vecinos"],
+          "query": [
+            { "key": "estado", "value": "Chiapas" },
+            { "key": "product", "value": "regular" }
+          ]
+        },
+        "description": "Estados vecinos de un estado con sus precios de hoy, para comparativos regionales."
+      }
+    }
+  ]
+}

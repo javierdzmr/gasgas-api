@@ -114,6 +114,9 @@ pre .n{color:#FDE68A}
   <a href="#errores">Errores</a>
   <a href="#versionado">Versionado</a>
   <a href="#changelog">Changelog</a>
+  <div class="grupo">Descargas</div>
+  <a href="/openapi.json" download>OpenAPI 3.1 (JSON)</a>
+  <a href="/gasgas-api.postman_collection.json" download>Colección Postman</a>
 </nav>
 
 <main class="contenido">
@@ -121,6 +124,7 @@ pre .n{color:#FDE68A}
   <h1>API de precios GasGas <span class="version">v1 · estable</span></h1>
   <p class="lead">Precios de combustible de las 14,194 estaciones de México — promedio, mínimo, máximo y desviación estándar por nivel geográfico, con serie histórica diaria. Fuente: Comisión Nacional de Energía, con validación y limpieza de atípicos.</p>
   <div class="base-url">https://api.gasgas.com.mx/api</div>
+  <p style="margin-top:10px;font-size:13.5px">Para tu equipo: <a href="/openapi.json" download><b>especificación OpenAPI 3.1</b></a> (contrato formal de la API, compatible con Swagger UI y generación de clientes) · <a href="/gasgas-api.postman_collection.json" download><b>colección de Postman</b></a> con todos los endpoints listos para importar.</p>
 
   <h2 id="inicio">Inicio rápido</h2>
   <p>Tu primera llamada en 60 segundos. Elige tu lenguaje:</p>
@@ -156,7 +160,7 @@ console.log(await r.json());</pre></div>
   <h2 id="convenciones">Convenciones</h2>
   <ul>
     <li><b>Números como texto.</b> Los precios llegan como strings con 4 decimales (<span class="mono">"23.9295"</span>) para no perder precisión. Conviértelos a decimal en tu sistema; para mostrar, redondea a 2.</li>
-    <li><b><span class="mono">updated_at</span> en cada respuesta.</b> Timestamp UTC (ISO 8601) del último cálculo. La base se actualiza ~11 veces al día con la publicación de la CNE.</li>
+    <li><b><span class="mono">updated_at</span> en cada respuesta.</b> Timestamp UTC (ISO 8601) del último cálculo. La base se actualiza con 2 cortes al día (6 AM y 2 PM, hora de México) a partir de la publicación de la CNE — verificable en <span class="mono">updated_at</span>.</li>
     <li><b>Fechas de negocio en hora de México.</b> El corte <span class="mono">days=1</span> corresponde al último día con datos publicados (zona America/Mexico_City), no al día UTC.</li>
     <li><b>Niveles geográficos.</b> <span class="mono">nacional</span> · <span class="mono">estado</span> · <span class="mono">municipio</span> (llave compuesta <span class="mono">Estado|Municipio</span>, la barra se codifica <span class="mono">%7C</span>) · código postal y estación individual disponibles por contrato.</li>
     <li><b>Nombres insensibles a mayúsculas.</b> <span class="mono">value=jalisco</span> y <span class="mono">value=Jalisco</span> son equivalentes.</li>

@@ -1,0 +1,178 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "GasGas API — Precios de combustible de México",
+    "version": "1.0.0",
+    "description": "API de precios de gasolina de México. Datos oficiales de la Comisión Nacional de Energía (CNE) con limpieza, validación de rangos y marca comercial resueltos por GasGas.\n\nLa base se actualiza con 2 cortes al día (6 AM y 2 PM, hora de México). Cada respuesta declara `updated_at`.\n\nLos endpoints de esta especificación son de consulta abierta con fines de evaluación. Los contratos comerciales operan con API key por cliente (encabezado `x-api-key`), niveles adicionales (código postal y estación) e histórico profundo desde mayo 2024.",
+    "contact": { "name": "Equipo de ingeniería GasGas", "email": "hola@gasgas.com.mx", "url": "https://gasgas.com.mx/datos" },
+    "termsOfService": "https://gasgas.com.mx/datos"
+  },
+  "servers": [
+    { "url": "https://api.gasgas.com.mx/api", "description": "Producción" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "ApiKey": { "type": "apiKey", "in": "header", "name": "x-api-key", "description": "Requerida solo en endpoints con contrato comercial. Rotable a solicitud." }
+    },
+    "schemas": {
+      "PreciosAgregados": {
+        "type": "object",
+        "description": "Promedios y estadísticas de un mercado. Los precios son strings con 4 decimales para no perder precisión.",
+        "properties": {
+          "regular": { "type": "string", "description": "Precio promedio por litro de Magna (MXN)", "examples": ["23.9295"] },
+          "premium": { "type": "string", "description": "Precio promedio por litro de Premium (MXN)", "examples": ["29.0847"] },
+          "diesel": { "type": "string", "description": "Precio promedio por litro de Diésel (MXN)", "examples": ["27.0410"] },
+          "min": { "type": "string", "description": "Precio mínimo del producto solicitado", "examples": ["22.9900"] },
+          "max": { "type": "string", "description": "Precio máximo del producto solicitado", "examples": ["24.4900"] },
+          "std": { "type": "string", "description": "Desviación estándar del producto solicitado", "examples": ["0.2968"] },
+          "stations_count": { "type": "integer", "description": "Estaciones que respaldan la cifra (base muestral)", "examples": [333] },
+          "updated_at": { "type": "string", "format": "date-time", "description": "Último cálculo (ISO 8601, UTC)" }
+        }
+      },
+      "PuntoHistorico": {
+        "type": "object",
+        "properties": {
+          "date": { "type": "string", "format": "date-time", "description": "Fecha del promedio diario" },
+          "regular": { "type": "string", "examples": ["23.8531"] },
+          "premium": { "type": "string", "examples": ["28.5296"] },
+          "diesel": { "type": "string", "examples": ["27.1566"] }
+        }
+      },
+      "Estado": {
+        "type": "object",
+        "properties": { "estado": { "type": "string", "examples": ["Jalisco"] } }
+      },
+      "Municipio": {
+        "type": "object",
+        "properties": {
+          "municipio": { "type": "string", "examples": ["Zapopan"] },
+          "estaciones": { "type": "integer", "description": "Estaciones con precio en la plaza (base muestral)", "examples": [108] }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": { "error": { "type": "string", "description": "Descripción del error" } }
+      }
+    },
+    "parameters": {
+      "market": {
+        "name": "market", "in": "query", "required": true,
+        "schema": { "type": "string", "enum": ["nacional", "estado", "municipio"] },
+        "description": "Nivel geográfico. Código postal y estación disponibles por contrato."
+      },
+      "value": {
+        "name": "value", "in": "query", "required": true,
+        "schema": { "type": "string" },
+        "description": "`all` para nacional; nombre del estado (insensible a mayúsculas); o llave compuesta `Estado|Municipio` (la barra se codifica `%7C`).",
+        "examples": { "nacional": { "value": "all" }, "estado": { "value": "Jalisco" }, "municipio": { "value": "Jalisco|Zapopan" } }
+      },
+      "product": {
+        "name": "product", "in": "query", "required": false,
+        "schema": { "type": "string", "enum": ["regular", "premium", "diesel"], "default": "regular" },
+        "description": "A qué combustible corresponden min/max/std."
+      }
+    },
+    "responses": {
+      "BadRequest": { "description": "Falta un parámetro o tiene formato inválido.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "NotFound": { "description": "El mercado solicitado no existe. Valida contra /estados o /municipios.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "TooManyRequests": { "description": "Límite de uso excedido. Reintenta con backoff; los límites están en tu contrato.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+    }
+  },
+  "paths": {
+    "/precios": {
+      "get": {
+        "operationId": "getPrecios",
+        "summary": "Precios agregados de un mercado",
+        "description": "Promedio, mínimo, máximo y desviación estándar de un mercado en un periodo. El corte `days=1` corresponde al último día con datos publicados (hora de México).",
+        "parameters": [
+          { "$ref": "#/components/parameters/market" },
+          { "$ref": "#/components/parameters/value" },
+          { "name": "days", "in": "query", "required": true, "schema": { "type": "integer", "enum": [1, 7, 30] }, "description": "Hoy, últimos 7 o últimos 30 días." },
+          { "$ref": "#/components/parameters/product" }
+        ],
+        "responses": {
+          "200": { "description": "Precios y estadísticas del mercado.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PreciosAgregados" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/historico": {
+      "get": {
+        "operationId": "getHistorico",
+        "summary": "Serie histórica diaria de un mercado",
+        "description": "Serie diaria de promedios, ordenada por fecha. Histórico profundo (desde mayo 2024) disponible por contrato.",
+        "parameters": [
+          { "$ref": "#/components/parameters/market" },
+          { "$ref": "#/components/parameters/value" },
+          { "name": "days", "in": "query", "required": false, "schema": { "type": "integer", "enum": [7, 30], "default": 30 }, "description": "Ventana de la serie." }
+        ],
+        "responses": {
+          "200": { "description": "Arreglo de promedios diarios ordenado por fecha.", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/PuntoHistorico" } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/estados": {
+      "get": {
+        "operationId": "getEstados",
+        "summary": "Catálogo de estados",
+        "description": "Los 32 estados disponibles, para construir selectores.",
+        "responses": {
+          "200": { "description": "Lista de estados.", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Estado" } } } } }
+        }
+      }
+    },
+    "/municipios": {
+      "get": {
+        "operationId": "getMunicipios",
+        "summary": "Catálogo de municipios de un estado",
+        "description": "Municipios con su número de estaciones. Sugerencia: usa `estaciones` para decidir cómo presentar plazas chicas — un promedio de 1–2 estaciones es referencia puntual, no mercado.",
+        "parameters": [
+          { "name": "estado", "in": "query", "required": true, "schema": { "type": "string" }, "description": "Estado del que se listan municipios.", "example": "Jalisco" }
+        ],
+        "responses": {
+          "200": { "description": "Municipios con base muestral.", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Municipio" } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/ranking-estados": {
+      "get": {
+        "operationId": "getRankingEstados",
+        "summary": "Ranking de los 32 estados por precio de hoy",
+        "parameters": [ { "$ref": "#/components/parameters/product" } ],
+        "responses": {
+          "200": { "description": "Los 32 estados con sus precios de hoy, ordenados." }
+        }
+      }
+    },
+    "/vecinos": {
+      "get": {
+        "operationId": "getVecinos",
+        "summary": "Estados vecinos con sus precios de hoy",
+        "description": "Para comparativos regionales.",
+        "parameters": [
+          { "name": "estado", "in": "query", "required": true, "schema": { "type": "string" }, "example": "Chiapas" },
+          { "$ref": "#/components/parameters/product" }
+        ],
+        "responses": {
+          "200": { "description": "Estados vecinos con precios de hoy." },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/test": {
+      "get": {
+        "operationId": "healthCheck",
+        "summary": "Health check",
+        "description": "Úsalo para verificar conectividad y monitoreo.",
+        "responses": {
+          "200": { "description": "Servicio operando.", "content": { "application/json": { "schema": { "type": "object", "properties": { "status": { "type": "string", "examples": ["ok"] } } } } } }
+        }
+      }
+    }
+  }
+}
