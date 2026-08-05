@@ -1,1 +1,2 @@
-Deploy autónomo verificado: 2026-07-19 00:05 UTC
+2026-08-04 21:13:40 CST
+test push directo desde Cowork local
