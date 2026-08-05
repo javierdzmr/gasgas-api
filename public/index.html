@@ -566,8 +566,9 @@ function horaDe(updatedAt){
   const then=new Date(updatedAt.replace(" ","T")+(updatedAt.includes("Z")?"":"Z"));
   if(isNaN(then)) return "";
   const hora=then.toLocaleTimeString("es-MX",{hour:"numeric",minute:"2-digit",hour12:true,timeZone:TZ});
+  const fecha=then.toLocaleDateString("es-MX",{day:"numeric",month:"short",timeZone:TZ}).replace(".","");
   const esHoy=then.toLocaleDateString("en-CA",{timeZone:TZ})===new Date().toLocaleDateString("en-CA",{timeZone:TZ});
-  return esHoy?hora:"ayer "+hora;
+  return (esHoy?"hoy ":"")+fecha+", "+hora;
 }
 
 function setMercado(tipo){
