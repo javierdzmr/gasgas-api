@@ -48,10 +48,13 @@ svg.ic{width:16px;height:16px;flex:none}
 .wordmark{font-weight:800;font-size:20px;letter-spacing:-.02em}
 .nav .fuente-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--texto-inv-2)}
 .nav .fuente-badge svg{color:var(--verde-500)}
-.nav-links{display:flex;align-items:center;gap:16px}
-.nav-links a{font-size:13px;font-weight:600;color:var(--texto-inv-2);transition:color var(--dur-rapido) var(--easing)}
-.nav-links a:hover{color:var(--texto-inverso)}
-@media (max-width:520px){.nav .fuente-badge{display:none}}
+.nav-links{display:flex;align-items:center;gap:10px}
+.nav-links a{display:inline-flex;align-items:center;height:32px;padding:0 14px;border-radius:var(--radio-full);font-size:13px;font-weight:700;color:var(--texto-inverso);border:1px solid rgba(255,255,255,.28);transition:background var(--dur-rapido) var(--easing)}
+.nav-links a:hover{background:rgba(255,255,255,.12)}
+.nav-links a.cta{background:var(--verde-600);border-color:var(--verde-600)}
+.nav-links a.cta:hover{background:var(--verde-500)}
+@media (max-width:760px){.nav .fuente-badge{display:none}}
+@media (max-width:600px){.nav-links a{padding:0 10px;font-size:12px}}
 .hero{padding:24px 0 32px}
 .overline{font-size:11px;line-height:14px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--verde-500)}
 .precio-hero{display:flex;align-items:flex-start;gap:2px;margin-top:12px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
@@ -181,6 +184,7 @@ svg.grafica{display:block;width:100%;height:150px}
 
   /* Sección principal: controles + tarjetas a la izquierda, gráfica a la derecha */
   .seccion{display:grid;grid-template-columns:360px minmax(0,1fr);column-gap:24px;align-content:start;
+    grid-template-rows:auto auto auto auto auto auto 1fr auto auto;
     grid-template-areas:
       "aviso aviso"
       "titulo titulo"
@@ -188,6 +192,7 @@ svg.grafica{display:block;width:100%;height:150px}
       "chipsf grafica"
       "nota grafica"
       "precios grafica"
+      "relleno grafica"
       "metabar metabar"
       "correo correo"}
   .aviso-cache{grid-area:aviso}
@@ -214,7 +219,7 @@ svg.grafica{display:block;width:100%;height:150px}
   <div class="wrap nav">
     <span class="lockup"><span class="logo-pill">GG</span><span class="wordmark">GasGas</span></span>
     <nav class="nav-links">
-      <a href="/datos">Datos para empresas</a>
+      <a class="cta" href="/datos">Datos para empresas</a>
       <a href="/docs">Docs API</a>
       <span class="fuente-badge"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.5-4.8 2.5.9-5.4L4.2 7.7l5.4-.8z" fill="currentColor" stroke="none" opacity="0"/><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>Datos oficiales CNE</span>
     </nav>
