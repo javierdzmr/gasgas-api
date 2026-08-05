@@ -408,7 +408,7 @@ function render(){
     np.textContent=`En ${nombreMercado} solo hay ${DATA.meta.stations} ${DATA.meta.stations===1?"estación":"estaciones"} con precio. Tómalo como referencia puntual, no como promedio de mercado.`;
   }else{np.hidden=true;}
   const ed=$("estado-dato");
-  if(DATA.origen==="vivo"){ed.textContent="● En vivo";ed.className="estado-dato estado-dato--vivo";}
+  if(DATA.origen==="vivo"){ed.textContent="● En vivo"+(DATA.horaAct?" · actualizado "+DATA.horaAct:"");ed.className="estado-dato estado-dato--vivo";}
   else{ed.textContent="Último dato: "+DATA.fechaTexto;ed.className="estado-dato estado-dato--cache";}
   $("aviso-cache").classList.toggle("visible",DATA.origen!=="vivo");
 
@@ -524,7 +524,7 @@ async function cargar(reintento){
         dates:h.map(r=>(r.date||"").slice(0,10)),
         regular:h.map(r=>+r.regular),premium:h.map(r=>+r.premium),diesel:h.map(r=>+r.diesel),
         meta:{stations:p.stations_count||p.total_estaciones||0,min:+p.min||0,max:+p.max||0,std:+p.std||0},
-        origen:"vivo",fechaTexto:"",antiguedad:antiguedadDe(p.updated_at)
+        origen:"vivo",fechaTexto:"",antiguedad:antiguedadDe(p.updated_at),horaAct:horaDe(p.updated_at)
       };
       render();return;
     }
@@ -558,6 +558,16 @@ function antiguedadDe(updatedAt){
   const esHoy=then.toLocaleDateString("en-CA",{timeZone:TZ})===new Date().toLocaleDateString("en-CA",{timeZone:TZ});
   const hora=then.toLocaleTimeString("es-MX",{hour:"numeric",minute:"2-digit",hour12:true,timeZone:TZ});
   return esHoy?`Actualizado hoy, ${hora}`:"Actualizado ayer";
+}
+
+/* Hora del último corte para el indicador "En vivo" (ej. "2:00 p.m.") */
+function horaDe(updatedAt){
+  if(!updatedAt) return "";
+  const then=new Date(updatedAt.replace(" ","T")+(updatedAt.includes("Z")?"":"Z"));
+  if(isNaN(then)) return "";
+  const hora=then.toLocaleTimeString("es-MX",{hour:"numeric",minute:"2-digit",hour12:true,timeZone:TZ});
+  const esHoy=then.toLocaleDateString("en-CA",{timeZone:TZ})===new Date().toLocaleDateString("en-CA",{timeZone:TZ});
+  return esHoy?hora:"ayer "+hora;
 }
 
 function setMercado(tipo){
