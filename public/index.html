@@ -158,6 +158,50 @@ svg.grafica{display:block;width:100%;height:150px}
 .footer{background:var(--azul-900);color:var(--texto-inv-2);margin-top:32px;padding:24px 0 34px;font-size:12px;line-height:18px}
 .footer b{color:var(--texto-inverso);font-weight:700}
 .footer .linea{margin-top:4px}
+
+/* ============ Desktop (≥900px): layout 2 columnas ============
+   La vista móvil queda intacta; todo lo de aquí abajo solo aplica
+   en pantallas anchas. */
+@media (min-width:900px){
+  .wrap{max-width:1040px;padding:0 24px}
+
+  /* Hero horizontal: precio grande a la izquierda, meta a la derecha */
+  .hero{display:grid;grid-template-columns:1fr auto;column-gap:24px;padding:32px 0 40px}
+  .hero .overline{grid-column:1/-1}
+  .precio-hero{grid-row:2;grid-column:1}
+  .precio-hero .num{font-size:72px}
+  .precio-hero .simbolo{font-size:42px;margin-top:6px}
+  .hero .delta{grid-row:3;grid-column:1;align-self:end}
+  .hero .fuente{grid-row:2;grid-column:2;align-self:end;justify-self:end;text-align:right;margin-top:0}
+  .hero .antiguedad{grid-row:3;grid-column:2;align-self:end;justify-self:end;margin-top:0}
+
+  /* Sección principal: controles + tarjetas a la izquierda, gráfica a la derecha */
+  .seccion{display:grid;grid-template-columns:360px minmax(0,1fr);column-gap:24px;align-content:start;
+    grid-template-areas:
+      "aviso aviso"
+      "titulo titulo"
+      "chipsm grafica"
+      "chipsf grafica"
+      "nota grafica"
+      "precios grafica"
+      "metabar metabar"
+      "correo correo"}
+  .aviso-cache{grid-area:aviso}
+  .titulo-seccion{grid-area:titulo}
+  .chips-mercado{grid-area:chipsm}
+  .chips-fuel{grid-area:chipsf}
+  .nota-pocas{grid-area:nota}
+  .grid-precios{grid-area:precios;grid-template-columns:1fr;gap:10px;align-content:start}
+  .card-precio{display:flex;align-items:center;gap:12px}
+  .card-precio .fuel{flex:1}
+  .card-precio .valor{margin:0}
+  .card-precio .valor .num{font-size:24px}
+  .card-grafica{grid-area:grafica;margin-top:0;display:flex;flex-direction:column}
+  .card-grafica svg.grafica{flex:1;min-height:280px;height:auto}
+  .metabar{grid-area:metabar}
+  .card-correo{grid-area:correo;margin-top:24px}
+  .card-correo .fila-correo{max-width:480px}
+}
 </style>
 </head>
 <body>
@@ -194,14 +238,14 @@ svg.grafica{display:block;width:100%;height:150px}
       <span class="estado-dato" id="estado-dato"></span>
     </div>
 
-    <div class="chips" role="group" aria-label="Mercado">
+    <div class="chips chips-mercado" role="group" aria-label="Mercado">
       <button class="chip" id="chip-nacional" aria-pressed="true" onclick="setMercado('nacional')">Nacional</button>
       <button class="chip" id="chip-estado" aria-pressed="false" onclick="setMercado('estado')">Por estado</button>
       <select class="selector-estado" id="sel-estado" hidden aria-label="Estado"></select>
       <select class="selector-estado" id="sel-municipio" hidden aria-label="Municipio"></select>
     </div>
 
-    <div class="chips" role="group" aria-label="Combustible">
+    <div class="chips chips-fuel" role="group" aria-label="Combustible">
       <button class="chip chip--magna" data-f="regular" aria-pressed="true"><span class="dot"></span>Magna</button>
       <button class="chip chip--premium" data-f="premium" aria-pressed="false"><span class="dot"></span>Premium</button>
       <button class="chip chip--diesel" data-f="diesel" aria-pressed="false"><span class="dot"></span>Diésel</button>
@@ -348,7 +392,7 @@ let CHART=null;
 function grafica(){
   const svg=$("grafica");
   const s=DATA[fuel].filter(v=>v!=null&&!isNaN(v));
-  const W=Math.max(svg.clientWidth||328,260),H=150;
+  const W=Math.max(svg.clientWidth||328,260),H=Math.max(svg.clientHeight||150,150);
   svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
   const padL=40,padR=10,padT=12,padB=10;
   let min=Math.min(...s),max=Math.max(...s);
@@ -370,7 +414,7 @@ function grafica(){
     `<circle cx="${x(s.length-1).toFixed(1)}" cy="${y(s[s.length-1]).toFixed(1)}" r="3.5" fill="#007A39"/>`+
     `<line id="ch-l" y1="${padT}" y2="${H-padB}" stroke="#C3CDD8" stroke-width="1" stroke-dasharray="3 3" style="display:none"/>`+
     `<circle id="ch-c" r="4" fill="#0E2A47" stroke="#fff" stroke-width="1.5" style="display:none"/>`;
-  CHART={s,x,y,W,padL,padR};
+  CHART={s,x,y,W,H,padL,padR};
   $("grafica-titulo").textContent=`${FUELS[fuel]} · 30 días`;
   $("grafica-rango").textContent=`${f2(Math.min(...s))} – ${f2(Math.max(...s))}`;
   const ds=DATA.dates;
@@ -402,7 +446,7 @@ function grafica(){
     let left=sx+px*(r.width/CHART.W)-tw/2;
     left=Math.max(4,Math.min(left,cw-tw-4));
     tt.style.left=left+"px";
-    tt.style.top=(sy+py*(r.height/150)-tt.offsetHeight-12)+"px";
+    tt.style.top=(sy+py*(r.height/CHART.H)-tt.offsetHeight-12)+"px";
   }
   function fuera(){tt.style.display="none";const a=$("ch-l"),b=$("ch-c");if(a)a.style.display="none";if(b)b.style.display="none";}
   svg.addEventListener("pointermove",mueve);
