@@ -433,8 +433,10 @@ function render(){
    Eje Y con escala visible (ventana mínima de $0.10 para no exagerar
    movimientos de centavos) + tooltip al pasar el cursor. */
 let CHART=null;
+const FUEL_COLOR={regular:"#007A39",premium:"#DC2626",diesel:"#334155"};
 function grafica(){
   const svg=$("grafica");
+  const col=FUEL_COLOR[fuel]||"#007A39";
   const s=DATA[fuel].filter(v=>v!=null&&!isNaN(v));
   const W=Math.max(svg.clientWidth||328,260),H=Math.max(svg.clientHeight||150,150);
   svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
@@ -454,8 +456,8 @@ function grafica(){
   const grid=ticks.map(t=>`<line x1="${padL}" x2="${W-padR}" y1="${y(t).toFixed(1)}" y2="${y(t).toFixed(1)}" stroke="#DCE3EB" stroke-width="1"/>
     <text x="${padL-6}" y="${(y(t)+3.5).toFixed(1)}" text-anchor="end" font-family="'JetBrains Mono',monospace" font-size="10" fill="#7B8A9A">${f2(t)}</text>`).join("");
   svg.innerHTML=grid+
-    `<path d="${linea}" fill="none" stroke="#007A39" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`+
-    `<circle cx="${x(s.length-1).toFixed(1)}" cy="${y(s[s.length-1]).toFixed(1)}" r="3.5" fill="#007A39"/>`+
+    `<path d="${linea}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`+
+    `<circle cx="${x(s.length-1).toFixed(1)}" cy="${y(s[s.length-1]).toFixed(1)}" r="3.5" fill="${col}"/>`+
     `<line id="ch-l" y1="${padT}" y2="${H-padB}" stroke="#C3CDD8" stroke-width="1" stroke-dasharray="3 3" style="display:none"/>`+
     `<circle id="ch-c" r="4" fill="#0E2A47" stroke="#fff" stroke-width="1.5" style="display:none"/>`;
   CHART={s,x,y,W,H,padL,padR};
