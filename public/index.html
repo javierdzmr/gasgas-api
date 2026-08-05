@@ -147,6 +147,17 @@ svg.grafica{display:block;width:100%;height:150px}
 .skeleton::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,var(--skeleton-shimmer),transparent);animation:gg-shimmer 1.4s infinite}
 @keyframes gg-shimmer{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
 
+/* API B2B (propuesta de valor de /datos) */
+.card-api{margin-top:24px;display:grid;gap:20px}
+.card-api .overline{color:var(--verde-600)}
+.card-api h3{font-size:20px;line-height:28px;font-weight:700;margin:6px 0 4px}
+.card-api p{color:var(--texto-2);margin-bottom:16px}
+.card-api .ctas{display:flex;flex-wrap:wrap;gap:8px}
+.api-bullets{list-style:none;display:grid;gap:10px;align-content:center}
+.api-bullets li{display:flex;gap:8px;font-size:13.5px;line-height:19px;color:var(--texto-2)}
+.api-bullets li::before{content:"✓";color:var(--verde-600);font-weight:800;flex:none}
+.api-bullets li b{color:var(--texto-1)}
+
 /* Correo */
 .card-correo{margin-top:24px}
 .card-correo h3{font-size:20px;line-height:28px;font-weight:600}
@@ -184,7 +195,7 @@ svg.grafica{display:block;width:100%;height:150px}
 
   /* Sección principal: controles + tarjetas a la izquierda, gráfica a la derecha */
   .seccion{display:grid;grid-template-columns:360px minmax(0,1fr);column-gap:24px;align-content:start;
-    grid-template-rows:auto auto auto auto auto auto 1fr auto auto;
+    grid-template-rows:auto auto auto auto auto auto 1fr auto auto auto;
     grid-template-areas:
       "aviso aviso"
       "titulo titulo"
@@ -194,6 +205,7 @@ svg.grafica{display:block;width:100%;height:150px}
       "precios grafica"
       "relleno grafica"
       "metabar metabar"
+      "apib2b apib2b"
       "correo correo"}
   .aviso-cache{grid-area:aviso}
   .titulo-seccion{grid-area:titulo}
@@ -208,6 +220,7 @@ svg.grafica{display:block;width:100%;height:150px}
   .card-grafica{grid-area:grafica;margin-top:0;display:flex;flex-direction:column}
   .card-grafica svg.grafica{flex:1;min-height:280px;height:auto}
   .metabar{grid-area:metabar}
+  .card-api{grid-area:apib2b;grid-template-columns:1.2fr 1fr;gap:24px;padding:24px}
   .card-correo{grid-area:correo;margin-top:24px}
   .card-correo .fila-correo{max-width:480px}
 }
@@ -282,6 +295,24 @@ svg.grafica{display:block;width:100%;height:150px}
     </div>
 
     <div class="metabar" id="metabar"></div>
+
+    <div class="card card-api">
+      <div>
+        <div class="overline">API y datos para empresas</div>
+        <h3>Precios listos para decidir, no un archivo que limpiar.</h3>
+        <p>La CNE publica el dato crudo. GasGas ya hizo el proceso de limpieza y te lo entrega listo para usar: por estado, municipio, código postal o estación.</p>
+        <div class="ctas">
+          <a class="btn btn--primario" href="/datos">Conocer los datos</a>
+          <a class="btn btn--secundario" href="/docs">Ver documentación</a>
+        </div>
+      </div>
+      <ul class="api-bullets">
+        <li><b>Limpieza hecha:</b>&nbsp;sin duplicados, sin $0.00 ni $999, rangos validados</li>
+        <li><b>Cobertura:</b>&nbsp;14,194 estaciones · 2,900+ municipios · 4,900+ CPs</li>
+        <li><b>Histórico desde mayo 2024</b>&nbsp;· 2 cortes al día (6 AM y 2 PM)</li>
+        <li><b>Contexto incluido:</b>&nbsp;promedios y semáforo de caro/barato</li>
+      </ul>
+    </div>
 
     <div class="card card-correo">
       <h3>El precio, en tu correo</h3>
