@@ -112,6 +112,8 @@ pre .n{color:#FDE68A}
   <a class="metodo" href="#otros">Otros endpoints</a>
   <div class="grupo">Operación</div>
   <a href="#errores">Errores</a>
+  <a href="#cache">Caché</a>
+  <a href="#seguridad">Seguridad</a>
   <a href="#versionado">Versionado</a>
   <a href="#changelog">Changelog</a>
   <div class="grupo">Descargas</div>
@@ -258,6 +260,34 @@ console.log(await r.json());</pre></div>
     <tr><td>429</td><td>Límite de uso excedido.</td><td>Espera y reintenta con backoff. Los límites están en tu contrato; nunca bloqueamos en silencio.</td></tr>
     <tr><td>5xx</td><td>Error de nuestro lado.</td><td>Reintenta con backoff exponencial. Nuestro monitoreo lo detecta en ≤1 hora y el equipo es alertado.</td></tr>
   </table>
+  <div class="etiqueta-code">Ejemplos de cuerpo de error (formato garantizado; el texto puede variar):</div>
+  <pre><span class="c">// 400 — parámetro faltante o inválido</span>
+{ <span class="k">"error"</span>: <span class="g">"Falta el parámetro estado"</span> }
+
+<span class="c">// 404 — ruta o mercado inexistente</span>
+{ <span class="k">"error"</span>: <span class="g">"Not Found"</span> }
+
+<span class="c">// 429 — límite de uso excedido (endpoints con contrato)</span>
+{ <span class="k">"error"</span>: <span class="g">"Límite de uso excedido"</span> }
+
+<span class="c">// 500 — error interno (el equipo es alertado)</span>
+{ <span class="k">"error"</span>: <span class="g">"Error obteniendo precios"</span> }</pre>
+
+  <h2 id="cache">Caché</h2>
+  <ul>
+    <li>Los <b>GET</b> responden con <span class="mono">Cache-Control: public, max-age=300, s-maxage=300</span> — la respuesta puede servirse desde el borde (CDN) o tu navegador hasta <b>5 minutos</b>.</li>
+    <li>Como la base se actualiza con 2 cortes al día, esos 5 minutos <b>no afectan la frescura práctica del dato</b>. La fuente de verdad de la antigüedad es siempre <span class="mono">updated_at</span>, no la hora de la respuesta.</li>
+    <li>Recomendación: si tu sistema consulta con alta frecuencia, cachea de tu lado por mercado y refresca tras los cortes (6 AM y 2 PM, hora de México).</li>
+    <li>Las peticiones que no son GET responden <span class="mono">Cache-Control: no-store</span>.</li>
+  </ul>
+
+  <h2 id="seguridad">Seguridad y datos</h2>
+  <ul>
+    <li><b>TLS obligatorio.</b> Toda la API se sirve sobre HTTPS; las peticiones HTTP se redirigen.</li>
+    <li><b>Llaves por cliente.</b> Los contratos operan con API key propia (encabezado <span class="mono">x-api-key</span>), rotable a solicitud sin costo. Nunca compartas tu llave en código del lado del cliente (navegador o apps móviles); llámanos desde tu backend.</li>
+    <li><b>Sin datos personales.</b> La API sirve exclusivamente datos públicos agregados de precios de combustible — no maneja PII, por lo que integrarte no agrega superficie de riesgo de privacidad a tu sistema.</li>
+    <li><b>Retención.</b> El histórico se conserva de forma continua desde mayo 2024; los agregados publicados no se reescriben tras su corte.</li>
+  </ul>
 
   <h2 id="versionado">Versionado y estabilidad</h2>
   <ul>
@@ -269,6 +299,7 @@ console.log(await r.json());</pre></div>
   <h2 id="changelog">Changelog</h2>
   <table>
     <tr><th>Fecha</th><th>Cambio</th></tr>
+    <tr><td>2026-08-05</td><td>Publicadas la <b>especificación OpenAPI 3.1</b> y la <b>colección de Postman</b>. Nuevas secciones: ejemplos de error, caché y seguridad.</td></tr>
     <tr><td>2026-07-19</td><td>Nuevo nivel <b>municipio</b> (~2,900 plazas) en <span class="mono">/precios</span> y <span class="mono">/historico</span> + nuevo catálogo <span class="mono">/municipios</span>.</td></tr>
     <tr><td>2026-07</td><td>Documentación pública v1. Esquema estable declarado.</td></tr>
   </table>
