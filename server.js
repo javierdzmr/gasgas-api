@@ -370,13 +370,24 @@ app.get("/api/ranking-estados", async (req, res) => {
     const { product } = req.query;
     const col = ['regular','premium','diesel'].includes(product) ? product : 'regular';
 
+    // Nota: stations_count y delta7_* son campos ADITIVOS (compatibles con clientes existentes)
     const result = await pool.query(`
-      SELECT market_value AS estado, regular, premium, diesel
-      FROM precios_agregados
-      WHERE market_type = 'estado'
-        AND days = 1
-        AND ${col} IS NOT NULL
-      ORDER BY ${col} DESC
+      WITH h AS (
+        SELECT market_value, regular, premium, diesel,
+               ROW_NUMBER() OVER (PARTITION BY market_value ORDER BY date DESC) AS rn
+        FROM precios_historicos_agregados
+        WHERE market_type = 'estado' AND date >= NOW() - INTERVAL '12 days'
+      )
+      SELECT a.market_value AS estado, a.regular, a.premium, a.diesel,
+             a.stations_count,
+             ROUND((h1.regular - h8.regular)::numeric, 4) AS delta7_regular,
+             ROUND((h1.premium - h8.premium)::numeric, 4) AS delta7_premium,
+             ROUND((h1.diesel  - h8.diesel)::numeric, 4) AS delta7_diesel
+      FROM precios_agregados a
+      LEFT JOIN h h1 ON h1.market_value = a.market_value AND h1.rn = 1
+      LEFT JOIN h h8 ON h8.market_value = a.market_value AND h8.rn = 8
+      WHERE a.market_type = 'estado' AND a.days = 1 AND a.${col} IS NOT NULL
+      ORDER BY a.${col} DESC
     `);
 
     res.json(result.rows);

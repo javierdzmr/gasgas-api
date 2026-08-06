@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GasGas Intelligence · Monitor Nacional</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/d3@7.9.0/dist/d3.min.js" integrity="sha384-CjloA8y00+1SDAUkjs099PVfnY2KmDC2BZnws9kh8D/lX1s46w6EPhpXdqMfjK6i" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/topojson-client@3.1.0/dist/topojson-client.min.js" integrity="sha384-Ukv1p/xTma6P4/2bY5KzWBw+ydSpXmhCMtyciIQVDJ1RmOxtCYNMF1uXT9T63H67" crossorigin="anonymous"></script>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Figtree', sans-serif; background: #081B30; color: #FFFFFF; -webkit-font-smoothing: antialiased; }
+  a { color: #00A94F; text-decoration: none; }
+  a:hover { color: #7FD4A8; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .panel { background: #0E2A47; border: 1px solid rgba(255,255,255,0.09); border-radius: 10px; }
+  .kpi-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: rgba(255,255,255,0.45); }
+  .kpi-val { font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 600; margin-top: 6px; }
+  @keyframes ggPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+  @keyframes rowIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+  .estado-path { cursor: pointer; transition: opacity 0.15s; stroke: #081B30; stroke-width: 0.8; }
+  .estado-path:hover { opacity: 0.75; }
+  .estado-path.sel { stroke: #FFFFFF; stroke-width: 2; }
+  .tab { font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 7px 16px; border-radius: 6px; cursor: pointer; border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.6); user-select: none; }
+  .tab.on { background: #00A94F; border-color: #00A94F; color: #FFFFFF; font-weight: 600; }
+  .tab:hover:not(.on) { border-color: rgba(255,255,255,0.4); color: #FFFFFF; }
+  #tooltip { position: fixed; pointer-events: none; background: #081B30; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 10px 14px; font-family: 'JetBrains Mono', monospace; font-size: 12px; display: none; z-index: 10; box-shadow: 0 8px 30px rgba(0,0,0,0.4); }
+  .feed-row { display: flex; gap: 10px; align-items: center; padding: 6px 10px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; animation: rowIn 0.35s ease-out; }
+  table.movers { width: 100%; border-collapse: collapse; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  table.movers th { text-align: left; font-weight: 500; font-size: 10px; letter-spacing: 0.1em; color: rgba(255,255,255,0.45); padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  table.movers td { padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  table.movers tr.click { cursor: pointer; }
+  table.movers tr.click:hover td { background: rgba(255,255,255,0.04); }
+  @media (max-width: 900px) {
+    header { height: auto !important; padding: 12px 16px !important; flex-wrap: wrap; gap: 10px; }
+    header > div { flex-wrap: wrap; gap: 10px !important; }
+    #reloj { min-width: 0 !important; }
+    .kpis { grid-template-columns: repeat(2, 1fr) !important; padding: 12px 16px !important; }
+    main { grid-template-columns: 1fr !important; padding: 12px 16px 20px !important; }
+    #map-wrap { min-height: 300px !important; }
+    .map-panel { min-height: 0 !important; }
+    .movers-wrap { overflow-x: auto; }
+    table.movers { min-width: 560px; }
+    footer { flex-direction: column; gap: 8px !important; }
+  }
+</style>
+</head>
+<body>
+<header style="height: 60px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; border-bottom: 1px solid rgba(255,255,255,0.1)">
+  <div style="display: flex; align-items: center; gap: 12px">
+    <div style="background: #FFFFFF; border-radius: 999px; padding: 5px 12px; font-weight: 800; font-size: 14px; color: #0E2A47">GG</div>
+    <span style="font-weight: 700; font-size: 15px">GasGas Intelligence</span>
+    <span class="mono" style="font-size: 11px; color: rgba(255,255,255,0.4); border-left: 1px solid rgba(255,255,255,0.15); padding-left: 12px; letter-spacing: 0.08em">MONITOR NACIONAL DE PRECIOS</span>
+  </div>
+  <div style="display: flex; align-items: center; gap: 18px">
+    <span class="mono" style="display: inline-flex; align-items: center; gap: 8px; background: #D22F2F; color: #FFFFFF; border-radius: 6px; padding: 5px 12px; font-size: 11px; letter-spacing: 0.08em"><span style="width: 6px; height: 6px; border-radius: 50%; background: #FFFFFF; animation: ggPulse 2s infinite"></span>EN VIVO</span>
+    <span class="mono" id="reloj" style="font-size: 13px; color: #FFFFFF; min-width: 150px"></span>
+    <a href="/datos" style="font-size: 13px; font-weight: 500; border: 1px solid rgba(255,255,255,0.25); border-radius: 8px; padding: 7px 14px; color: rgba(255,255,255,0.85)">← Volver al sitio</a>
+  </div>
+</header>
+
+<div class="kpis" style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; padding: 14px 24px; border-bottom: 1px solid rgba(255,255,255,0.08)">
+  <div class="panel" style="padding: 14px 16px"><div class="kpi-label">PROMEDIO NACIONAL</div><div class="kpi-val" id="kpi-nac">—</div></div>
+  <div class="panel" style="padding: 14px 16px"><div class="kpi-label">ESTACIONES MONITOREADAS</div><div class="kpi-val">14,194</div></div>
+  <div class="panel" style="padding: 14px 16px"><div class="kpi-label">PRECIOS PROCESADOS HOY</div><div class="kpi-val" id="kpi-reg" style="color: #00A94F">—</div></div>
+  <div class="panel" style="padding: 14px 16px"><div class="kpi-label">LATENCIA API P50</div><div class="kpi-val" id="kpi-lat">—</div></div>
+  <div class="panel" style="padding: 14px 16px"><div class="kpi-label">CORTES AL DÍA</div><div class="kpi-val" style="color: #00A94F">2 <span style="font-size: 12px; color: rgba(255,255,255,0.5)">6 AM · 2 PM</span></div></div>
+  <div class="panel" style="padding: 14px 16px"><div class="kpi-label">ÚLTIMO CORTE CNE</div><div class="kpi-val" id="kpi-corte">— <span style="color: #00A94F; font-size: 14px">✓</span></div></div>
+</div>
+
+<main style="display: grid; grid-template-columns: 1fr 400px; gap: 14px; padding: 14px 24px 24px">
+  <section style="display: flex; flex-direction: column; gap: 14px; min-width: 0">
+    <div class="panel map-panel" style="padding: 20px; display: flex; flex-direction: column; min-height: 520px">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; gap: 12px; flex-wrap: wrap">
+        <div style="display: flex; gap: 8px">
+          <span class="tab on" data-prod="regular">REGULAR</span>
+          <span class="tab" data-prod="premium">PREMIUM</span>
+          <span class="tab" data-prod="diesel">DIÉSEL</span>
+        </div>
+        <span class="mono" style="font-size: 11px; color: rgba(255,255,255,0.4)">choropleth · promedio estatal MXN/L · clic para ficha</span>
+      </div>
+      <div id="map-wrap" style="flex: 1; min-height: 440px"></div>
+      <div style="display: flex; align-items: center; gap: 14px; margin-top: 10px">
+        <span class="mono" id="leg-min" style="font-size: 11px; color: rgba(255,255,255,0.5)"></span>
+        <div style="flex: 0 0 220px; height: 10px; border-radius: 5px; background: linear-gradient(90deg, #00A94F, #9BC98A, #E8C36A, #E06565)"></div>
+        <span class="mono" id="leg-max" style="font-size: 11px; color: rgba(255,255,255,0.5)"></span>
+        <span class="mono" style="font-size: 11px; color: rgba(255,255,255,0.35); margin-left: 12px">verde = más barato · rojo = más caro</span>
+      </div>
+    </div>
+    <div class="panel">
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 16px 0">
+        <span class="mono" style="font-size: 11px; letter-spacing: 0.1em; color: rgba(255,255,255,0.5)">MAYORES MOVIMIENTOS · 7 DÍAS</span>
+        <span class="mono" style="font-size: 11px; color: rgba(255,255,255,0.35)">clic en una fila para ver el estado</span>
+      </div>
+      <div class="movers-wrap"><table class="movers" id="movers"></table></div>
+    </div>
+  </section>
+
+  <aside style="display: flex; flex-direction: column; gap: 14px; min-width: 0">
+    <div class="panel" style="padding: 22px">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px">
+        <span class="mono" style="font-size: 11px; letter-spacing: 0.1em; color: rgba(255,255,255,0.5)">FICHA ESTATAL</span>
+        <span class="mono" style="display: flex; align-items: center; gap: 6px; font-size: 11px; color: #FF6B6B"><span style="width: 6px; height: 6px; border-radius: 50%; background: #FF6B6B; animation: ggPulse 2s infinite"></span>EN VIVO</span>
+      </div>
+      <div id="ficha"></div>
+    </div>
+    <div class="panel" style="padding: 18px; flex: 1; display: flex; flex-direction: column; min-height: 220px">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px">
+        <span class="mono" style="font-size: 11px; letter-spacing: 0.1em; color: rgba(255,255,255,0.5)">PROMEDIOS DEL ÚLTIMO CORTE · POR ESTADO</span>
+        <span class="mono" style="font-size: 11px; color: rgba(255,255,255,0.4)">hoy: <span id="feed-count" style="color: #FFFFFF"></span></span>
+      </div>
+      <div id="feed" style="display: grid; gap: 3px; align-content: start"></div>
+    </div>
+  </aside>
+</main>
+
+<footer style="padding: 14px 24px 22px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap">
+  <span class="mono" style="font-size: 11px; color: rgba(255,255,255,0.35)">Fuente: Comisión Nacional de Energía · Procesamiento y validación GasGas · Metodología: deduplicación, filtrado de precios inválidos, enriquecimiento con marca y CP</span>
+  <span class="mono" style="font-size: 11px; color: rgba(255,255,255,0.35)">© 2026 GasGas · gasgas.com.mx/datos</span>
+</footer>
+<div id="tooltip"></div>
+
+<script>
+/* ── Monitor Nacional GasGas — 100% datos reales de la API pública ── */
+const ESTADOS = [
+  ["Baja California","BC","MX-BCN"],["Sonora","SON","MX-SON"],["Chihuahua","CHIH","MX-CHH"],["Coahuila","COAH","MX-COA"],["Nuevo León","NL","MX-NLE"],["Tamaulipas","TAM","MX-TAM"],
+  ["Baja California Sur","BCS","MX-BCS"],["Sinaloa","SIN","MX-SIN"],["Durango","DGO","MX-DUR"],["Zacatecas","ZAC","MX-ZAC"],["San Luis Potosí","SLP","MX-SLP"],
+  ["Nayarit","NAY","MX-NAY"],["Aguascalientes","AGS","MX-AGU"],["Guanajuato","GTO","MX-GUA"],["Querétaro","QRO","MX-QUE"],["Hidalgo","HGO","MX-HID"],["Veracruz","VER","MX-VER"],["Yucatán","YUC","MX-YUC"],
+  ["Jalisco","JAL","MX-JAL"],["Michoacán","MICH","MX-MIC"],["Estado de México","MEX","MX-MEX"],["Tlaxcala","TLAX","MX-TLA"],["Puebla","PUE","MX-PUE"],["Tabasco","TAB","MX-TAB"],["Campeche","CAMP","MX-CAM"],["Quintana Roo","QROO","MX-ROO"],
+  ["Colima","COL","MX-COL"],["Guerrero","GRO","MX-GRO"],["CDMX","CDMX","MX-CMX"],["Morelos","MOR","MX-MOR"],["Oaxaca","OAX","MX-OAX"],["Chiapas","CHIS","MX-CHP"]
+];
+const VECINOS = { BC:["BCS","SON"], SON:["BC","CHIH","SIN"], CHIH:["SON","COAH","DGO"], COAH:["CHIH","NL","DGO"], NL:["COAH","TAM","SLP"], TAM:["NL","SLP","VER"], BCS:["BC"], SIN:["SON","DGO","NAY"], DGO:["CHIH","COAH","ZAC"], ZAC:["DGO","SLP","AGS"], SLP:["ZAC","NL","GTO"], NAY:["SIN","JAL","ZAC"], AGS:["ZAC","JAL"], GTO:["JAL","QRO","MICH"], QRO:["GTO","HGO","MEX"], HGO:["QRO","MEX","PUE"], VER:["PUE","TAM","OAX"], YUC:["CAMP","QROO"], JAL:["NAY","ZAC","MICH"], MICH:["JAL","GTO","MEX"], MEX:["CDMX","MICH","MOR"], TLAX:["PUE","HGO","MEX"], PUE:["TLAX","VER","MOR"], TAB:["CHIS","CAMP","VER"], CAMP:["YUC","QROO","TAB"], QROO:["YUC","CAMP"], COL:["JAL","MICH"], GRO:["MICH","MEX","OAX"], CDMX:["MEX","MOR"], MOR:["CDMX","MEX","PUE"], OAX:["GRO","PUE","CHIS"], CHIS:["OAX","TAB"] };
+const byAbbr = {}; ESTADOS.forEach(e => byAbbr[e[1]] = e);
+const norm = s => (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+const NAME_MAP = { "distrito federal":"CDMX","ciudad de mexico":"CDMX","cdmx":"CDMX","mexico":"MEX","edomex":"MEX","estado de mexico":"MEX","michoacan de ocampo":"MICH","veracruz de ignacio de la llave":"VER","coahuila de zaragoza":"COAH" };
+function matchEstado(f) {
+  const id = f.id || (f.properties && f.properties.id);
+  if (id) { const hit = ESTADOS.find(e => e[2] === id); if (hit) return hit; }
+  const n = norm(f.properties && (f.properties.name || f.properties.NOMGEO || f.properties.estado));
+  if (NAME_MAP[n]) return byAbbr[NAME_MAP[n]];
+  return ESTADOS.find(e => n && (norm(e[0]) === n || n.startsWith(norm(e[0])) || norm(e[0]).startsWith(n)));
+}
+function estadoByName(n) { n = norm(n); if (NAME_MAP[n]) return byAbbr[NAME_MAP[n]]; return ESTADOS.find(e => norm(e[0]) === n) || null; }
+
+let sel = "CDMX", prod = "regular", paths;
+const API = "https://api.gasgas.com.mx/api";
+const D = { est: {}, nac: null, corte: "—", precioshoy: 0, hist: {}, lats: [] };
+
+function jget(url) {
+  const t = performance.now();
+  return fetch(url).then(r => { D.lats.push(performance.now() - t); return r.json(); });
+}
+const f2 = v => "$" + Number(v).toFixed(2);
+function horaCorte(ts) { try { const d = new Date(ts); if (isNaN(d)) return "—"; return d.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "America/Mexico_City" }); } catch (e) { return "—"; } }
+
+function minMax(p) {
+  const vals = Object.values(D.est).map(o => o[p]).filter(v => v != null);
+  if (!vals.length) return [0, 1];
+  return [Math.min.apply(null, vals), Math.max.apply(null, vals)];
+}
+const colorFor = p => {
+  const mm = minMax(prod);
+  const t = (p - mm[0]) / ((mm[1] - mm[0]) || 1);
+  return d3.scaleLinear().domain([0, 0.4, 0.7, 1]).range(["#00A94F", "#9BC98A", "#E8C36A", "#E06565"])(Math.max(0, Math.min(1, t)));
+};
+const precioDe = (abbr, p) => (D.est[abbr] || {})[p];
+const pintar = () => { if (paths) paths.transition().duration(400).attr("fill", d => { const v = d.__abbr ? precioDe(d.__abbr, prod) : null; return v != null ? colorFor(v) : "#33475B"; }); };
+
+/* Reloj (hora real del visitante) */
+function tickReloj() { document.getElementById("reloj").textContent = new Date().toLocaleDateString("es-MX", { day: "2-digit", month: "short" }) + " · " + new Date().toLocaleTimeString("es-MX", { hour12: false }); }
+tickReloj(); setInterval(tickReloj, 1000);
+
+/* KPIs reales */
+function renderKpis() {
+  document.getElementById("kpi-nac").textContent = D.nac && D.nac[prod] != null ? f2(D.nac[prod]) : "—";
+  document.getElementById("kpi-reg").textContent = D.precioshoy ? D.precioshoy.toLocaleString("en-US") : "—";
+  const l = D.lats.slice().sort((a, b) => a - b);
+  document.getElementById("kpi-lat").textContent = l.length ? Math.round(l[Math.floor(l.length / 2)]) + " ms" : "—";
+  document.getElementById("kpi-corte").innerHTML = D.corte + ' <span style="color:#00A94F;font-size:14px">✓</span>';
+  const fc = document.getElementById("feed-count"); if (fc) fc.textContent = D.precioshoy ? D.precioshoy.toLocaleString("en-US") : "";
+}
+
+/* Feed: promedios reales del último corte, rotando estados y productos */
+const PRODS = ["regular", "premium", "diesel"];
+function feedRow(first) {
+  const keys = Object.keys(D.est); if (!keys.length) return null;
+  const abbr = keys[Math.floor(Math.random() * keys.length)];
+  const p = PRODS[Math.floor(Math.random() * PRODS.length)];
+  const v = D.est[abbr][p]; if (v == null) return null;
+  const div = document.createElement("div");
+  div.className = "feed-row";
+  div.style.background = first ? "rgba(0,169,79,0.14)" : "transparent";
+  div.innerHTML = '<span style="color:' + (first ? "#00A94F" : "rgba(255,255,255,0.4)") + ';min-width:52px">' + D.corte + '</span><span style="min-width:120px">' + byAbbr[abbr][0] + '</span><span style="color:rgba(255,255,255,0.55);min-width:56px">' + p + '</span><span style="min-width:48px;text-align:right">' + f2(v) + '</span><span style="color:rgba(255,255,255,0.55);flex:1;text-align:right">promedio</span><span style="color:#00A94F">✓</span>';
+  return div;
+}
+function startFeed() {
+  const feedEl = document.getElementById("feed");
+  feedEl.innerHTML = "";
+  for (let k = 0; k < 6; k++) { const r = feedRow(k === 0); if (r) feedEl.appendChild(r); }
+  setInterval(() => {
+    const r = feedRow(true); if (!r) return;
+    feedEl.querySelectorAll(".feed-row").forEach(x => { x.style.background = "transparent"; x.querySelector("span").style.color = "rgba(255,255,255,0.4)"; });
+    feedEl.prepend(r);
+    while (feedEl.children.length > 6) feedEl.removeChild(feedEl.lastChild);
+  }, 2600);
+}
+
+/* Sparkline con serie histórica REAL */
+function sparkFrom(series) {
+  const s = series.filter(v => v != null && !isNaN(v)).slice(-30);
+  if (s.length < 2) return "";
+  const step = 120 / (s.length - 1);
+  const mn = Math.min.apply(null, s), mx = Math.max.apply(null, s), rg = (mx - mn) || 1;
+  return s.map((v, i) => (i * step).toFixed(1) + "," + (28 - ((v - mn) / rg) * 24).toFixed(1)).join(" ");
+}
+
+function renderFicha() {
+  const e = byAbbr[sel]; if (!e) return;
+  const d = D.est[sel] || {};
+  const cmp = [];
+  if (D.nac && D.nac.regular != null) cmp.push(["Promedio nacional", D.nac.regular]);
+  (VECINOS[sel] || []).forEach(v => { const dv = D.est[v]; if (dv && dv.regular != null) cmp.push([byAbbr[v][0], dv.regular]); });
+  const rows = cmp.map(([n, p]) => {
+    const df = d.regular != null ? p - d.regular : 0;
+    return '<div style="display:flex;justify-content:space-between;gap:12px"><span style="color:rgba(255,255,255,0.7)">' + n + '</span><span style="display:flex;gap:14px"><span>' + f2(p) + '</span><span style="color:' + (df >= 0 ? "#00A94F" : "#E88A8A") + ';min-width:56px;text-align:right">' + (df >= 0 ? "+" : "−") + "$" + Math.abs(df).toFixed(2) + '</span></span></div>';
+  }).join("");
+  const d7 = d.d7 && d.d7.regular != null ? d.d7.regular : null;
+  const prods = [["REGULAR", d.regular], ["PREMIUM", d.premium], ["DIÉSEL", d.diesel]];
+  document.getElementById("ficha").innerHTML =
+    '<div style="font-size:24px;font-weight:800;letter-spacing:-0.01em;margin-bottom:18px">' + e[0] + '</div>' +
+    '<div class="mono" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px">' +
+    prods.map(([l, p]) => '<div style="background:rgba(255,255,255,0.06);border-radius:8px;padding:10px"><div style="font-size:9px;color:rgba(255,255,255,0.5);letter-spacing:0.08em">' + l + '</div><div style="font-size:15px;font-weight:600;margin-top:5px">' + (p != null ? f2(p) : "—") + '</div></div>').join("") +
+    '</div>' +
+    '<div style="margin-bottom:18px">' +
+    '<div class="mono" style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="font-size:10px;letter-spacing:0.08em;color:rgba(255,255,255,0.5)">TENDENCIA 30 DÍAS · REGULAR</span>' +
+    (d7 != null ? '<span style="font-size:11px;color:' + (d7 >= 0 ? "#E88A8A" : "#00A94F") + '">' + (d7 >= 0 ? "▲ +" : "▼ ") + Math.abs(d7).toFixed(2) + ' 7d</span>' : '') + '</div>' +
+    '<svg viewBox="0 0 120 32" preserveAspectRatio="none" style="width:100%;height:36px;display:block"><polyline id="ficha-spark" points="" fill="none" stroke="#00A94F" stroke-width="1.5"></polyline></svg>' +
+    '</div>' +
+    '<div class="mono" style="display:grid;gap:9px;font-size:12.5px;border-top:1px solid rgba(255,255,255,0.1);padding-top:14px">' +
+    '<div style="font-size:10px;letter-spacing:0.08em;color:rgba(255,255,255,0.5);margin-bottom:2px">REGULAR · VS NACIONAL Y VECINOS</div>' + rows +
+    '<div style="display:flex;justify-content:space-between;border-top:1px solid rgba(255,255,255,0.1);padding-top:9px;margin-top:2px"><span style="color:rgba(255,255,255,0.5)">estaciones</span><span>' + (d.est != null ? Number(d.est).toLocaleString("en-US") : "—") + '</span></div>' +
+    '</div>';
+  if (paths) paths.classed("sel", x => x.__abbr === sel);
+  /* Tendencia real (histórico 30 días), cacheada por estado */
+  const abbr = sel;
+  if (D.hist[abbr]) { const el = document.getElementById("ficha-spark"); if (el) el.setAttribute("points", D.hist[abbr]); }
+  else {
+    const apiName = d.apiName || e[0];
+    jget(API + "/historico?market=estado&value=" + encodeURIComponent(apiName) + "&days=30").then(h => {
+      if (Array.isArray(h) && h.length > 1) {
+        D.hist[abbr] = sparkFrom(h.map(r => +r.regular));
+        if (sel === abbr) { const el = document.getElementById("ficha-spark"); if (el) el.setAttribute("points", D.hist[abbr]); }
+        renderKpis();
+      }
+    }).catch(() => {});
+  }
+}
+
+function renderMovers() {
+  const arr = ESTADOS.filter(e => D.est[e[1]]).map(e => ({ e, d: D.est[e[1]] }));
+  const sorted = arr.sort((a, b) => Math.abs((b.d.d7 && b.d.d7.regular) || 0) - Math.abs((a.d.d7 && a.d.d7.regular) || 0)).slice(0, 6);
+  document.getElementById("movers").innerHTML = '<tr><th>ESTADO</th><th>REGULAR</th><th>PREMIUM</th><th>DIÉSEL</th><th>Δ 7 DÍAS</th><th>ESTACIONES</th></tr>' +
+    sorted.map(o => {
+      const d = o.d, dv = (d.d7 && d.d7.regular != null) ? d.d7.regular : null;
+      return '<tr class="click" data-abbr="' + o.e[1] + '"><td style="font-weight:600">' + o.e[0] + '</td><td>' + (d.regular != null ? f2(d.regular) : "—") + '</td><td>' + (d.premium != null ? f2(d.premium) : "—") + '</td><td>' + (d.diesel != null ? f2(d.diesel) : "—") + '</td><td style="color:' + (dv != null && dv >= 0 ? "#E88A8A" : "#00A94F") + '">' + (dv != null ? ((dv >= 0 ? "▲ +" : "▼ ") + Math.abs(dv).toFixed(2)) : "—") + '</td><td style="color:rgba(255,255,255,0.6)">' + (d.est != null ? Number(d.est).toLocaleString("en-US") : "—") + '</td></tr>';
+    }).join("");
+  document.querySelectorAll("#movers tr.click").forEach(tr => tr.addEventListener("click", () => { sel = tr.dataset.abbr; renderFicha(); }));
+}
+
+function updateLegend() {
+  const mm = minMax(prod);
+  document.getElementById("leg-min").textContent = Object.keys(D.est).length ? f2(mm[0]) : "—";
+  document.getElementById("leg-max").textContent = Object.keys(D.est).length ? f2(mm[1]) : "—";
+  renderKpis();
+}
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+  document.querySelectorAll(".tab").forEach(x => x.classList.remove("on"));
+  t.classList.add("on");
+  prod = t.dataset.prod;
+  updateLegend();
+  pintar();
+}));
+
+/* ── Carga de datos reales ── */
+Promise.all([
+  jget(API + "/precios?market=nacional&value=all&days=1&product=regular"),
+  jget(API + "/ranking-estados?product=regular"),
+  jget("/api/stats-hoy").catch(() => ({}))
+]).then(([nac, rk, st]) => {
+  if (nac && nac.regular) { D.nac = { regular: +nac.regular, premium: +nac.premium, diesel: +nac.diesel }; D.corte = horaCorte(nac.updated_at); }
+  if (Array.isArray(rk)) rk.forEach(r => {
+    const m = estadoByName(r.estado); if (!m) return;
+    D.est[m[1]] = {
+      regular: r.regular != null ? +r.regular : null,
+      premium: r.premium != null ? +r.premium : null,
+      diesel: r.diesel != null ? +r.diesel : null,
+      est: r.stations_count != null ? +r.stations_count : null,
+      apiName: r.estado,
+      d7: {
+        regular: r.delta7_regular != null ? +r.delta7_regular : null,
+        premium: r.delta7_premium != null ? +r.delta7_premium : null,
+        diesel: r.delta7_diesel != null ? +r.delta7_diesel : null
+      }
+    };
+  });
+  D.precioshoy = Number(st && st.precios_hoy) || 0;
+  renderKpis(); renderMovers(); startFeed(); updateLegend(); renderFicha(); pintar();
+}).catch(() => { renderKpis(); });
+
+/* ── Geometría del mapa ── */
+const SOURCES = [
+  "https://cdn.amcharts.com/lib/5/geodata/json/mexicoLow.json",
+  "https://raw.githubusercontent.com/angelnmara/geojson/master/mexicoHigh.json"
+];
+async function loadGeo() {
+  for (const url of SOURCES) {
+    try { const r = await fetch(url); if (r.ok) return await r.json(); } catch (e) {}
+  }
+  throw new Error("geo");
+}
+loadGeo().then(geo => {
+  const features = (geo.type === "Topology") ? topojson.feature(geo, Object.values(geo.objects)[0]).features : geo.features;
+  features.forEach(f => { const m = matchEstado(f); f.__abbr = m ? m[1] : null; });
+  const wrap = document.getElementById("map-wrap");
+  const W = wrap.clientWidth, H = wrap.clientHeight;
+  const proj = d3.geoMercator().fitExtent([[10, 10], [W - 10, H - 10]], { type: "FeatureCollection", features });
+  const path = d3.geoPath(proj);
+  const svg = d3.select(wrap).append("svg").attr("viewBox", "0 0 " + W + " " + H).style("width", "100%").style("height", "100%");
+  const tip = document.getElementById("tooltip");
+  paths = svg.selectAll("path").data(features).enter().append("path")
+    .attr("class", "estado-path").attr("d", path)
+    .attr("fill", d => { const v = d.__abbr ? precioDe(d.__abbr, prod) : null; return v != null ? colorFor(v) : "#33475B"; })
+    .on("mousemove", (ev, d) => {
+      if (!d.__abbr) return;
+      const v = precioDe(d.__abbr, prod);
+      const o = D.est[d.__abbr];
+      const dd = o && o.d7 && o.d7.regular != null ? o.d7.regular : null;
+      tip.style.display = "block";
+      tip.style.left = (ev.clientX + 16) + "px";
+      tip.style.top = (ev.clientY + 16) + "px";
+      tip.innerHTML = '<div style="font-weight:600;color:#FFFFFF">' + byAbbr[d.__abbr][0] + '</div><div style="margin-top:4px;color:rgba(255,255,255,0.7)">' + prod + ' <span style="color:#FFFFFF">' + (v != null ? f2(v) : "—") + '</span>' + (dd != null ? ' · <span style="color:' + (dd >= 0 ? "#E88A8A" : "#00A94F") + '">' + (dd >= 0 ? "+" : "") + dd.toFixed(2) + ' 7d</span>' : '') + '</div>';
+    })
+    .on("mouseleave", () => { tip.style.display = "none"; })
+    .on("click", (ev, d) => { if (d.__abbr) { sel = d.__abbr; renderFicha(); } });
+  renderFicha();
+}).catch(() => {
+  document.getElementById("map-wrap").innerHTML = '<div class="mono" style="color:rgba(255,255,255,0.5);font-size:13px;padding:40px">No se pudo cargar la geometría del mapa. Verifique la conexión.</div>';
+  renderFicha();
+});
+
+</script>
+</body>
+</html>
