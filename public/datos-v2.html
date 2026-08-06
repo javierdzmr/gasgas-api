@@ -33,8 +33,6 @@
     [style*="display: flex"] { flex-wrap: wrap !important; }
     /* EXCEPTO el ticker marquee: debe seguir en una sola línea (él y sus items) */
     [style*="ggMarquee"], [style*="ggMarquee"] span { flex-wrap: nowrap !important; }
-    /* Etiqueta del ticker a su propia línea completa */
-    [style*="background: #081B30"] { width: 100% !important; border-right: none !important; }
     /* Tipografía y espacios a escala móvil */
     h1 { font-size: 36px !important; }
     h2 { font-size: 26px !important; }
@@ -101,12 +99,12 @@
       </div>
     </div>
   </div>
-  <div style="margin-top: 88px; border-top: 1px solid rgba(255,255,255,0.08); border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: stretch">
-    <div style="display: flex; align-items: center; gap: 8px; padding: 14px 24px; background: #081B30; border-right: 1px solid rgba(255,255,255,0.08); white-space: nowrap; flex-shrink: 0">
+  <div style="margin-top: 88px; border-top: 1px solid rgba(255,255,255,0.08); border-bottom: 1px solid rgba(255,255,255,0.08)">
+    <div style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 24px; background: #081B30; border-bottom: 1px solid rgba(255,255,255,0.08); white-space: nowrap">
       <span style="width: 6px; height: 6px; border-radius: 50%; background: #00A94F; animation: ggPulse 2s infinite"></span>
       <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.08em; color: rgba(255,255,255,0.7)">EN VIVO · PROMEDIO REGULAR POR ESTADO</span>
     </div>
-    <div style="overflow: hidden; flex: 1; display: flex; align-items: center">
+    <div style="overflow: hidden; width: 100%">
     <div style="display: flex; gap: 48px; width: max-content; animation: ggMarquee 36s linear infinite; font-family: 'JetBrains Mono', monospace; font-size: 13px; padding: 14px 0 14px 48px">
       <sc-for list="{{ tickerItems }}" as="t" hint-placeholder-count="10">
         <span style="display: flex; gap: 10px; white-space: nowrap"><span style="color: rgba(255,255,255,0.45)">{{ t.e }}</span><span style="color: #FFFFFF">{{ t.p }}</span><span style="color: #00A94F; font-size: 11px">{{ t.d }}</span></span>
@@ -122,7 +120,7 @@
       <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #007A39; letter-spacing: 0.1em">EL PROCESO</div>
       <div style="display: flex; align-items: center; gap: 10px; border: 1px solid #E7ECF0; border-radius: 999px; padding: 8px 16px; background: #F7F9FA">
         <span style="width: 7px; height: 7px; border-radius: 50%; background: #00A94F; animation: ggPulse 2s infinite"></span>
-        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #4C6379">estaciones procesadas hoy</span>
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #4C6379">precios procesados hoy</span>
         <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; color: #0E2A47">{{ procesados }}</span>
       </div>
     </div>
@@ -368,11 +366,11 @@ class Component extends DCLogic {
     this.timer = setInterval(() => {
       if (this.props.datoEnVivoAnimado ?? true) this.setState(s => ({ i: (s.i + 1) % this.registros.length }));
     }, 3200);
-    /* Contador REAL: estaciones con precio hoy, de la API de GasGas */
-    fetch("https://api.gasgas.com.mx/api/precios?market=nacional&value=all&days=1&product=regular")
+    /* Contador REAL: precios procesados hoy (endpoint del mismo servidor) */
+    fetch("/api/stats-hoy")
       .then(r => r.json())
-      .then(p => {
-        const n = Number(p.stations_count || p.total_estaciones || 0);
+      .then(s => {
+        const n = Number(s.precios_hoy || 0);
         if (n > 0) this.setState({ procesados: n });
       })
       .catch(() => {});

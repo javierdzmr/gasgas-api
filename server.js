@@ -471,6 +471,24 @@ app.get("/", (req, res) => {
   res.json({ status: "ok", service: "GasGas API" });
 });
 
+// 🔹 Stats del día (para la landing /datos): precios y estaciones procesados hoy
+app.get("/api/stats-hoy", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        (COUNT(regular) + COUNT(premium) + COUNT(diesel))::int AS precios_hoy,
+        COUNT(*)::int AS registros_hoy,
+        MAX(date::date)::text AS fecha
+      FROM prices
+      WHERE date::date = (SELECT MAX(date::date) FROM prices)
+    `);
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error("ERROR /stats-hoy:", err);
+    res.status(500).json({ error: "Error obteniendo stats" });
+  }
+});
+
 app.get("/api/test", (req, res) => {
   res.json({ status: "ok" });
 });
