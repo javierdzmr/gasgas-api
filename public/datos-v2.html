@@ -48,12 +48,13 @@
 
 <header data-screen-label="Nav" style="background: #0E2A47; border-bottom: 1px solid rgba(255,255,255,0.08)">
   <div style="max-width: 1140px; margin: 0 auto; padding: 0 32px; height: 72px; display: flex; align-items: center; justify-content: space-between">
-    <div style="display: flex; align-items: center; gap: 12px">
+    <a href="/" style="display: flex; align-items: center; gap: 12px">
       <div style="background: #FFFFFF; border-radius: 999px; padding: 6px 14px; font-weight: 800; font-size: 15px; letter-spacing: 0.02em; color: #0E2A47">GG</div>
       <span style="color: #FFFFFF; font-weight: 600; font-size: 15px">gasgas <span style="color: rgba(255,255,255,0.45); font-weight: 400">/ datos</span></span>
-    </div>
+    </a>
     <nav style="display: flex; align-items: center; gap: 32px">
       <a href="#proceso" style="color: rgba(255,255,255,0.75); font-size: 14px; font-weight: 500" style-hover="color: #FFFFFF">Proceso</a>
+      <a href="/docs" style="color: rgba(255,255,255,0.75); font-size: 14px; font-weight: 500" style-hover="color: #FFFFFF">Docs</a>
       <a href="#niveles" style="color: rgba(255,255,255,0.75); font-size: 14px; font-weight: 500" style-hover="color: #FFFFFF">Niveles de datos</a>
       <a href="#api" style="color: rgba(255,255,255,0.75); font-size: 14px; font-weight: 500" style-hover="color: #FFFFFF">API</a>
       <a href="#precios" style="color: rgba(255,255,255,0.75); font-size: 14px; font-weight: 500" style-hover="color: #FFFFFF">Precios</a>
@@ -85,9 +86,9 @@
         <div style="font-size: 44px; font-weight: 600; color: #FFFFFF; letter-spacing: -0.01em">{{ regVivo.precio }} <span style="font-size: 15px; color: rgba(255,255,255,0.45)">MXN/L</span></div>
         <div style="margin-top: 18px; display: grid; grid-template-columns: auto 1fr; gap: 8px 20px; font-size: 13px">
           <span style="color: rgba(255,255,255,0.45)">producto</span><span style="color: #FFFFFF">{{ regVivo.producto }}</span>
-          <span style="color: rgba(255,255,255,0.45)">marca</span><span style="color: #00A94F">{{ regVivo.marca }}</span>
-          <span style="color: rgba(255,255,255,0.45)">estación</span><span style="color: #FFFFFF">{{ regVivo.estacion }}</span>
-          <span style="color: rgba(255,255,255,0.45)">cp</span><span style="color: #FFFFFF">{{ regVivo.cp }}</span>
+          <span style="color: rgba(255,255,255,0.45)">mercado</span><span style="color: #00A94F">{{ regVivo.mercado }}</span>
+          <span style="color: rgba(255,255,255,0.45)">estaciones</span><span style="color: #FFFFFF">{{ regVivo.estaciones }}</span>
+          <span style="color: rgba(255,255,255,0.45)">fuente</span><span style="color: #FFFFFF">CNE · promedio validado</span>
           <span style="color: rgba(255,255,255,0.45)">validado</span><span style="color: #00A94F">true</span>
         </div>
         <div style="margin-top: 20px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,0.1)">
@@ -184,7 +185,7 @@
       <div style="background: #FFFFFF; border: 1px solid #E7ECF0; border-radius: 12px; padding: 28px" style-hover="border: 1px solid #00A94F; box-shadow: 0 6px 24px rgba(14,42,71,0.08)">
         <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #8B99A6; margin-bottom: 14px">nivel 3</div>
         <div style="font-size: 20px; font-weight: 700; margin-bottom: 8px">Código Postal</div>
-        <div style="font-family: 'JetBrains Mono', monospace; font-size: 26px; font-weight: 600; color: #007A39; margin-bottom: 10px">CP a CP</div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 26px; font-weight: 600; color: #007A39; margin-bottom: 10px">4,900+</div>
         <p style="font-size: 14px; color: #4C6379; line-height: 1.55; margin: 0">Precisión de vecindario para apps de consumo y geointeligencia.</p>
       </div>
       <div style="background: #0E2A47; border: 1px solid #0E2A47; border-radius: 12px; padding: 28px" style-hover="box-shadow: 0 6px 24px rgba(14,42,71,0.3)">
@@ -205,7 +206,7 @@
         <h2 style="font-size: 38px; font-weight: 800; margin: 0 0 20px; letter-spacing: -0.02em; color: #FFFFFF; text-wrap: pretty">Una llamada. JSON limpio. A producción.</h2>
         <p style="font-size: 17px; color: rgba(255,255,255,0.65); line-height: 1.65; margin: 0 0 32px; text-wrap: pretty">REST sobre HTTPS, autenticación por API key, esquema estable y versionado. Su equipo integra en una tarde, no en un sprint.</p>
         <div style="display: grid; gap: 16px">
-          <div style="display: flex; gap: 12px; align-items: baseline"><span style="color: #00A94F; font-family: 'JetBrains Mono', monospace">—</span><span style="color: rgba(255,255,255,0.8); font-size: 15px">Filtros por estado, municipio, CP, estación y producto</span></div>
+          <div style="display: flex; gap: 12px; align-items: baseline"><span style="color: #00A94F; font-family: 'JetBrains Mono', monospace">—</span><span style="color: rgba(255,255,255,0.8); font-size: 15px">Nacional, estado y municipio abiertos a evaluación · CP y estación por contrato</span></div>
           <div style="display: flex; gap: 12px; align-items: baseline"><span style="color: #00A94F; font-family: 'JetBrains Mono', monospace">—</span><span style="color: rgba(255,255,255,0.8); font-size: 15px">Histórico diario desde mayo 2024</span></div>
           <div style="display: flex; gap: 12px; align-items: baseline"><span style="color: #00A94F; font-family: 'JetBrains Mono', monospace">—</span><span style="color: rgba(255,255,255,0.8); font-size: 15px">Uptime y latencia con SLA por contrato</span></div>
         </div>
@@ -215,24 +216,21 @@
           <span style="width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.15)"></span>
           <span style="width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.15)"></span>
           <span style="width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.15)"></span>
-          <span style="margin-left: 12px; color: rgba(255,255,255,0.4); font-size: 12px">GET /v1/precios</span>
+          <span style="margin-left: 12px; color: rgba(255,255,255,0.4); font-size: 12px">GET /api/precios</span>
         </div>
         <div style="padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.85)">
-          <span style="color: #8B99A6">$</span> curl https://api.gasgas.com.mx/v1/precios<span style="color: #00A94F">?cp=06600&producto=regular</span> \<br>
-          &nbsp;&nbsp;-H <span style="color: #7FD4A8">"Authorization: Bearer gg_live_•••"</span>
+          <span style="color: #8B99A6">$</span> curl "https://api.gasgas.com.mx/api/precios<span style="color: #00A94F">?market=estado&value=Jalisco&days=1&product=regular</span>"
         </div>
         <pre style="margin: 0; padding: 20px 24px; color: rgba(255,255,255,0.85); font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.65; overflow-x: auto">{
-  <span style="color: #7FD4A8">"actualizado"</span>: <span style="color: #FFD98A">"2026-08-05T06:00:00-06:00"</span>,
-  <span style="color: #7FD4A8">"resultados"</span>: [{
-    <span style="color: #7FD4A8">"estacion_id"</span>: <span style="color: #FFD98A">"GG-04121"</span>,
-    <span style="color: #7FD4A8">"marca"</span>: <span style="color: #FFD98A">"Pemex"</span>,
-    <span style="color: #7FD4A8">"producto"</span>: <span style="color: #FFD98A">"regular"</span>,
-    <span style="color: #7FD4A8">"precio"</span>: <span style="color: #00A94F">23.49</span>,
-    <span style="color: #7FD4A8">"cp"</span>: <span style="color: #FFD98A">"06600"</span>,
-    <span style="color: #7FD4A8">"municipio"</span>: <span style="color: #FFD98A">"Cuauhtémoc"</span>,
-    <span style="color: #7FD4A8">"estado"</span>: <span style="color: #FFD98A">"CDMX"</span>,
-    <span style="color: #7FD4A8">"validado"</span>: <span style="color: #00A94F">true</span>
-  }]
+  <span style="color: #7FD4A8">"regular"</span>: <span style="color: #FFD98A">"23.93"</span>, <span style="color: #7FD4A8">"premium"</span>: <span style="color: #FFD98A">"29.08"</span>, <span style="color: #7FD4A8">"diesel"</span>: <span style="color: #FFD98A">"27.04"</span>,
+  <span style="color: #7FD4A8">"min"</span>: <span style="color: #FFD98A">"22.99"</span>, <span style="color: #7FD4A8">"max"</span>: <span style="color: #FFD98A">"24.49"</span>, <span style="color: #7FD4A8">"std"</span>: <span style="color: #FFD98A">"0.29"</span>,
+  <span style="color: #7FD4A8">"stations_count"</span>: <span style="color: #00A94F">333</span>,
+  <span style="color: #7FD4A8">"semaforo"</span>: {
+    <span style="color: #7FD4A8">"estado"</span>: <span style="color: #FFD98A">"medio"</span>,
+    <span style="color: #7FD4A8">"delta_pct"</span>: <span style="color: #00A94F">0.5</span>,
+    <span style="color: #7FD4A8">"referencia"</span>: <span style="color: #FFD98A">"nacional"</span>
+  },
+  <span style="color: #7FD4A8">"updated_at"</span>: <span style="color: #FFD98A">"2026-08-05T12:00:46.227Z"</span>
 }</pre>
       </div>
     </div>
@@ -342,17 +340,12 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;datoEnVivoAnimado&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Hero&quot;}}">
 class Component extends DCLogic {
+  /* Placeholders mientras carga el dato real de la API */
   registros = [
-    { precio: "$23.49", producto: "regular", marca: "Pemex", estacion: "GG-04121 · Cuauhtémoc, CDMX", cp: "06600", hace: "hace 2 min" },
-    { precio: "$25.12", producto: "premium", marca: "OXXO Gas", estacion: "GG-11302 · Monterrey, NL", cp: "64000", hace: "hace 4 min" },
-    { precio: "$25.87", producto: "diesel", marca: "Mobil", estacion: "GG-07742 · Guadalajara, JAL", cp: "44100", hace: "hace 1 min" },
-    { precio: "$23.51", producto: "regular", marca: "BP", estacion: "GG-02218 · Benito Juárez, CDMX", cp: "03100", hace: "hace 3 min" }
+    { precio: "…", producto: "regular", mercado: "Nacional", estaciones: "…", hace: "consultando…" }
   ];
   sparks = [
-    "0,22 15,20 30,23 45,18 60,19 75,14 90,15 105,10 120,11",
-    "0,26 15,24 30,25 45,21 60,22 75,18 90,19 105,14 120,12",
-    "0,10 15,12 30,9 45,13 60,15 75,13 90,17 105,16 120,19",
-    "0,18 15,17 30,19 45,16 60,17 75,15 90,16 105,13 120,14"
+    "0,16 15,16 30,16 45,16 60,16 75,16 90,16 105,16 120,16"
   ];
   ticker = [
     { e: "CDMX", p: "$23.48", d: "▲" }, { e: "NL", p: "$23.91", d: "▼" },
@@ -374,6 +367,41 @@ class Component extends DCLogic {
         if (n > 0) this.setState({ procesados: n });
       })
       .catch(() => {});
+    /* Hero "DATO EN VIVO" con promedios REALES (nacional y Jalisco, 3 productos) */
+    const API = "https://api.gasgas.com.mx/api";
+    const spark = (rows, k) => {
+      const s = rows.map(r => +r[k]).filter(v => !isNaN(v)).slice(-9);
+      if (s.length < 2) return "";
+      const mn = Math.min(...s), mx = Math.max(...s), rg = (mx - mn) || 1;
+      return s.map((v, i) => `${i * 15},${(26 - ((v - mn) / rg) * 20).toFixed(1)}`).join(" ");
+    };
+    const hora = ts => {
+      try {
+        const d = new Date(ts);
+        if (isNaN(d)) return "hoy";
+        return "hoy " + d.toLocaleTimeString("es-MX", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "America/Mexico_City" });
+      } catch (e) { return "hoy"; }
+    };
+    const f = v => "$" + Number(v).toFixed(2);
+    const fm = n => Number(n || 0).toLocaleString("en-US");
+    Promise.all([
+      fetch(API + "/precios?market=nacional&value=all&days=1&product=regular").then(r => r.json()),
+      fetch(API + "/historico?market=nacional&value=all&days=30").then(r => r.json()),
+      fetch(API + "/precios?market=estado&value=Jalisco&days=1&product=regular").then(r => r.json()),
+      fetch(API + "/historico?market=estado&value=Jalisco&days=30").then(r => r.json())
+    ]).then(([pn, hn, pj, hj]) => {
+      const regs = [], sps = [];
+      if (pn && pn.regular && Array.isArray(hn) && hn.length > 1) {
+        const estN = fm(pn.stations_count || pn.total_estaciones), hN = hora(pn.updated_at);
+        regs.push({ precio: f(pn.regular), producto: "regular", mercado: "Nacional", estaciones: estN, hace: hN }); sps.push(spark(hn, "regular"));
+        regs.push({ precio: f(pn.premium), producto: "premium", mercado: "Nacional", estaciones: estN, hace: hN }); sps.push(spark(hn, "premium"));
+        regs.push({ precio: f(pn.diesel), producto: "diesel", mercado: "Nacional", estaciones: estN, hace: hN }); sps.push(spark(hn, "diesel"));
+      }
+      if (pj && pj.regular && Array.isArray(hj) && hj.length > 1) {
+        regs.push({ precio: f(pj.regular), producto: "regular", mercado: "Jalisco", estaciones: fm(pj.stations_count || pj.total_estaciones), hace: hora(pj.updated_at) }); sps.push(spark(hj, "regular"));
+      }
+      if (regs.length) { this.registros = regs; this.sparks = sps; this.setState({ i: 0 }); }
+    }).catch(() => {});
     /* Ticker con datos REALES: ranking de estados de la API de GasGas */
     const AB = {"Aguascalientes":"AGS","Baja California":"BC","Baja California Sur":"BCS","Campeche":"CAMP","Chiapas":"CHIS","Chihuahua":"CHIH","CDMX":"CDMX","Ciudad de México":"CDMX","Coahuila":"COAH","Coahuila de Zaragoza":"COAH","Colima":"COL","Durango":"DGO","Edomex":"EDOMEX","Estado de México":"EDOMEX","México":"EDOMEX","Guanajuato":"GTO","Guerrero":"GRO","Hidalgo":"HGO","Jalisco":"JAL","Michoacán":"MICH","Michoacán de Ocampo":"MICH","Morelos":"MOR","Nayarit":"NAY","Nuevo León":"NL","Oaxaca":"OAX","Puebla":"PUE","Querétaro":"QRO","Quintana Roo":"QROO","San Luis Potosí":"SLP","Sinaloa":"SIN","Sonora":"SON","Tabasco":"TAB","Tamaulipas":"TAMPS","Tlaxcala":"TLAX","Veracruz":"VER","Veracruz de Ignacio de la Llave":"VER","Yucatán":"YUC","Zacatecas":"ZAC"};
     fetch("https://api.gasgas.com.mx/api/ranking-estados?product=regular")
