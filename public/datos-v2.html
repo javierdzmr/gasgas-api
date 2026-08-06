@@ -31,6 +31,8 @@
     [style*="gap: 72px"] { gap: 36px !important; }
     /* Filas flexibles pueden envolver */
     [style*="display: flex"] { flex-wrap: wrap !important; }
+    /* EXCEPTO el ticker marquee: debe seguir en una sola línea */
+    [style*="ggMarquee"] { flex-wrap: nowrap !important; }
     /* Tipografía y espacios a escala móvil */
     h1 { font-size: 36px !important; }
     h2 { font-size: 26px !important; }
@@ -312,7 +314,7 @@
     <h2 style="font-size: 40px; font-weight: 800; color: #FFFFFF; margin: 0 0 16px; letter-spacing: -0.02em; text-wrap: pretty">Deje de limpiar archivos. Empiece a decidir.</h2>
     <p style="font-size: 17px; color: rgba(255,255,255,0.65); margin: 0 0 36px">Acceso de evaluación con datos reales para su equipo técnico.</p>
     <div style="display: flex; gap: 16px; justify-content: center">
-      <a href="mailto:datos@gasgas.com.mx" style="background: #00A94F; color: #FFFFFF; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600" style-hover="background: #007A39; color: #FFFFFF">datos@gasgas.com.mx</a>
+      <a href="mailto:hola@gasgas.com.mx" style="background: #00A94F; color: #FFFFFF; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600" style-hover="background: #007A39; color: #FFFFFF">hola@gasgas.com.mx</a>
     </div>
   </div>
 </section>
@@ -356,6 +358,21 @@ class Component extends DCLogic {
     this.timer2 = setInterval(() => {
       if (this.props.datoEnVivoAnimado ?? true) this.setState(s => ({ procesados: s.procesados + Math.floor(Math.random() * 37) + 4 }));
     }, 1400);
+    /* Ticker con datos REALES: ranking de estados de la API de GasGas */
+    const AB = {"Aguascalientes":"AGS","Baja California":"BC","Baja California Sur":"BCS","Campeche":"CAMP","Chiapas":"CHIS","Chihuahua":"CHIH","CDMX":"CDMX","Ciudad de México":"CDMX","Coahuila":"COAH","Coahuila de Zaragoza":"COAH","Colima":"COL","Durango":"DGO","Edomex":"EDOMEX","Estado de México":"EDOMEX","México":"EDOMEX","Guanajuato":"GTO","Guerrero":"GRO","Hidalgo":"HGO","Jalisco":"JAL","Michoacán":"MICH","Michoacán de Ocampo":"MICH","Morelos":"MOR","Nayarit":"NAY","Nuevo León":"NL","Oaxaca":"OAX","Puebla":"PUE","Querétaro":"QRO","Quintana Roo":"QROO","San Luis Potosí":"SLP","Sinaloa":"SIN","Sonora":"SON","Tabasco":"TAB","Tamaulipas":"TAMPS","Tlaxcala":"TLAX","Veracruz":"VER","Veracruz de Ignacio de la Llave":"VER","Yucatán":"YUC","Zacatecas":"ZAC"};
+    fetch("https://api.gasgas.com.mx/api/ranking-estados?product=regular")
+      .then(r => r.json())
+      .then(rows => {
+        if (Array.isArray(rows) && rows.length) {
+          this.ticker = rows.slice(0, 12).map(r => ({
+            e: AB[r.estado] || String(r.estado).toUpperCase().slice(0, 7),
+            p: "$" + Number(r.regular).toFixed(2),
+            d: ""
+          }));
+          this.setState({});
+        }
+      })
+      .catch(() => {}); /* si falla, se queda la lista estática */
   }
   componentWillUnmount() { clearInterval(this.timer); clearInterval(this.timer2); }
   renderVals() {
