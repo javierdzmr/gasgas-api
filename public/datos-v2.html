@@ -26,13 +26,15 @@
   @media (max-width: 740px) {
     /* Toda rejilla multi-columna pasa a una columna */
     [style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
-    /* Niveles (4 tarjetas) se ven mejor en 2 columnas */
-    [style*="repeat(4"] { grid-template-columns: 1fr 1fr !important; }
+    /* Niveles (4 tarjetas) se ven mejor en 2 columnas; el resto de rejillas de 4 va a 1 columna */
+    [data-screen-label="Niveles"] [style*="repeat(4"] { grid-template-columns: 1fr 1fr !important; }
     [style*="gap: 72px"] { gap: 36px !important; }
     /* Filas flexibles pueden envolver */
     [style*="display: flex"] { flex-wrap: wrap !important; }
-    /* EXCEPTO el ticker marquee: debe seguir en una sola línea */
-    [style*="ggMarquee"] { flex-wrap: nowrap !important; }
+    /* EXCEPTO el ticker marquee: debe seguir en una sola línea (él y sus items) */
+    [style*="ggMarquee"], [style*="ggMarquee"] span { flex-wrap: nowrap !important; }
+    /* Etiqueta del ticker a su propia línea completa */
+    [style*="background: #081B30"] { width: 100% !important; border-right: none !important; }
     /* Tipografía y espacios a escala móvil */
     h1 { font-size: 36px !important; }
     h2 { font-size: 26px !important; }
@@ -120,7 +122,7 @@
       <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #007A39; letter-spacing: 0.1em">EL PROCESO</div>
       <div style="display: flex; align-items: center; gap: 10px; border: 1px solid #E7ECF0; border-radius: 999px; padding: 8px 16px; background: #F7F9FA">
         <span style="width: 7px; height: 7px; border-radius: 50%; background: #00A94F; animation: ggPulse 2s infinite"></span>
-        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #4C6379">registros procesados hoy</span>
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #4C6379">estaciones procesadas hoy</span>
         <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; color: #0E2A47">{{ procesados }}</span>
       </div>
     </div>
@@ -178,7 +180,7 @@
       <div style="background: #FFFFFF; border: 1px solid #E7ECF0; border-radius: 12px; padding: 28px" style-hover="border: 1px solid #00A94F; box-shadow: 0 6px 24px rgba(14,42,71,0.08)">
         <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #8B99A6; margin-bottom: 14px">nivel 2</div>
         <div style="font-size: 20px; font-weight: 700; margin-bottom: 8px">Municipio</div>
-        <div style="font-family: 'JetBrains Mono', monospace; font-size: 26px; font-weight: 600; color: #007A39; margin-bottom: 10px">2,469</div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 26px; font-weight: 600; color: #007A39; margin-bottom: 10px">2,900+</div>
         <p style="font-size: 14px; color: #4C6379; line-height: 1.55; margin: 0">Comparativos por plaza para estrategia regional de precios.</p>
       </div>
       <div style="background: #FFFFFF; border: 1px solid #E7ECF0; border-radius: 12px; padding: 28px" style-hover="border: 1px solid #00A94F; box-shadow: 0 6px 24px rgba(14,42,71,0.08)">
@@ -206,7 +208,7 @@
         <p style="font-size: 17px; color: rgba(255,255,255,0.65); line-height: 1.65; margin: 0 0 32px; text-wrap: pretty">REST sobre HTTPS, autenticación por API key, esquema estable y versionado. Su equipo integra en una tarde, no en un sprint.</p>
         <div style="display: grid; gap: 16px">
           <div style="display: flex; gap: 12px; align-items: baseline"><span style="color: #00A94F; font-family: 'JetBrains Mono', monospace">—</span><span style="color: rgba(255,255,255,0.8); font-size: 15px">Filtros por estado, municipio, CP, estación y producto</span></div>
-          <div style="display: flex; gap: 12px; align-items: baseline"><span style="color: #00A94F; font-family: 'JetBrains Mono', monospace">—</span><span style="color: rgba(255,255,255,0.8); font-size: 15px">Histórico diario desde 2017</span></div>
+          <div style="display: flex; gap: 12px; align-items: baseline"><span style="color: #00A94F; font-family: 'JetBrains Mono', monospace">—</span><span style="color: rgba(255,255,255,0.8); font-size: 15px">Histórico diario desde mayo 2024</span></div>
           <div style="display: flex; gap: 12px; align-items: baseline"><span style="color: #00A94F; font-family: 'JetBrains Mono', monospace">—</span><span style="color: rgba(255,255,255,0.8); font-size: 15px">Uptime y latencia con SLA por contrato</span></div>
         </div>
       </div>
@@ -244,34 +246,45 @@
     <div style="text-align: center; margin-bottom: 64px">
       <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #007A39; letter-spacing: 0.1em; margin-bottom: 16px">PRECIOS</div>
       <h2 style="font-size: 38px; font-weight: 800; margin: 0 0 12px; letter-spacing: -0.02em">Un plan por nivel de decisión.</h2>
-      <p style="font-size: 17px; color: #4C6379; margin: 0">Contratos anuales. Facturación en MXN con CFDI.</p>
+      <p style="font-size: 17px; color: #4C6379; margin: 0">Precios "desde", ajustados por cobertura y volumen. Facturación en MXN con CFDI. El histórico (desde mayo 2024) se cotiza como complemento.</p>
     </div>
-    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; align-items: stretch">
-      <div style="border: 1px solid #E7ECF0; border-radius: 14px; padding: 36px; display: flex; flex-direction: column">
-        <div style="font-size: 18px; font-weight: 700; margin-bottom: 6px">Regional</div>
-        <div style="font-size: 14px; color: #4C6379; margin-bottom: 24px">Estado y municipio</div>
-        <div style="font-family: 'JetBrains Mono', monospace; margin-bottom: 28px"><span style="font-size: 34px; font-weight: 600">$17,250</span> <span style="font-size: 14px; color: #8B99A6">MXN/mes</span></div>
-        <div style="display: grid; gap: 12px; font-size: 14.5px; color: #33475B; flex: 1">
-          <span>✓ Promedios por estado y municipio</span>
-          <span>✓ Actualización diaria</span>
-          <span>✓ Histórico de 12 meses</span>
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; align-items: stretch">
+      <div style="border: 1px solid #E7ECF0; border-radius: 14px; padding: 28px; display: flex; flex-direction: column">
+        <div style="font-size: 18px; font-weight: 700; margin-bottom: 6px">Estado</div>
+        <div style="font-size: 14px; color: #4C6379; margin-bottom: 24px">32 mercados + nacional</div>
+        <div style="font-family: 'JetBrains Mono', monospace; margin-bottom: 28px"><span style="font-size: 13px; color: #8B99A6">desde</span> <span style="font-size: 30px; font-weight: 600">$17,250</span> <span style="font-size: 13px; color: #8B99A6">MXN/mes</span></div>
+        <div style="display: grid; gap: 12px; font-size: 14px; color: #33475B; flex: 1">
+          <span>✓ Promedios estatales y nacional</span>
+          <span>✓ 3 combustibles, actualización diaria</span>
+          <span>✓ Datos desde tu contratación</span>
         </div>
-        <a href="#contacto" style="margin-top: 32px; display: block; text-align: center; border: 1px solid #0E2A47; color: #0E2A47; padding: 12px; border-radius: 8px; font-weight: 600; font-size: 15px" style-hover="background: #0E2A47; color: #FFFFFF">Solicitar acceso</a>
+        <a href="#contacto" style="margin-top: 28px; display: block; text-align: center; border: 1px solid #0E2A47; color: #0E2A47; padding: 12px; border-radius: 8px; font-weight: 600; font-size: 15px" style-hover="background: #0E2A47; color: #FFFFFF">Solicitar acceso</a>
       </div>
-      <div style="border: 2px solid #00A94F; border-radius: 14px; padding: 36px; display: flex; flex-direction: column; position: relative; box-shadow: 0 12px 40px rgba(0,169,79,0.12)">
-        <div style="position: absolute; top: -13px; left: 50%; transform: translateX(-50%); background: #00A94F; color: #FFFFFF; font-size: 12px; font-weight: 700; padding: 4px 14px; border-radius: 999px; letter-spacing: 0.03em">MÁS CONTRATADO</div>
-        <div style="font-size: 18px; font-weight: 700; margin-bottom: 6px">Precisión</div>
-        <div style="font-size: 14px; color: #4C6379; margin-bottom: 24px">Hasta código postal</div>
-        <div style="font-family: 'JetBrains Mono', monospace; margin-bottom: 28px"><span style="font-size: 34px; font-weight: 600">$28,900</span> <span style="font-size: 14px; color: #8B99A6">MXN/mes</span></div>
-        <div style="display: grid; gap: 12px; font-size: 14.5px; color: #33475B; flex: 1">
-          <span>✓ Todo lo de Regional</span>
+      <div style="border: 1px solid #E7ECF0; border-radius: 14px; padding: 28px; display: flex; flex-direction: column">
+        <div style="font-size: 18px; font-weight: 700; margin-bottom: 6px">Municipio</div>
+        <div style="font-size: 14px; color: #4C6379; margin-bottom: 24px">2,900+ plazas</div>
+        <div style="font-family: 'JetBrains Mono', monospace; margin-bottom: 28px"><span style="font-size: 13px; color: #8B99A6">desde</span> <span style="font-size: 30px; font-weight: 600">$28,750</span> <span style="font-size: 13px; color: #8B99A6">MXN/mes</span></div>
+        <div style="display: grid; gap: 12px; font-size: 14px; color: #33475B; flex: 1">
+          <span>✓ Todo lo de Estado</span>
+          <span>✓ Promedios y dispersión por plaza</span>
+          <span>✓ Para logística y estrategia regional</span>
+        </div>
+        <a href="#contacto" style="margin-top: 28px; display: block; text-align: center; border: 1px solid #0E2A47; color: #0E2A47; padding: 12px; border-radius: 8px; font-weight: 600; font-size: 15px" style-hover="background: #0E2A47; color: #FFFFFF">Solicitar acceso</a>
+      </div>
+      <div style="border: 2px solid #00A94F; border-radius: 14px; padding: 28px; display: flex; flex-direction: column; position: relative; box-shadow: 0 12px 40px rgba(0,169,79,0.12)">
+        <div style="position: absolute; top: -13px; left: 50%; transform: translateX(-50%); background: #00A94F; color: #FFFFFF; font-size: 12px; font-weight: 700; padding: 4px 14px; border-radius: 999px; letter-spacing: 0.03em; white-space: nowrap">MÁS CONTRATADO</div>
+        <div style="font-size: 18px; font-weight: 700; margin-bottom: 6px">Código Postal</div>
+        <div style="font-size: 14px; color: #4C6379; margin-bottom: 24px">4,900+ zonas</div>
+        <div style="font-family: 'JetBrains Mono', monospace; margin-bottom: 28px"><span style="font-size: 13px; color: #8B99A6">desde</span> <span style="font-size: 30px; font-weight: 600">$40,250</span> <span style="font-size: 13px; color: #8B99A6">MXN/mes</span></div>
+        <div style="display: grid; gap: 12px; font-size: 14px; color: #33475B; flex: 1">
+          <span>✓ Todo lo de Municipio</span>
           <span>✓ Nivel código postal</span>
-          <span>✓ Histórico completo desde 2017</span>
+          <span>✓ Verificación de tickets e hiperlocal</span>
           <span>✓ Soporte prioritario</span>
         </div>
-        <a href="#contacto" style="margin-top: 32px; display: block; text-align: center; background: #00A94F; color: #FFFFFF; padding: 12px; border-radius: 8px; font-weight: 600; font-size: 15px" style-hover="background: #007A39; color: #FFFFFF">Solicitar acceso</a>
+        <a href="#contacto" style="margin-top: 28px; display: block; text-align: center; background: #00A94F; color: #FFFFFF; padding: 12px; border-radius: 8px; font-weight: 600; font-size: 15px" style-hover="background: #007A39; color: #FFFFFF">Solicitar acceso</a>
       </div>
-      <div style="border: 1px solid #E7ECF0; border-radius: 14px; padding: 36px; display: flex; flex-direction: column; background: #0E2A47">
+      <div style="border: 1px solid #E7ECF0; border-radius: 14px; padding: 28px; display: flex; flex-direction: column; background: #0E2A47">
         <div style="font-size: 18px; font-weight: 700; margin-bottom: 6px; color: #FFFFFF">Estación</div>
         <div style="font-size: 14px; color: rgba(255,255,255,0.6); margin-bottom: 24px">Las 14,194 estaciones</div>
         <div style="font-family: 'JetBrains Mono', monospace; margin-bottom: 28px; color: #FFFFFF"><span style="font-size: 34px; font-weight: 600">A la medida</span></div>
@@ -350,14 +363,19 @@ class Component extends DCLogic {
     { e: "QRO", p: "$23.86", d: "▼" }, { e: "BC", p: "$24.12", d: "▲" },
     { e: "SON", p: "$24.05", d: "▲" }, { e: "VER", p: "$23.44", d: "▼" }
   ];
-  state = { i: 0, procesados: 1248391 };
+  state = { i: 0, procesados: 0 };
   componentDidMount() {
     this.timer = setInterval(() => {
       if (this.props.datoEnVivoAnimado ?? true) this.setState(s => ({ i: (s.i + 1) % this.registros.length }));
     }, 3200);
-    this.timer2 = setInterval(() => {
-      if (this.props.datoEnVivoAnimado ?? true) this.setState(s => ({ procesados: s.procesados + Math.floor(Math.random() * 37) + 4 }));
-    }, 1400);
+    /* Contador REAL: estaciones con precio hoy, de la API de GasGas */
+    fetch("https://api.gasgas.com.mx/api/precios?market=nacional&value=all&days=1&product=regular")
+      .then(r => r.json())
+      .then(p => {
+        const n = Number(p.stations_count || p.total_estaciones || 0);
+        if (n > 0) this.setState({ procesados: n });
+      })
+      .catch(() => {});
     /* Ticker con datos REALES: ranking de estados de la API de GasGas */
     const AB = {"Aguascalientes":"AGS","Baja California":"BC","Baja California Sur":"BCS","Campeche":"CAMP","Chiapas":"CHIS","Chihuahua":"CHIH","CDMX":"CDMX","Ciudad de México":"CDMX","Coahuila":"COAH","Coahuila de Zaragoza":"COAH","Colima":"COL","Durango":"DGO","Edomex":"EDOMEX","Estado de México":"EDOMEX","México":"EDOMEX","Guanajuato":"GTO","Guerrero":"GRO","Hidalgo":"HGO","Jalisco":"JAL","Michoacán":"MICH","Michoacán de Ocampo":"MICH","Morelos":"MOR","Nayarit":"NAY","Nuevo León":"NL","Oaxaca":"OAX","Puebla":"PUE","Querétaro":"QRO","Quintana Roo":"QROO","San Luis Potosí":"SLP","Sinaloa":"SIN","Sonora":"SON","Tabasco":"TAB","Tamaulipas":"TAMPS","Tlaxcala":"TLAX","Veracruz":"VER","Veracruz de Ignacio de la Llave":"VER","Yucatán":"YUC","Zacatecas":"ZAC"};
     fetch("https://api.gasgas.com.mx/api/ranking-estados?product=regular")
@@ -374,14 +392,14 @@ class Component extends DCLogic {
       })
       .catch(() => {}); /* si falla, se queda la lista estática */
   }
-  componentWillUnmount() { clearInterval(this.timer); clearInterval(this.timer2); }
+  componentWillUnmount() { clearInterval(this.timer); }
   renderVals() {
     const i = this.state.i % this.registros.length;
     const reg = Object.assign({}, this.registros[i], { spark: this.sparks[i] });
     return {
       regVivo: reg,
       tickerItems: this.ticker.concat(this.ticker),
-      procesados: this.state.procesados.toLocaleString("en-US")
+      procesados: this.state.procesados > 0 ? this.state.procesados.toLocaleString("en-US") : "…"
     };
   }
 }
