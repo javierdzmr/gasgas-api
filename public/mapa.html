@@ -48,7 +48,6 @@
     .hint-movers, .leyenda-extra { display: none; }
     #feed .feed-row { flex-wrap: nowrap !important; font-size: 10.5px; gap: 8px; padding: 6px 8px; }
     #feed .feed-row span { min-width: 0 !important; }
-    #feed .feed-row span[style*="flex:1"], #feed .feed-row span[style*="flex: 1"] { display: none; }
     .kpi-val { font-size: 16px; }
   }
 </style>
@@ -199,7 +198,7 @@ function feedRow(first) {
   const div = document.createElement("div");
   div.className = "feed-row";
   div.style.background = first ? "rgba(0,169,79,0.14)" : "transparent";
-  div.innerHTML = '<span style="color:' + (first ? "#00A94F" : "rgba(255,255,255,0.4)") + ';min-width:52px">' + D.corte + '</span><span style="min-width:120px">' + byAbbr[abbr][0] + '</span><span style="color:rgba(255,255,255,0.55);min-width:56px">' + p + '</span><span style="min-width:48px;text-align:right">' + f2(v) + '</span><span style="color:rgba(255,255,255,0.55);flex:1;text-align:right">promedio</span><span style="color:#00A94F">✓</span>';
+  div.innerHTML = '<span style="color:' + (first ? "#00A94F" : "rgba(255,255,255,0.4)") + ';flex:none">' + D.corte + '</span><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + byAbbr[abbr][0] + '</span><span style="color:rgba(255,255,255,0.55);flex:none">' + p + '</span><span style="flex:none;min-width:48px;text-align:right">' + f2(v) + '</span><span style="color:#00A94F;flex:none">✓</span>';
   return div;
 }
 function startFeed() {
