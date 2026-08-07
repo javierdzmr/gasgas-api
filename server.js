@@ -525,7 +525,7 @@ app.get("/api/demo/cp", async (req, res) => {
       return res.status(403).json({
         error: "Ese CP no está en la demostración.",
         cps_demo: Object.keys(DEMO_CPS),
-        nota: "El catálogo completo (4,900+ CPs) opera con API key por contrato.",
+        nota: "El catálogo completo (5,000+ CPs) opera con API key por contrato.",
         contacto: "hola@gasgas.com.mx"
       });
     }
@@ -550,7 +550,7 @@ app.get("/api/demo/cp", async (req, res) => {
     `, [cp]);
     const fila = result.rows[0] || {};
     res.json(Object.assign({ cp, lugar: DEMO_CPS[cp], demo: true }, fila,
-      { nota: "CP de demostración. Catálogo completo de 4,900+ CPs por contrato." }));
+      { nota: "CP de demostración. Catálogo completo de 5,000+ CPs por contrato." }));
   } catch (err) {
     console.error("ERROR /demo/cp:", err);
     res.status(500).json({ error: "Error obteniendo demo de CP" });

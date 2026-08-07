@@ -238,8 +238,8 @@
       <div style="background: #FFFFFF; border: 1px solid #E7ECF0; border-radius: 12px; padding: 28px" style-hover="border: 1px solid #00A94F; box-shadow: 0 6px 24px rgba(14,42,71,0.08)">
         <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #8B99A6; margin-bottom: 14px">nivel 3</div>
         <div style="font-size: 20px; font-weight: 700; margin-bottom: 8px">Código Postal</div>
-        <div style="font-family: 'JetBrains Mono', monospace; font-size: 26px; font-weight: 600; color: #007A39; margin-bottom: 10px">4,900+</div>
-        <p style="font-size: 14px; color: #4C6379; line-height: 1.55; margin: 0">Precisión de vecindario para apps de consumo y geointeligencia.</p>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 26px; font-weight: 600; color: #007A39; margin-bottom: 10px">5,000+</div>
+        <p style="font-size: 14px; color: #4C6379; line-height: 1.55; margin: 0">Precisión de vecindario: todos los CPs del país con estación de servicio.</p>
       </div>
       <div style="background: #0E2A47; border: 1px solid #0E2A47; border-radius: 12px; padding: 28px" style-hover="box-shadow: 0 6px 24px rgba(14,42,71,0.3)">
         <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 14px">nivel 4</div>
@@ -325,7 +325,7 @@
         <select value="{{ qCp }}" onChange="{{ qOnCp }}" style="display: {{ qCpDisplay }}; width: 100%; height: 44px; border: 1px solid #DCE3EB; border-radius: 8px; padding: 0 12px; font-family: 'Figtree', sans-serif; font-size: 15px; color: #0E2A47; background: #FFFFFF; margin-bottom: 10px">
           <sc-for list="{{ qCps }}" as="c" hint-placeholder-count="8"><option value="{{ c.v }}">{{ c.t }}</option></sc-for>
         </select>
-        <div style="display: {{ qCpDisplay }}; font-size: 12px; color: #8B99A6; margin-bottom: 4px">CPs de demostración — el catálogo completo de 4,900+ CPs se contrata con API key.</div>
+        <div style="display: {{ qCpDisplay }}; font-size: 12px; color: #8B99A6; margin-bottom: 4px">CPs de demostración — el catálogo completo de 5,000+ CPs se contrata con API key.</div>
         <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: #8B99A6; margin: 12px 0 10px">3 · ¿QUÉ TAN AL DETALLE?</div>
         <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 22px">
           <sc-for list="{{ qNiveles }}" as="n" hint-placeholder-count="4">
@@ -390,7 +390,7 @@
       <div style="border: 2px solid #00A94F; border-radius: 14px; padding: 28px; display: flex; flex-direction: column; position: relative; box-shadow: 0 12px 40px rgba(0,169,79,0.12)">
         <div style="position: absolute; top: -13px; left: 50%; transform: translateX(-50%); background: #00A94F; color: #FFFFFF; font-size: 12px; font-weight: 700; padding: 4px 14px; border-radius: 999px; letter-spacing: 0.03em; white-space: nowrap">MÁS CONTRATADO</div>
         <div style="font-size: 18px; font-weight: 700; margin-bottom: 6px">Código Postal</div>
-        <div style="font-size: 14px; color: #4C6379; margin-bottom: 24px">4,900+ zonas</div>
+        <div style="font-size: 14px; color: #4C6379; margin-bottom: 24px">5,000+ zonas</div>
         <div style="font-family: 'JetBrains Mono', monospace; margin-bottom: 28px"><span style="font-size: 13px; color: #8B99A6">desde</span> <span style="font-size: 30px; font-weight: 600">$40,250</span> <span style="font-size: 13px; color: #8B99A6">MXN/mes</span></div>
         <div style="display: grid; gap: 12px; font-size: 14px; color: #33475B; flex: 1">
           <span>✓ Todo lo de Municipio</span>
@@ -598,7 +598,7 @@ class Component extends DCLogic {
       const niv = "estación individual";
       this.setState({
         qStatus: "· nivel por contrato",
-        qResp: JSON.stringify({ info: "El nivel " + niv + " opera con API key por contrato.", incluye: s.qNivel === "cp" ? "4,900+ códigos postales geolocalizados" : "las 14,194 estaciones con marca y ubicación", contacto: "hola@gasgas.com.mx" }, null, 2),
+        qResp: JSON.stringify({ info: "El nivel " + niv + " opera con API key por contrato.", incluye: s.qNivel === "cp" ? "5,000+ códigos postales geolocalizados" : "las 14,194 estaciones con marca y ubicación", contacto: "hola@gasgas.com.mx" }, null, 2),
         qExplica: "El nivel " + niv + " es parte de los planes comerciales — así operan nuestros clientes en producción. Escríbanos a hola@gasgas.com.mx y le damos acceso de evaluación."
       });
       return;
@@ -619,7 +619,7 @@ class Component extends DCLogic {
         tx += ".";
         if (j.stations_count && Number(j.stations_count) < 5) tx += " Con tan pocas estaciones, tómelo como referencia puntual, no como promedio de mercado.";
         if (j.semaforo && j.semaforo.estado) tx += " Frente al promedio nacional está en nivel " + j.semaforo.estado + ".";
-        if (j.demo) tx += " Este es un CP de demostración — el catálogo completo de 4,900+ CPs opera por contrato.";
+        if (j.demo) tx += " Este es un CP de demostración — el catálogo completo de 5,000+ CPs opera por contrato.";
         this.setState({ qExplica: tx });
       })
       .catch(() => this.setState({ qStatus: "sin conexión", qResp: "No pudimos conectar. Intente de nuevo.", qExplica: "—" }));
