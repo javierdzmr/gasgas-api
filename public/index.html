@@ -462,7 +462,7 @@
     <h2 style="font-size: 40px; font-weight: 800; color: #FFFFFF; margin: 0 0 16px; letter-spacing: -0.02em; text-wrap: pretty">Deje de limpiar archivos. Empiece a decidir.</h2>
     <p style="font-size: 17px; color: rgba(255,255,255,0.65); margin: 0 0 36px">Acceso de evaluación con datos reales para su equipo técnico.</p>
     <div style="display: flex; gap: 16px; justify-content: center">
-      <a href="mailto:hola@gasgas.com.mx" style="background: #00A94F; color: #FFFFFF; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600" style-hover="background: #007A39; color: #FFFFFF">hola@gasgas.com.mx</a>
+      <a href="{{ correoHref }}" style="background: #00A94F; color: #FFFFFF; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600" style-hover="background: #007A39; color: #FFFFFF">{{ correoTxt }}</a>
     </div>
   </div>
 </section>
@@ -735,6 +735,7 @@ class Component extends DCLogic {
       qOnMunicipio: (ev) => this.setState({ qMunicipio: ev.target.value }),
       qEnviar: () => this.qEjecutar(),
       qPath: this.qPathActual(),
+      correoTxt: "hola@" + "gasgas.com.mx", correoHref: "mailto:hola@" + "gasgas.com.mx",
       qRespLineas: this.qLineas(this.state.qResp), qCargandoDisplay: this.state.qCargando ? "block" : "none", qListoDisplay: this.state.qCargando ? "none" : "block", qStatus: this.state.qStatus, qExplica: this.state.qExplica,
       tCaro: this.tzStat("caro"), tBarato: this.tzStat("barato"), tMov: this.tzStat("mov"),
       fechaHoy: new Date().toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "America/Mexico_City" })
