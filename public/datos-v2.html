@@ -21,6 +21,12 @@
   @keyframes ggDash { to { stroke-dashoffset: 0; } }
 
   .mapa-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  @keyframes ggShimmer { from { background-position: -260px 0; } to { background-position: 260px 0; } }
+  .gg-skel { height: 13px; border-radius: 6px; background: linear-gradient(90deg, rgba(255,255,255,0.07) 25%, rgba(255,255,255,0.18) 50%, rgba(255,255,255,0.07) 75%); background-size: 520px 100%; animation: ggShimmer 1.1s linear infinite; margin-bottom: 13px; }
+  .gg-skel-verde { height: 12px; border-radius: 6px; background: linear-gradient(90deg, rgba(0,122,57,0.12) 25%, rgba(0,122,57,0.28) 50%, rgba(0,122,57,0.12) 75%); background-size: 520px 100%; animation: ggShimmer 1.1s linear infinite; margin-bottom: 11px; }
+  .gg-dots span { display: inline-block; animation: ggPulse 1.1s infinite; }
+  .gg-dots span:nth-child(2) { animation-delay: 0.18s; }
+  .gg-dots span:nth-child(3) { animation-delay: 0.36s; }
   /* ===== Capa responsive (agregada post-export; el diseño desktop no cambia) ===== */
   html, body { overflow-x: hidden; }
   pre, code { white-space: pre-wrap !important; word-break: break-word; }
@@ -342,7 +348,16 @@
             <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: rgba(255,255,255,0.55)">RESPUESTA DE LA API</span>
             <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #00A94F">{{ qStatus }}</span>
           </div>
-          <div style="margin: 0; padding: 20px 22px; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.65; overflow-x: auto; min-height: 260px">
+          <div style="display: {{ qCargandoDisplay }}; padding: 24px 22px; min-height: 260px">
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #00A94F; margin-bottom: 18px">consultando la API en vivo <span class="gg-dots"><span>●</span><span>●</span><span>●</span></span></div>
+            <div class="gg-skel" style="width: 72%"></div>
+            <div class="gg-skel" style="width: 88%"></div>
+            <div class="gg-skel" style="width: 58%"></div>
+            <div class="gg-skel" style="width: 80%"></div>
+            <div class="gg-skel" style="width: 44%"></div>
+            <div class="gg-skel" style="width: 66%"></div>
+          </div>
+          <div style="display: {{ qListoDisplay }}; margin: 0; padding: 20px 22px; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.65; overflow-x: auto; min-height: 260px">
             <sc-for list="{{ qRespLineas }}" as="ln" hint-placeholder-count="12">
               <div style="white-space: pre-wrap; word-break: break-word"><span style="color: {{ ln.kc }}">{{ ln.k }}</span><span style="color: #D9E2EC">{{ ln.sep }}</span><span style="color: {{ ln.vc }}">{{ ln.v }}</span><span style="color: #D9E2EC">{{ ln.coma }}</span></div>
             </sc-for>
@@ -350,7 +365,8 @@
         </div>
         <div style="background: #E8F5EE; border: 1px solid #B9E4CC; border-radius: 14px; padding: 20px 24px; margin-top: 16px">
           <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: #007A39; margin-bottom: 8px">EN ESPAÑOL SIMPLE, ESTO DICE:</div>
-          <div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.75; color: #1D5C3B">{{ qExplica }}</div>
+          <div style="display: {{ qCargandoDisplay }}"><div class="gg-skel-verde" style="width: 92%"></div><div class="gg-skel-verde" style="width: 78%"></div><div class="gg-skel-verde" style="width: 50%"></div></div>
+          <div style="display: {{ qListoDisplay }}; font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.75; color: #1D5C3B">{{ qExplica }}</div>
         </div>
       </div>
     </div>
@@ -461,7 +477,7 @@
 <script type="text/x-dc" data-dc-script data-props="{&quot;datoEnVivoAnimado&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Hero&quot;}}">
 class Component extends DCLogic {
   /* ── 100% datos reales de la API de GasGas; placeholders mientras carga ── */
-  state = { i: 0, procesados: 0, selEstado: "CDMX", lat: 0, feed: [], corteHora: "—", ready: 0, qProd: "regular", qEstado: "Jalisco", qNivel: "estado", qMunicipio: "", qMunis: [], qCp: "11800", qResp: "Elija sus opciones y pulse \"Enviar consulta\".", qStatus: "listo", qExplica: "Aquí traduciremos la respuesta a lenguaje de negocio." };
+  state = { i: 0, procesados: 0, selEstado: "CDMX", lat: 0, feed: [], corteHora: "—", ready: 0, qProd: "regular", qEstado: "Jalisco", qNivel: "estado", qMunicipio: "", qMunis: [], qCp: "11800", qCargando: false, qResp: "Elija sus opciones y pulse \"Enviar consulta\".", qStatus: "listo", qExplica: "Aquí traduciremos la respuesta a lenguaje de negocio." };
   // [nombre, abbr, col, fila] — geometría del mapa de mosaicos (sin datos inventados)
   estadosData = [
     ["Baja California","BC",1,1],["Sonora","SON",2,1],["Chihuahua","CHIH",3,1],["Coahuila","COAH",4,1],["Nuevo León","NL",5,1],["Tamaulipas","TAM",6,1],
@@ -603,14 +619,14 @@ class Component extends DCLogic {
       });
       return;
     }
-    this.setState({ qStatus: "consultando…", qResp: "…", qExplica: "…" });
+    this.setState({ qCargando: true, qStatus: "consultando…", qResp: "…", qExplica: "…" });
     const t0 = performance.now();
     fetch(this.API + this.qPathActual().replace("/api", "").replace("/precios", "/precios"))
       .then(r => Promise.all([r.status, r.json()]))
       .then(([st, j]) => {
         const ms = Math.round(performance.now() - t0);
         const lugar = s.qNivel === "cp" ? "el CP " + s.qCp + " (" + (j.lugar || "") + ")" : (s.qNivel === "municipio" && s.qMunicipio ? s.qMunicipio + ", " + s.qEstado : s.qEstado);
-        this.setState({ qStatus: st + " OK · " + ms + " ms", qResp: JSON.stringify(j, null, 2) });
+        this.setState({ qCargando: false, qStatus: st + " OK · " + ms + " ms", qResp: JSON.stringify(j, null, 2) });
         const v = j && j[s.qProd] != null ? Number(j[s.qProd]) : null;
         if (v == null || isNaN(v) || !v) { this.setState({ qExplica: "Sin dato disponible para esta combinación." }); return; }
         let tx = "La gasolina " + this.qNombreProd(s.qProd) + " en " + lugar + " promedia $" + v.toFixed(2) + " MXN por litro hoy (corte " + (this.R.corte || "del día") + ")";
@@ -622,7 +638,7 @@ class Component extends DCLogic {
         if (j.demo) tx += " Este es un CP de demostración — el catálogo completo de 5,000+ CPs opera por contrato.";
         this.setState({ qExplica: tx });
       })
-      .catch(() => this.setState({ qStatus: "sin conexión", qResp: "No pudimos conectar. Intente de nuevo.", qExplica: "—" }));
+      .catch(() => this.setState({ qCargando: false, qStatus: "sin conexión", qResp: "No pudimos conectar. Intente de nuevo.", qExplica: "—" }));
   }
 
   renderVals() {
@@ -716,7 +732,7 @@ class Component extends DCLogic {
       qOnMunicipio: (ev) => this.setState({ qMunicipio: ev.target.value }),
       qEnviar: () => this.qEjecutar(),
       qPath: this.qPathActual(),
-      qRespLineas: this.qLineas(this.state.qResp), qStatus: this.state.qStatus, qExplica: this.state.qExplica,
+      qRespLineas: this.qLineas(this.state.qResp), qCargandoDisplay: this.state.qCargando ? "block" : "none", qListoDisplay: this.state.qCargando ? "none" : "block", qStatus: this.state.qStatus, qExplica: this.state.qExplica,
       tCaro: this.tzStat("caro"), tBarato: this.tzStat("barato"), tMov: this.tzStat("mov"),
       fechaHoy: new Date().toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "America/Mexico_City" })
     };
