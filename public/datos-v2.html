@@ -37,6 +37,8 @@
     header nav a:not([href="#contacto"]) { display: none !important; }
     header nav { gap: 10px !important; }
     header [style*="height: 72px"] { height: 60px !important; }
+    section[data-screen-label="Hero"] [style*="transition: background 0.8s"] { flex-wrap: nowrap !important; font-size: 10.5px !important; gap: 8px !important; }
+    section[data-screen-label="Hero"] [style*="transition: background 0.8s"] span { min-width: 0 !important; }
   }
 
 </style>
@@ -432,7 +434,7 @@
       <div style="background: #FFFFFF; border-radius: 999px; padding: 4px 11px; font-weight: 800; font-size: 13px; color: #0E2A47">GG</div>
       <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: rgba(255,255,255,0.5)">gasgas.com.mx/datos</span>
     </div>
-    <span style="font-size: 13px; color: rgba(255,255,255,0.35)">© 2026 GasGas · Datos de la Comisión Nacional de Energía</span>
+    <span style="font-size: 13px; color: rgba(255,255,255,0.35)">© 2026 GasGas · Fuente: CNE · datos depurados por el algoritmo de calidad GasGas</span>
   </div>
 </footer>
 </x-dc>
@@ -543,7 +545,7 @@ class Component extends DCLogic {
     const ticker = this.estadosData.filter(e => this.R.est[e[1]] && this.R.est[e[1]].regular != null)
       .sort((a, b) => this.R.est[b[1]].regular - this.R.est[a[1]].regular).slice(0, 12)
       .map(e => { const d = this.R.est[e[1]];
-        return { e: e[1], p: this.f2(d.regular), d: d.d7 == null ? "" : (d.d7 >= 0 ? "▲" : "▼"), dc: d.d7 != null && d.d7 >= 0 ? "#E88A8A" : "#00A94F" }; });
+        return { e: e[1], p: this.f2(d.regular), d: (d.d7 == null || Math.abs(d.d7) < 0.005) ? "" : (d.d7 >= 0 ? "▲" : "▼"), dc: d.d7 != null && d.d7 >= 0 ? "#E88A8A" : "#00A94F" }; });
     const tick = ticker.length ? ticker : [{ e: "…", p: "", d: "", dc: "#00A94F" }];
     /* Mosaico con colores por precio real */
     const vals = Object.values(this.R.est).map(o => o.regular).filter(v => v != null);
@@ -574,8 +576,8 @@ class Component extends DCLogic {
       regular: dSel.regular != null ? this.f2(dSel.regular) : "—",
       premium: dSel.premium != null ? this.f2(dSel.premium) : "—",
       diesel: dSel.diesel != null ? this.f2(dSel.diesel) : "—",
-      cambioTxt: d7 == null ? "" : (d7 >= 0 ? "▲ +" : "▼ ") + Math.abs(d7).toFixed(2),
-      cambioColor: d7 != null && d7 >= 0 ? "#E88A8A" : "#00A94F",
+      cambioTxt: d7 == null ? "" : (Math.abs(d7) < 0.005 ? "· s/c" : (d7 >= 0 ? "▲ +" : "▼ ") + Math.abs(d7).toFixed(2)),
+      cambioColor: d7 == null || Math.abs(d7) < 0.005 ? "rgba(255,255,255,0.45)" : (d7 >= 0 ? "#E88A8A" : "#00A94F"),
       spark: this.R.hist[abSel] || "",
       estaciones: dSel.est != null ? Number(dSel.est).toLocaleString("en-US") : "—"
     };
@@ -589,7 +591,7 @@ class Component extends DCLogic {
     /* Mayores subidas / bajadas reales (Δ7 días) */
     const conDelta = this.estadosData.filter(e => this.R.est[e[1]] && this.R.est[e[1]].d7 != null)
       .map(e => ({ e, d: this.R.est[e[1]] })).sort((a, b) => b.d.d7 - a.d.d7);
-    const mv = o => ({ nombre: o.e[0], precioTxt: this.f2(o.d.regular), cambioTxt: (o.d.d7 >= 0 ? "+" : "") + o.d.d7.toFixed(2) });
+    const mv = o => ({ nombre: o.e[0], precioTxt: this.f2(o.d.regular), cambioTxt: Math.abs(o.d.d7) < 0.005 ? "s/c" : (o.d.d7 >= 0 ? "+" : "") + o.d.d7.toFixed(2) });
     const ph = [{ nombre: "consultando…", precioTxt: "", cambioTxt: "" }];
     return {
       feed, actual,

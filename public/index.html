@@ -244,7 +244,7 @@ svg.grafica{display:block;width:100%;height:150px}
       <span class="simbolo">$</span><span class="num tabular" id="hero-precio">--.--</span><span class="litro">/L</span>
     </div>
     <div class="delta"><span class="pildora" id="hero-delta"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/></svg><span id="hero-delta-txt">Cargando…</span></span></div>
-    <p class="fuente" id="hero-fuente">Fuente: Comisión Nacional de Energía · promedio de las estaciones del país</p>
+    <p class="fuente" id="hero-fuente">Fuente: CNE · datos depurados por el algoritmo de calidad GasGas</p>
     <div class="antiguedad antiguedad--inv" id="hero-antiguedad"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span id="hero-antiguedad-txt">Consultando…</span></div>
   </div>
 </section>
@@ -319,7 +319,7 @@ svg.grafica{display:block;width:100%;height:150px}
 <footer class="footer">
   <div class="wrap">
     <b>GasGas</b> · El precio de la gasolina en México
-    <div class="linea">Fuente: Comisión Nacional de Energía · gasgas.com.mx · © 2026</div>
+    <div class="linea">Fuente: CNE · datos depurados por el algoritmo de calidad GasGas · gasgas.com.mx · © 2026</div>
     <div class="linea"><a href="/datos" style="text-decoration:underline">Datos y API para empresas</a></div>
   </div>
 </footer>
@@ -382,7 +382,7 @@ function render(){
   const pill=$("hero-delta");
   pill.className="pildora pildora--"+(d?d.clase:"sin-dato");
   pill.innerHTML=`<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="${d?d.icon:"M5 12h14"}"/></svg><span>${d?d.txt:"Sin dato"}</span>`;
-  $("hero-fuente").textContent=`Fuente: Comisión Nacional de Energía · ${fmtMiles(DATA.meta.stations)} estaciones`;
+  $("hero-fuente").textContent=`Fuente: CNE · algoritmo de calidad GasGas · ${fmtMiles(DATA.meta.stations)} estaciones`;
   $("hero-antiguedad-txt").textContent=DATA.antiguedad;
 
   /* Título + estado del dato */

@@ -43,6 +43,7 @@
     .movers-wrap { overflow-x: auto; }
     table.movers { min-width: 560px; }
     footer { flex-direction: column; gap: 8px !important; }
+    .hint-movers, .leyenda-extra { display: none; }
   }
 </style>
 </head>
@@ -85,13 +86,13 @@
         <span class="mono" id="leg-min" style="font-size: 11px; color: rgba(255,255,255,0.5)"></span>
         <div style="flex: 0 0 220px; height: 10px; border-radius: 5px; background: linear-gradient(90deg, #00A94F, #9BC98A, #E8C36A, #E06565)"></div>
         <span class="mono" id="leg-max" style="font-size: 11px; color: rgba(255,255,255,0.5)"></span>
-        <span class="mono" style="font-size: 11px; color: rgba(255,255,255,0.35); margin-left: 12px">verde = más barato · rojo = más caro</span>
+        <span class="mono leyenda-extra" style="font-size: 11px; color: rgba(255,255,255,0.35); margin-left: 12px">verde = más barato · rojo = más caro</span>
       </div>
     </div>
     <div class="panel">
       <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 16px 0">
         <span class="mono" style="font-size: 11px; letter-spacing: 0.1em; color: rgba(255,255,255,0.5)">MAYORES MOVIMIENTOS · 7 DÍAS</span>
-        <span class="mono" style="font-size: 11px; color: rgba(255,255,255,0.35)">clic en una fila para ver el estado</span>
+        <span class="mono hint-movers" style="font-size: 11px; color: rgba(255,255,255,0.35)">clic en una fila para ver el estado</span>
       </div>
       <div class="movers-wrap"><table class="movers" id="movers"></table></div>
     </div>
@@ -116,7 +117,7 @@
 </main>
 
 <footer style="padding: 14px 24px 22px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap">
-  <span class="mono" style="font-size: 11px; color: rgba(255,255,255,0.35)">Fuente: Comisión Nacional de Energía · Procesamiento y validación GasGas · Metodología: deduplicación, filtrado de precios inválidos, enriquecimiento con marca y CP</span>
+  <span class="mono" style="font-size: 11px; color: rgba(255,255,255,0.35)">Fuente: CNE · datos depurados por el algoritmo de calidad GasGas — deduplicación, filtrado de precios inválidos, enriquecimiento con marca y CP</span>
   <span class="mono" style="font-size: 11px; color: rgba(255,255,255,0.35)">© 2026 GasGas · gasgas.com.mx/datos</span>
 </footer>
 <div id="tooltip"></div>
@@ -165,6 +166,7 @@ const colorFor = p => {
   return d3.scaleLinear().domain([0, 0.4, 0.7, 1]).range(["#00A94F", "#9BC98A", "#E8C36A", "#E06565"])(Math.max(0, Math.min(1, t)));
 };
 const precioDe = (abbr, p) => (D.est[abbr] || {})[p];
+const delta7Txt = v => v == null ? null : (Math.abs(v) < 0.005 ? { t: "· s/c", c: "rgba(255,255,255,0.45)" } : { t: (v >= 0 ? "▲ +" : "▼ ") + Math.abs(v).toFixed(2), c: v >= 0 ? "#E88A8A" : "#00A94F" });
 const pintar = () => { if (paths) paths.transition().duration(400).attr("fill", d => { const v = d.__abbr ? precioDe(d.__abbr, prod) : null; return v != null ? colorFor(v) : "#33475B"; }); };
 
 /* Reloj (hora real del visitante) */
@@ -226,6 +228,7 @@ function renderFicha() {
     return '<div style="display:flex;justify-content:space-between;gap:12px"><span style="color:rgba(255,255,255,0.7)">' + n + '</span><span style="display:flex;gap:14px"><span>' + f2(p) + '</span><span style="color:' + (df >= 0 ? "#00A94F" : "#E88A8A") + ';min-width:56px;text-align:right">' + (df >= 0 ? "+" : "−") + "$" + Math.abs(df).toFixed(2) + '</span></span></div>';
   }).join("");
   const d7 = d.d7 && d.d7.regular != null ? d.d7.regular : null;
+  const d7t = delta7Txt(d7);
   const prods = [["REGULAR", d.regular], ["PREMIUM", d.premium], ["DIÉSEL", d.diesel]];
   document.getElementById("ficha").innerHTML =
     '<div style="font-size:24px;font-weight:800;letter-spacing:-0.01em;margin-bottom:18px">' + e[0] + '</div>' +
@@ -234,7 +237,7 @@ function renderFicha() {
     '</div>' +
     '<div style="margin-bottom:18px">' +
     '<div class="mono" style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="font-size:10px;letter-spacing:0.08em;color:rgba(255,255,255,0.5)">TENDENCIA 30 DÍAS · REGULAR</span>' +
-    (d7 != null ? '<span style="font-size:11px;color:' + (d7 >= 0 ? "#E88A8A" : "#00A94F") + '">' + (d7 >= 0 ? "▲ +" : "▼ ") + Math.abs(d7).toFixed(2) + ' 7d</span>' : '') + '</div>' +
+    (d7t ? '<span style="font-size:11px;color:' + d7t.c + '">' + d7t.t + ' 7d</span>' : '') + '</div>' +
     '<svg viewBox="0 0 120 32" preserveAspectRatio="none" style="width:100%;height:36px;display:block"><polyline id="ficha-spark" points="" fill="none" stroke="#00A94F" stroke-width="1.5"></polyline></svg>' +
     '</div>' +
     '<div class="mono" style="display:grid;gap:9px;font-size:12.5px;border-top:1px solid rgba(255,255,255,0.1);padding-top:14px">' +
@@ -262,8 +265,8 @@ function renderMovers() {
   const sorted = arr.sort((a, b) => Math.abs((b.d.d7 && b.d.d7.regular) || 0) - Math.abs((a.d.d7 && a.d.d7.regular) || 0)).slice(0, 6);
   document.getElementById("movers").innerHTML = '<tr><th>ESTADO</th><th>REGULAR</th><th>PREMIUM</th><th>DIÉSEL</th><th>Δ 7 DÍAS</th><th>ESTACIONES</th></tr>' +
     sorted.map(o => {
-      const d = o.d, dv = (d.d7 && d.d7.regular != null) ? d.d7.regular : null;
-      return '<tr class="click" data-abbr="' + o.e[1] + '"><td style="font-weight:600">' + o.e[0] + '</td><td>' + (d.regular != null ? f2(d.regular) : "—") + '</td><td>' + (d.premium != null ? f2(d.premium) : "—") + '</td><td>' + (d.diesel != null ? f2(d.diesel) : "—") + '</td><td style="color:' + (dv != null && dv >= 0 ? "#E88A8A" : "#00A94F") + '">' + (dv != null ? ((dv >= 0 ? "▲ +" : "▼ ") + Math.abs(dv).toFixed(2)) : "—") + '</td><td style="color:rgba(255,255,255,0.6)">' + (d.est != null ? Number(d.est).toLocaleString("en-US") : "—") + '</td></tr>';
+      const d = o.d, dt = delta7Txt((d.d7 && d.d7.regular != null) ? d.d7.regular : null);
+      return '<tr class="click" data-abbr="' + o.e[1] + '"><td style="font-weight:600">' + o.e[0] + '</td><td>' + (d.regular != null ? f2(d.regular) : "—") + '</td><td>' + (d.premium != null ? f2(d.premium) : "—") + '</td><td>' + (d.diesel != null ? f2(d.diesel) : "—") + '</td><td style="color:' + (dt ? dt.c : "rgba(255,255,255,0.6)") + '">' + (dt ? dt.t : "—") + '</td><td style="color:rgba(255,255,255,0.6)">' + (d.est != null ? Number(d.est).toLocaleString("en-US") : "—") + '</td></tr>';
     }).join("");
   document.querySelectorAll("#movers tr.click").forEach(tr => tr.addEventListener("click", () => { sel = tr.dataset.abbr; renderFicha(); }));
 }
@@ -335,11 +338,11 @@ loadGeo().then(geo => {
       if (!d.__abbr) return;
       const v = precioDe(d.__abbr, prod);
       const o = D.est[d.__abbr];
-      const dd = o && o.d7 && o.d7.regular != null ? o.d7.regular : null;
+      const ddt = delta7Txt(o && o.d7 && o.d7.regular != null ? o.d7.regular : null);
       tip.style.display = "block";
       tip.style.left = (ev.clientX + 16) + "px";
       tip.style.top = (ev.clientY + 16) + "px";
-      tip.innerHTML = '<div style="font-weight:600;color:#FFFFFF">' + byAbbr[d.__abbr][0] + '</div><div style="margin-top:4px;color:rgba(255,255,255,0.7)">' + prod + ' <span style="color:#FFFFFF">' + (v != null ? f2(v) : "—") + '</span>' + (dd != null ? ' · <span style="color:' + (dd >= 0 ? "#E88A8A" : "#00A94F") + '">' + (dd >= 0 ? "+" : "") + dd.toFixed(2) + ' 7d</span>' : '') + '</div>';
+      tip.innerHTML = '<div style="font-weight:600;color:#FFFFFF">' + byAbbr[d.__abbr][0] + '</div><div style="margin-top:4px;color:rgba(255,255,255,0.7)">' + prod + ' <span style="color:#FFFFFF">' + (v != null ? f2(v) : "—") + '</span>' + (ddt ? ' · <span style="color:' + ddt.c + '">' + ddt.t + ' 7d</span>' : '') + '</div>';
     })
     .on("mouseleave", () => { tip.style.display = "none"; })
     .on("click", (ev, d) => { if (d.__abbr) { sel = d.__abbr; renderFicha(); } });
