@@ -132,9 +132,11 @@ app.get("/api/precios", async (req, res) => {
         pa.${stdCol} AS std,
         pa.stations_count,
         ${
-          market !== "nacional"
-            ? `(SELECT COUNT(*) FROM gas_stations WHERE LOWER(estado)=LOWER($2)) AS total_estaciones`
-            : `(SELECT COUNT(*) FROM gas_stations) AS total_estaciones`
+          market === "nacional"
+            ? `(SELECT COUNT(*) FROM gas_stations) AS total_estaciones`
+            : market === "municipio"
+              ? `(SELECT COUNT(*) FROM gas_stations WHERE LOWER(estado)=LOWER(split_part($2,'|',1)) AND LOWER(municipio)=LOWER(split_part($2,'|',2))) AS total_estaciones`
+              : `(SELECT COUNT(*) FROM gas_stations WHERE LOWER(estado)=LOWER($2)) AS total_estaciones`
         }
       FROM precios_agregados pa
       WHERE pa.market_type = $1

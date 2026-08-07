@@ -389,11 +389,15 @@
             <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: rgba(255,255,255,0.55)">RESPUESTA DE LA API</span>
             <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #00A94F">{{ qStatus }}</span>
           </div>
-          <pre style="margin: 0; padding: 20px 22px; color: #D9E2EC; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.65; overflow-x: auto; min-height: 260px; white-space: pre-wrap; word-break: break-word">{{ qResp }}</pre>
+          <div style="margin: 0; padding: 20px 22px; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.65; overflow-x: auto; min-height: 260px">
+            <sc-for list="{{ qRespLineas }}" as="ln" hint-placeholder-count="12">
+              <div style="white-space: pre-wrap; word-break: break-word"><span style="color: {{ ln.kc }}">{{ ln.k }}</span><span style="color: #D9E2EC">{{ ln.sep }}</span><span style="color: {{ ln.vc }}">{{ ln.v }}</span><span style="color: #D9E2EC">{{ ln.coma }}</span></div>
+            </sc-for>
+          </div>
         </div>
         <div style="background: #E8F5EE; border: 1px solid #B9E4CC; border-radius: 14px; padding: 20px 24px; margin-top: 16px">
           <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: #007A39; margin-bottom: 8px">EN ESPAÑOL SIMPLE, ESTO DICE:</div>
-          <div style="font-size: 15px; line-height: 1.6; color: #1D5C3B">{{ qExplica }}</div>
+          <div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.75; color: #1D5C3B">{{ qExplica }}</div>
         </div>
       </div>
     </div>
@@ -600,6 +604,17 @@ class Component extends DCLogic {
 
   /* ── Playground: consultas reales sin escribir código ── */
   qNombreProd(p) { return p === "regular" ? "regular" : (p === "premium" ? "premium" : "diésel"); }
+  qLineas(txt) {
+    return String(txt).split("\n").map(line => {
+      const m = line.match(/^(\s*)("[^"]*")(:\s*)(.*?)(,?)$/);
+      if (m) {
+        const val = m[4];
+        const vc = val.charAt(0) === '"' ? "#FFD98A" : (val.charAt(0) === "{" || val.charAt(0) === "[" ? "#D9E2EC" : "#00A94F");
+        return { k: m[1] + m[2], kc: "#7FD4A8", sep: m[3], v: val, vc, coma: m[5] };
+      }
+      return { k: line, kc: "#D9E2EC", sep: "", v: "", vc: "#D9E2EC", coma: "" };
+    });
+  }
   qPathActual() {
     const s = this.state;
     if (s.qNivel === "estacion") return "/api/… · nivel disponible por contrato";
@@ -638,6 +653,7 @@ class Component extends DCLogic {
         if (j.min && j.max) tx += ", con estaciones entre $" + Number(j.min).toFixed(2) + " y $" + Number(j.max).toFixed(2);
         if (j.stations_count) tx += ", con base en " + Number(j.stations_count).toLocaleString("en-US") + " estaciones verificadas";
         tx += ".";
+        if (j.stations_count && Number(j.stations_count) < 5) tx += " Con tan pocas estaciones, tómelo como referencia puntual, no como promedio de mercado.";
         if (j.semaforo && j.semaforo.estado) tx += " Frente al promedio nacional está en nivel " + j.semaforo.estado + ".";
         if (j.demo) tx += " Este es un CP de demostración — el catálogo completo de 4,900+ CPs opera por contrato.";
         this.setState({ qExplica: tx });
@@ -736,7 +752,7 @@ class Component extends DCLogic {
       qOnMunicipio: (ev) => this.setState({ qMunicipio: ev.target.value }),
       qEnviar: () => this.qEjecutar(),
       qPath: this.qPathActual(),
-      qResp: this.state.qResp, qStatus: this.state.qStatus, qExplica: this.state.qExplica,
+      qRespLineas: this.qLineas(this.state.qResp), qStatus: this.state.qStatus, qExplica: this.state.qExplica,
       fechaHoy: new Date().toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "America/Mexico_City" })
     };
   }
