@@ -482,6 +482,79 @@ app.get("/", (req, res) => {
   res.json({ status: "ok", service: "GasGas API" });
 });
 
+// 🔹 DEMO nivel Código Postal (para el playground de /datos)
+//    Protecciones anti-abuso:
+//    1. WHITELIST: solo 8 CPs de demostración — imposible enumerar el catálogo completo (producto de pago)
+//    2. RATE LIMIT en memoria: 30 peticiones/hora por IP en este endpoint
+//    3. Query parametrizada ($1) — sin inyección SQL
+//    4. Cache-Control de 5 min (middleware /api) absorbe ráfagas en el borde
+const DEMO_CPS = {
+  "11800": "Ciudad de México, CDMX",
+  "64000": "Monterrey, Nuevo León",
+  "45640": "Tlajomulco (ZM Guadalajara), Jalisco",
+  "27000": "Torreón, Coahuila",
+  "22000": "Tijuana, Baja California",
+  "88500": "Reynosa, Tamaulipas",
+  "77712": "Playa del Carmen, Quintana Roo",
+  "81200": "Los Mochis, Sinaloa"
+};
+const demoCpHits = new Map(); // ip -> { n, reset }
+function demoCpRateLimit(req, res) {
+  const ip = (req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.socket.remoteAddress || "?";
+  const ahora = Date.now();
+  let reg = demoCpHits.get(ip);
+  if (!reg || ahora > reg.reset) { reg = { n: 0, reset: ahora + 3600_000 }; demoCpHits.set(ip, reg); }
+  reg.n++;
+  if (demoCpHits.size > 5000) { // limpieza para no crecer sin límite
+    for (const [k, v] of demoCpHits) if (ahora > v.reset) demoCpHits.delete(k);
+  }
+  if (reg.n > 30) {
+    res.status(429).json({ error: "Límite de uso de la demo excedido. Para acceso completo: hola@gasgas.com.mx" });
+    return false;
+  }
+  return true;
+}
+
+app.get("/api/demo/cp", async (req, res) => {
+  try {
+    if (!demoCpRateLimit(req, res)) return;
+    const cp = String(req.query.cp || "");
+    if (!DEMO_CPS[cp]) {
+      return res.status(403).json({
+        error: "Ese CP no está en la demostración.",
+        cps_demo: Object.keys(DEMO_CPS),
+        nota: "El catálogo completo (4,900+ CPs) opera con API key por contrato.",
+        contacto: "hola@gasgas.com.mx"
+      });
+    }
+    const col = ["regular", "premium", "diesel"].includes(req.query.product) ? req.query.product : "regular";
+    const RANGO = { regular: [21, 27], premium: [23, 32], diesel: [25, 33] };
+    const [lo, hi] = RANGO[col];
+    const result = await pool.query(`
+      SELECT
+        ROUND(AVG(CASE WHEN p.regular BETWEEN 21 AND 27 THEN p.regular END)::numeric, 4)::text AS regular,
+        ROUND(AVG(CASE WHEN p.premium BETWEEN 23 AND 32 THEN p.premium END)::numeric, 4)::text AS premium,
+        ROUND(AVG(CASE WHEN p.diesel  BETWEEN 25 AND 33 THEN p.diesel  END)::numeric, 4)::text AS diesel,
+        ROUND(MIN(CASE WHEN p.${col} BETWEEN ${lo} AND ${hi} THEN p.${col} END)::numeric, 4)::text AS min,
+        ROUND(MAX(CASE WHEN p.${col} BETWEEN ${lo} AND ${hi} THEN p.${col} END)::numeric, 4)::text AS max,
+        ROUND(STDDEV(CASE WHEN p.${col} BETWEEN ${lo} AND ${hi} THEN p.${col} END)::numeric, 4)::text AS std,
+        COUNT(DISTINCT l.gas_station_id)::int AS stations_count,
+        MAX(p.date)::text AS updated_at
+      FROM prices p
+      JOIN prices_gas_station_links l ON l.price_id = p.id
+      JOIN gas_stations g ON g.id = l.gas_station_id
+      WHERE g.cp = $1
+        AND p.date::date = (SELECT MAX(date::date) FROM prices)
+    `, [cp]);
+    const fila = result.rows[0] || {};
+    res.json(Object.assign({ cp, lugar: DEMO_CPS[cp], demo: true }, fila,
+      { nota: "CP de demostración. Catálogo completo de 4,900+ CPs por contrato." }));
+  } catch (err) {
+    console.error("ERROR /demo/cp:", err);
+    res.status(500).json({ error: "Error obteniendo demo de CP" });
+  }
+});
+
 // 🔹 Stats del día (para la landing /datos): precios y estaciones procesados hoy
 app.get("/api/stats-hoy", async (req, res) => {
   try {

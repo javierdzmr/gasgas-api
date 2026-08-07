@@ -363,12 +363,16 @@
           </sc-for>
         </div>
         <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: #8B99A6; margin-bottom: 10px">2 · ¿EN DÓNDE?</div>
-        <select value="{{ qEstado }}" onChange="{{ qOnEstado }}" style="width: 100%; height: 44px; border: 1px solid #DCE3EB; border-radius: 8px; padding: 0 12px; font-family: 'Figtree', sans-serif; font-size: 15px; color: #0E2A47; background: #FFFFFF; margin-bottom: 10px">
+        <select value="{{ qEstado }}" onChange="{{ qOnEstado }}" style="display: {{ qEstadoDisplay }}; width: 100%; height: 44px; border: 1px solid #DCE3EB; border-radius: 8px; padding: 0 12px; font-family: 'Figtree', sans-serif; font-size: 15px; color: #0E2A47; background: #FFFFFF; margin-bottom: 10px">
           <sc-for list="{{ qEstados }}" as="o" hint-placeholder-count="32"><option value="{{ o.v }}">{{ o.t }}</option></sc-for>
         </select>
         <select value="{{ qMunicipio }}" onChange="{{ qOnMunicipio }}" style="display: {{ qMuniDisplay }}; width: 100%; height: 44px; border: 1px solid #DCE3EB; border-radius: 8px; padding: 0 12px; font-family: 'Figtree', sans-serif; font-size: 15px; color: #0E2A47; background: #FFFFFF; margin-bottom: 10px">
           <sc-for list="{{ qMunis }}" as="m" hint-placeholder-count="5"><option value="{{ m.v }}">{{ m.t }}</option></sc-for>
         </select>
+        <select value="{{ qCp }}" onChange="{{ qOnCp }}" style="display: {{ qCpDisplay }}; width: 100%; height: 44px; border: 1px solid #DCE3EB; border-radius: 8px; padding: 0 12px; font-family: 'Figtree', sans-serif; font-size: 15px; color: #0E2A47; background: #FFFFFF; margin-bottom: 10px">
+          <sc-for list="{{ qCps }}" as="c" hint-placeholder-count="8"><option value="{{ c.v }}">{{ c.t }}</option></sc-for>
+        </select>
+        <div style="display: {{ qCpDisplay }}; font-size: 12px; color: #8B99A6; margin-bottom: 4px">CPs de demostración — el catálogo completo de 4,900+ CPs se contrata con API key.</div>
         <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: #8B99A6; margin: 12px 0 10px">3 · ¿QUÉ TAN AL DETALLE?</div>
         <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 22px">
           <sc-for list="{{ qNiveles }}" as="n" hint-placeholder-count="4">
@@ -500,7 +504,7 @@
 <script type="text/x-dc" data-dc-script data-props="{&quot;datoEnVivoAnimado&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Hero&quot;}}">
 class Component extends DCLogic {
   /* ── 100% datos reales de la API de GasGas; placeholders mientras carga ── */
-  state = { i: 0, procesados: 0, selEstado: "CDMX", lat: 0, feed: [], corteHora: "—", ready: 0, qProd: "regular", qEstado: "Jalisco", qNivel: "estado", qMunicipio: "", qMunis: [], qResp: "Elija sus opciones y pulse \"Enviar consulta\".", qStatus: "listo", qExplica: "Aquí traduciremos la respuesta a lenguaje de negocio." };
+  state = { i: 0, procesados: 0, selEstado: "CDMX", lat: 0, feed: [], corteHora: "—", ready: 0, qProd: "regular", qEstado: "Jalisco", qNivel: "estado", qMunicipio: "", qMunis: [], qCp: "11800", qResp: "Elija sus opciones y pulse \"Enviar consulta\".", qStatus: "listo", qExplica: "Aquí traduciremos la respuesta a lenguaje de negocio." };
   // [nombre, abbr, col, fila] — geometría del mapa de mosaicos (sin datos inventados)
   estadosData = [
     ["Baja California","BC",1,1],["Sonora","SON",2,1],["Chihuahua","CHIH",3,1],["Coahuila","COAH",4,1],["Nuevo León","NL",5,1],["Tamaulipas","TAM",6,1],
@@ -598,7 +602,8 @@ class Component extends DCLogic {
   qNombreProd(p) { return p === "regular" ? "regular" : (p === "premium" ? "premium" : "diésel"); }
   qPathActual() {
     const s = this.state;
-    if (s.qNivel === "cp" || s.qNivel === "estacion") return "/api/… · nivel disponible por contrato";
+    if (s.qNivel === "estacion") return "/api/… · nivel disponible por contrato";
+    if (s.qNivel === "cp") return "/api/demo/cp?cp=" + s.qCp + "&product=" + s.qProd;
     if (s.qNivel === "municipio" && s.qMunicipio) return "/api/precios?market=municipio&value=" + encodeURIComponent(s.qEstado + "|" + s.qMunicipio) + "&days=1&product=" + s.qProd;
     return "/api/precios?market=estado&value=" + encodeURIComponent(s.qEstado) + "&days=1&product=" + s.qProd;
   }
@@ -610,8 +615,8 @@ class Component extends DCLogic {
   }
   qEjecutar() {
     const s = this.state;
-    if (s.qNivel === "cp" || s.qNivel === "estacion") {
-      const niv = s.qNivel === "cp" ? "código postal" : "estación individual";
+    if (s.qNivel === "estacion") {
+      const niv = "estación individual";
       this.setState({
         qStatus: "· nivel por contrato",
         qResp: JSON.stringify({ info: "El nivel " + niv + " opera con API key por contrato.", incluye: s.qNivel === "cp" ? "4,900+ códigos postales geolocalizados" : "las 14,194 estaciones con marca y ubicación", contacto: "hola@gasgas.com.mx" }, null, 2),
@@ -625,7 +630,7 @@ class Component extends DCLogic {
       .then(r => Promise.all([r.status, r.json()]))
       .then(([st, j]) => {
         const ms = Math.round(performance.now() - t0);
-        const lugar = s.qNivel === "municipio" && s.qMunicipio ? s.qMunicipio + ", " + s.qEstado : s.qEstado;
+        const lugar = s.qNivel === "cp" ? "el CP " + s.qCp + " (" + (j.lugar || "") + ")" : (s.qNivel === "municipio" && s.qMunicipio ? s.qMunicipio + ", " + s.qEstado : s.qEstado);
         this.setState({ qStatus: st + " OK · " + ms + " ms", qResp: JSON.stringify(j, null, 2) });
         const v = j && j[s.qProd] != null ? Number(j[s.qProd]) : null;
         if (v == null || isNaN(v) || !v) { this.setState({ qExplica: "Sin dato disponible para esta combinación." }); return; }
@@ -634,6 +639,7 @@ class Component extends DCLogic {
         if (j.stations_count) tx += ", con base en " + Number(j.stations_count).toLocaleString("en-US") + " estaciones verificadas";
         tx += ".";
         if (j.semaforo && j.semaforo.estado) tx += " Frente al promedio nacional está en nivel " + j.semaforo.estado + ".";
+        if (j.demo) tx += " Este es un CP de demostración — el catálogo completo de 4,900+ CPs opera por contrato.";
         this.setState({ qExplica: tx });
       })
       .catch(() => this.setState({ qStatus: "sin conexión", qResp: "No pudimos conectar. Intente de nuevo.", qExplica: "—" }));
@@ -712,14 +718,19 @@ class Component extends DCLogic {
         bg: this.state.qProd === p ? "#0E2A47" : "#FFFFFF", fg: this.state.qProd === p ? "#FFFFFF" : "#0E2A47", bd: this.state.qProd === p ? "#0E2A47" : "#DCE3EB",
         pick: () => this.setState({ qProd: p })
       })),
-      qNiveles: [["estado", "Estado"], ["municipio", "Municipio"], ["cp", "Código Postal 🔒"], ["estacion", "Estación 🔒"]].map(([k, t]) => ({
+      qNiveles: [["estado", "Estado"], ["municipio", "Municipio"], ["cp", "Código Postal"], ["estacion", "Estación 🔒"]].map(([k, t]) => ({
         t,
-        bg: this.state.qNivel === k ? "#0E2A47" : "#FFFFFF", fg: this.state.qNivel === k ? "#FFFFFF" : (k === "cp" || k === "estacion" ? "#8B99A6" : "#0E2A47"), bd: this.state.qNivel === k ? "#0E2A47" : "#DCE3EB",
+        bg: this.state.qNivel === k ? "#0E2A47" : "#FFFFFF", fg: this.state.qNivel === k ? "#FFFFFF" : (k === "estacion" ? "#8B99A6" : "#0E2A47"), bd: this.state.qNivel === k ? "#0E2A47" : "#DCE3EB",
         pick: () => { this.setState({ qNivel: k }); if (k === "municipio" && !this.state.qMunis.length) this.qCargarMunis(this.state.qEstado); }
       })),
       qEstados: this.estadosData.map(e => ({ v: (this.R.est[e[1]] && this.R.est[e[1]].apiName) || e[0], t: e[0] })).sort((a, b) => a.t.localeCompare(b.t)),
       qMunis: this.state.qMunis.map(m => ({ v: m, t: m })),
       qMuniDisplay: this.state.qNivel === "municipio" ? "block" : "none",
+      qEstadoDisplay: this.state.qNivel === "cp" ? "none" : "block",
+      qCpDisplay: this.state.qNivel === "cp" ? "block" : "none",
+      qCp: this.state.qCp,
+      qCps: [["11800", "11800 · CDMX"], ["64000", "64000 · Monterrey"], ["45640", "45640 · ZM Guadalajara"], ["27000", "27000 · Torreón"], ["22000", "22000 · Tijuana"], ["88500", "88500 · Reynosa"], ["77712", "77712 · Playa del Carmen"], ["81200", "81200 · Los Mochis"]].map(([v, t]) => ({ v, t })),
+      qOnCp: (ev) => this.setState({ qCp: ev.target.value }),
       qEstado: this.state.qEstado, qMunicipio: this.state.qMunicipio,
       qOnEstado: (ev) => { const v = ev.target.value; this.setState({ qEstado: v, qMunis: [], qMunicipio: "" }); if (this.state.qNivel === "municipio") this.qCargarMunis(v); },
       qOnMunicipio: (ev) => this.setState({ qMunicipio: ev.target.value }),
