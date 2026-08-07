@@ -20,6 +20,7 @@
   @keyframes ggFadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes ggDash { to { stroke-dashoffset: 0; } }
 
+  .mapa-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   /* ===== Capa responsive (agregada post-export; el diseño desktop no cambia) ===== */
   html, body { overflow-x: hidden; }
   pre, code { white-space: pre-wrap !important; word-break: break-word; }
@@ -39,6 +40,9 @@
     header [style*="height: 72px"] { height: 60px !important; }
     section[data-screen-label="Hero"] [style*="transition: background 0.8s"] { flex-wrap: nowrap !important; font-size: 10.5px !important; gap: 8px !important; }
     section[data-screen-label="Hero"] [style*="transition: background 0.8s"] span { min-width: 0 !important; }
+    section[data-screen-label="Hero"] [style*="transition: background 0.8s"] span[style*="flex: 1"] { display: none !important; }
+    .mapa-scroll > div { min-width: 560px; }
+    section#monitor [style*="grid-template-columns: 1.35fr"] { grid-template-columns: 1fr !important; }
   }
 
 </style>
@@ -160,6 +164,7 @@
           <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: #8B99A6">MAPA · GASOLINA REGULAR MXN/L</span>
           <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8B99A6">clic para explorar</span>
         </div>
+        <div class="mapa-scroll">
         <div style="display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px">
           <sc-for list="{{ estados }}" as="e" hint-placeholder-count="32">
             <div onClick="{{ e.select }}" style="grid-column: {{ e.col }}; grid-row: {{ e.row }}; background: {{ e.bg }}; color: {{ e.fg }}; border: 1px solid {{ e.bd }}; border-radius: 8px; padding: 9px 2px 7px; text-align: center; cursor: pointer; font-family: 'JetBrains Mono', monospace; transition: transform 0.12s" style-hover="transform: scale(1.12); box-shadow: 0 4px 14px rgba(14,42,71,0.18); z-index: 2; position: relative">
@@ -167,6 +172,7 @@
               <div style="font-size: 9.5px; opacity: 0.75; margin-top: 4px">{{ e.precioTxt }}</div>
             </div>
           </sc-for>
+        </div>
         </div>
         <div style="display: flex; gap: 20px; margin-top: 20px; font-size: 12px; color: #8B99A6; font-family: 'JetBrains Mono', monospace; align-items: center">
           <span style="display: flex; align-items: center; gap: 6px"><span style="width: 12px; height: 12px; border-radius: 3px; background: #E8F5EE; border: 1px solid #B9E4CC"></span>más barato</span>
