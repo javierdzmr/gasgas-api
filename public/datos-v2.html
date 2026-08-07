@@ -129,7 +129,7 @@
       </div>
       <div style="display: flex; align-items: center; gap: 20px">
         <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #8B99A6">{{ fechaHoy }} · corte {{ corteHora }}</span>
-        <a href="/mapa" style="display: inline-flex; align-items: center; gap: 8px; border: 1px solid #0E2A47; color: #0E2A47; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600" style-hover="background: #0E2A47; color: #FFFFFF">Abrir Modo Mapa →</a>
+        <a href="/mapa" style="display: inline-flex; align-items: center; gap: 8px; background: #0E2A47; color: #FFFFFF; border-radius: 8px; padding: 12px 24px; font-size: 15px; font-weight: 700; box-shadow: 0 6px 20px rgba(14,42,71,0.35)" style-hover="background: #00A94F; color: #FFFFFF">Abrir Modo Mapa →</a>
       </div>
     </div>
     <h2 style="font-size: 38px; font-weight: 800; margin: 0 0 12px; letter-spacing: -0.02em; text-wrap: pretty">El pulso de la gasolina, estado por estado.</h2>
@@ -450,7 +450,7 @@ class Component extends DCLogic {
   ];
   vecinos = { BC:["BCS","SON"], SON:["BC","CHIH","SIN"], CHIH:["SON","COAH","DGO"], COAH:["CHIH","NL","DGO"], NL:["COAH","TAM","SLP"], TAM:["NL","SLP","VER"], BCS:["BC"], SIN:["SON","DGO","NAY"], DGO:["CHIH","COAH","ZAC"], ZAC:["DGO","SLP","AGS"], SLP:["ZAC","NL","GTO"], NAY:["SIN","JAL","ZAC"], AGS:["ZAC","JAL"], GTO:["JAL","QRO","MICH"], QRO:["GTO","HGO","MEX"], HGO:["QRO","MEX","PUE"], VER:["PUE","TAM","OAX"], YUC:["CAMP","QROO"], JAL:["NAY","ZAC","MICH"], MICH:["JAL","GTO","MEX"], MEX:["CDMX","MICH","MOR"], TLAX:["PUE","HGO","MEX"], PUE:["TLAX","VER","MOR"], TAB:["CHIS","CAMP","VER"], CAMP:["YUC","QROO","TAB"], QROO:["YUC","CAMP"], COL:["JAL","MICH"], GRO:["MICH","MEX","OAX"], CDMX:["MEX","MOR"], MOR:["CDMX","MEX","PUE"], OAX:["GRO","PUE","CHIS"], CHIS:["OAX","TAB"] };
   R = { est: {}, nac: null, hist: {}, lats: [] };
-  API = "https://api.gasgas.com.mx/api";
+  API = "/api";
   PRODS = ["regular", "premium", "diesel"];
 
   norm(s) { return (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }

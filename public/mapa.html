@@ -144,7 +144,7 @@ function matchEstado(f) {
 function estadoByName(n) { n = norm(n); if (NAME_MAP[n]) return byAbbr[NAME_MAP[n]]; return ESTADOS.find(e => norm(e[0]) === n) || null; }
 
 let sel = "CDMX", prod = "regular", paths;
-const API = "https://api.gasgas.com.mx/api";
+const API = "/api";
 const D = { est: {}, nac: null, corte: "—", precioshoy: 0, hist: {}, lats: [] };
 
 function jget(url) {
