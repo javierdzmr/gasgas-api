@@ -40,8 +40,10 @@
     main { grid-template-columns: 1fr !important; padding: 12px 16px 20px !important; }
     #map-wrap { min-height: 300px !important; }
     .map-panel { min-height: 0 !important; }
-    .movers-wrap { overflow-x: auto; }
-    table.movers { min-width: 560px; }
+    table.movers th:nth-child(3), table.movers td:nth-child(3),
+    table.movers th:nth-child(4), table.movers td:nth-child(4) { display: none; }
+    table.movers { font-size: 11.5px; }
+    table.movers th, table.movers td { padding: 8px 8px; }
     footer { flex-direction: column; gap: 8px !important; }
     .hint-movers, .leyenda-extra { display: none; }
     #feed .feed-row { flex-wrap: nowrap !important; font-size: 10.5px; gap: 8px; padding: 6px 8px; }
