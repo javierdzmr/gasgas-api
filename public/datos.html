@@ -41,8 +41,14 @@
     section[data-screen-label="Hero"] [style*="transition: background 0.8s"] { flex-wrap: nowrap !important; font-size: 10.5px !important; gap: 8px !important; }
     section[data-screen-label="Hero"] [style*="transition: background 0.8s"] span { min-width: 0 !important; }
     section[data-screen-label="Hero"] [style*="transition: background 0.8s"] span[style*="flex: 1"] { display: none !important; }
-    .mapa-scroll > div { min-width: 560px; }
     section#monitor [style*="grid-template-columns: 1.35fr"] { grid-template-columns: 1fr !important; }
+    /* Mosaico compacto: los 32 estados caben en pantalla; el precio se ve al tocar (ficha) */
+    [style*="padding: 0 32px"] { padding-left: 16px !important; padding-right: 16px !important; }
+    section#monitor [style*="padding: 28px"] { padding: 16px !important; }
+    .mapa-scroll > div { gap: 3px !important; }
+    .mapa-scroll > div > div { padding: 7px 1px 6px !important; border-radius: 6px !important; }
+    .mapa-scroll > div > div > div:first-child { font-size: 9.5px !important; letter-spacing: -0.02em; }
+    .mapa-scroll > div > div > div:last-child { display: none; }
   }
 
 </style>
@@ -162,7 +168,7 @@
       <div style="background: #FFFFFF; border: 1px solid #E7ECF0; border-radius: 12px; padding: 28px">
         <div style="display: flex; justify-content: space-between; margin-bottom: 20px">
           <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: #8B99A6">MAPA · GASOLINA REGULAR MXN/L</span>
-          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8B99A6">clic para explorar</span>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8B99A6" class="hint-mapa">clic para explorar</span>
         </div>
         <div class="mapa-scroll">
         <div style="display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px">
