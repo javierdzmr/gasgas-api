@@ -78,7 +78,7 @@
       <a href="#proceso" style="color: rgba(255,255,255,0.75); font-size: 14px; font-weight: 500" style-hover="color: #FFFFFF">Proceso</a>
       <a href="#niveles" style="color: rgba(255,255,255,0.75); font-size: 14px; font-weight: 500" style-hover="color: #FFFFFF">Niveles de datos</a>
       <a href="#api" style="color: rgba(255,255,255,0.75); font-size: 14px; font-weight: 500" style-hover="color: #FFFFFF">API</a>
-      <a href="#precios" style="color: rgba(255,255,255,0.75); font-size: 14px; font-weight: 500" style-hover="color: #FFFFFF">Precios</a>
+      <a href="#precios" style="color: rgba(255,255,255,0.75); font-size: 14px; font-weight: 500" style-hover="color: #FFFFFF">Planes</a>
       <a href="#contacto" style="background: #00A94F; color: #FFFFFF; padding: 9px 20px; border-radius: 8px; font-size: 14px; font-weight: 600" style-hover="background: #007A39; color: #FFFFFF">Solicitar acceso</a>
     </nav>
   </div>
@@ -117,7 +117,7 @@
             <sc-for list="{{ feed }}" as="f" hint-placeholder-count="5">
               <div style="display: flex; gap: 12px; align-items: center; background: {{ f.bg }}; border-radius: 6px; padding: 6px 10px; transition: background 0.8s">
                 <span style="color: {{ f.horaColor }}; min-width: 62px">{{ f.hora }}</span>
-                <span style="color: #FFFFFF; min-width: 72px">{{ f.marca }}</span>
+                <span style="color: #FFFFFF; flex: none; width: 118px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ f.marca }}</span>
                 <span style="color: rgba(255,255,255,0.55); min-width: 58px">{{ f.producto }}</span>
                 <span style="color: #FFFFFF; min-width: 52px; text-align: right">{{ f.precioTxt }}</span>
                 <span style="color: rgba(255,255,255,0.55); flex: 1; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ f.cp }}</span>
