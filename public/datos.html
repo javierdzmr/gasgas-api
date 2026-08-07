@@ -349,6 +349,53 @@
   </div>
 </section>
 
+<section id="playground" data-screen-label="Playground" style="padding: 112px 0; background: #FFFFFF; border-bottom: 1px solid #E7ECF0">
+  <div style="max-width: 1140px; margin: 0 auto; padding: 0 32px">
+    <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #007A39; letter-spacing: 0.1em; margin-bottom: 16px">PRUÉBELA USTED MISMO</div>
+    <h2 style="font-size: 38px; font-weight: 800; margin: 0 0 12px; letter-spacing: -0.02em; text-wrap: pretty">Arme una consulta sin escribir código.</h2>
+    <p style="font-size: 17px; color: #4C6379; line-height: 1.6; margin: 0 0 48px; max-width: 600px; text-wrap: pretty">Elija qué quiere saber y vea cómo se construye la petición y qué responde la API — en vivo, contra producción. Exactamente así la consumiría su equipo.</p>
+    <div style="display: grid; grid-template-columns: 1fr 1.15fr; gap: 24px; align-items: start">
+      <div style="background: #FFFFFF; border: 1px solid #E7ECF0; border-radius: 14px; padding: 26px; box-shadow: 0 2px 12px rgba(14,42,71,0.05)">
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: #8B99A6; margin-bottom: 10px">1 · ¿QUÉ COMBUSTIBLE?</div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 22px">
+          <sc-for list="{{ qProds }}" as="p" hint-placeholder-count="3">
+            <div onClick="{{ p.pick }}" style="border: 1px solid {{ p.bd }}; background: {{ p.bg }}; color: {{ p.fg }}; border-radius: 8px; padding: 9px 18px; font-size: 14px; font-weight: 600; cursor: pointer">{{ p.t }}</div>
+          </sc-for>
+        </div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: #8B99A6; margin-bottom: 10px">2 · ¿EN DÓNDE?</div>
+        <select value="{{ qEstado }}" onChange="{{ qOnEstado }}" style="width: 100%; height: 44px; border: 1px solid #DCE3EB; border-radius: 8px; padding: 0 12px; font-family: 'Figtree', sans-serif; font-size: 15px; color: #0E2A47; background: #FFFFFF; margin-bottom: 10px">
+          <sc-for list="{{ qEstados }}" as="o" hint-placeholder-count="32"><option value="{{ o.v }}">{{ o.t }}</option></sc-for>
+        </select>
+        <select value="{{ qMunicipio }}" onChange="{{ qOnMunicipio }}" style="display: {{ qMuniDisplay }}; width: 100%; height: 44px; border: 1px solid #DCE3EB; border-radius: 8px; padding: 0 12px; font-family: 'Figtree', sans-serif; font-size: 15px; color: #0E2A47; background: #FFFFFF; margin-bottom: 10px">
+          <sc-for list="{{ qMunis }}" as="m" hint-placeholder-count="5"><option value="{{ m.v }}">{{ m.t }}</option></sc-for>
+        </select>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: #8B99A6; margin: 12px 0 10px">3 · ¿QUÉ TAN AL DETALLE?</div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 22px">
+          <sc-for list="{{ qNiveles }}" as="n" hint-placeholder-count="4">
+            <div onClick="{{ n.pick }}" style="border: 1px solid {{ n.bd }}; background: {{ n.bg }}; color: {{ n.fg }}; border-radius: 8px; padding: 9px 16px; font-size: 14px; font-weight: 600; cursor: pointer">{{ n.t }}</div>
+          </sc-for>
+        </div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: #8B99A6; margin-bottom: 10px">SU PETICIÓN SE ESCRIBE SOLA</div>
+        <div style="background: #0E2A47; border-radius: 10px; padding: 14px 16px; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.6; color: #D9E2EC; word-break: break-all; margin-bottom: 18px">GET api.gasgas.com.mx<span style="color: #00A94F">{{ qPath }}</span></div>
+        <div onClick="{{ qEnviar }}" style="background: #00A94F; color: #FFFFFF; border-radius: 10px; padding: 14px; text-align: center; font-size: 16px; font-weight: 700; cursor: pointer" style-hover="background: #007A39">Enviar consulta →</div>
+      </div>
+      <div>
+        <div style="background: #081B30; border-radius: 14px; overflow: hidden">
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; border-bottom: 1px solid rgba(255,255,255,0.1)">
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: rgba(255,255,255,0.55)">RESPUESTA DE LA API</span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #00A94F">{{ qStatus }}</span>
+          </div>
+          <pre style="margin: 0; padding: 20px 22px; color: #D9E2EC; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.65; overflow-x: auto; min-height: 260px; white-space: pre-wrap; word-break: break-word">{{ qResp }}</pre>
+        </div>
+        <div style="background: #E8F5EE; border: 1px solid #B9E4CC; border-radius: 14px; padding: 20px 24px; margin-top: 16px">
+          <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: #007A39; margin-bottom: 8px">EN ESPAÑOL SIMPLE, ESTO DICE:</div>
+          <div style="font-size: 15px; line-height: 1.6; color: #1D5C3B">{{ qExplica }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section id="precios" data-screen-label="Precios" style="padding: 112px 0; background: #FFFFFF; border-bottom: 1px solid #E7ECF0">
   <div style="max-width: 1140px; margin: 0 auto; padding: 0 32px">
     <div style="text-align: center; margin-bottom: 64px">
@@ -453,7 +500,7 @@
 <script type="text/x-dc" data-dc-script data-props="{&quot;datoEnVivoAnimado&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Hero&quot;}}">
 class Component extends DCLogic {
   /* ── 100% datos reales de la API de GasGas; placeholders mientras carga ── */
-  state = { i: 0, procesados: 0, selEstado: "CDMX", lat: 0, feed: [], corteHora: "—", ready: 0 };
+  state = { i: 0, procesados: 0, selEstado: "CDMX", lat: 0, feed: [], corteHora: "—", ready: 0, qProd: "regular", qEstado: "Jalisco", qNivel: "estado", qMunicipio: "", qMunis: [], qResp: "Elija sus opciones y pulse \"Enviar consulta\".", qStatus: "listo", qExplica: "Aquí traduciremos la respuesta a lenguaje de negocio." };
   // [nombre, abbr, col, fila] — geometría del mapa de mosaicos (sin datos inventados)
   estadosData = [
     ["Baja California","BC",1,1],["Sonora","SON",2,1],["Chihuahua","CHIH",3,1],["Coahuila","COAH",4,1],["Nuevo León","NL",5,1],["Tamaulipas","TAM",6,1],
@@ -546,6 +593,52 @@ class Component extends DCLogic {
     }, 2600);
   }
   componentWillUnmount() { clearInterval(this.timer); }
+
+  /* ── Playground: consultas reales sin escribir código ── */
+  qNombreProd(p) { return p === "regular" ? "regular" : (p === "premium" ? "premium" : "diésel"); }
+  qPathActual() {
+    const s = this.state;
+    if (s.qNivel === "cp" || s.qNivel === "estacion") return "/api/… · nivel disponible por contrato";
+    if (s.qNivel === "municipio" && s.qMunicipio) return "/api/precios?market=municipio&value=" + encodeURIComponent(s.qEstado + "|" + s.qMunicipio) + "&days=1&product=" + s.qProd;
+    return "/api/precios?market=estado&value=" + encodeURIComponent(s.qEstado) + "&days=1&product=" + s.qProd;
+  }
+  qCargarMunis(estado) {
+    this.jget(this.API + "/municipios?estado=" + encodeURIComponent(estado)).then(r => {
+      if (Array.isArray(r) && r.length) this.setState({ qMunis: r.map(m => m.municipio), qMunicipio: r[0].municipio });
+      else this.setState({ qMunis: [], qMunicipio: "" });
+    }).catch(() => this.setState({ qMunis: [], qMunicipio: "" }));
+  }
+  qEjecutar() {
+    const s = this.state;
+    if (s.qNivel === "cp" || s.qNivel === "estacion") {
+      const niv = s.qNivel === "cp" ? "código postal" : "estación individual";
+      this.setState({
+        qStatus: "· nivel por contrato",
+        qResp: JSON.stringify({ info: "El nivel " + niv + " opera con API key por contrato.", incluye: s.qNivel === "cp" ? "4,900+ códigos postales geolocalizados" : "las 14,194 estaciones con marca y ubicación", contacto: "hola@gasgas.com.mx" }, null, 2),
+        qExplica: "El nivel " + niv + " es parte de los planes comerciales — así operan nuestros clientes en producción. Escríbanos a hola@gasgas.com.mx y le damos acceso de evaluación."
+      });
+      return;
+    }
+    this.setState({ qStatus: "consultando…", qResp: "…", qExplica: "…" });
+    const t0 = performance.now();
+    fetch(this.API + this.qPathActual().replace("/api", "").replace("/precios", "/precios"))
+      .then(r => Promise.all([r.status, r.json()]))
+      .then(([st, j]) => {
+        const ms = Math.round(performance.now() - t0);
+        const lugar = s.qNivel === "municipio" && s.qMunicipio ? s.qMunicipio + ", " + s.qEstado : s.qEstado;
+        this.setState({ qStatus: st + " OK · " + ms + " ms", qResp: JSON.stringify(j, null, 2) });
+        const v = j && j[s.qProd] != null ? Number(j[s.qProd]) : null;
+        if (v == null || isNaN(v) || !v) { this.setState({ qExplica: "Sin dato disponible para esta combinación." }); return; }
+        let tx = "La gasolina " + this.qNombreProd(s.qProd) + " en " + lugar + " promedia $" + v.toFixed(2) + " MXN por litro hoy (corte " + (this.R.corte || "del día") + ")";
+        if (j.min && j.max) tx += ", con estaciones entre $" + Number(j.min).toFixed(2) + " y $" + Number(j.max).toFixed(2);
+        if (j.stations_count) tx += ", con base en " + Number(j.stations_count).toLocaleString("en-US") + " estaciones verificadas";
+        tx += ".";
+        if (j.semaforo && j.semaforo.estado) tx += " Frente al promedio nacional está en nivel " + j.semaforo.estado + ".";
+        this.setState({ qExplica: tx });
+      })
+      .catch(() => this.setState({ qStatus: "sin conexión", qResp: "No pudimos conectar. Intente de nuevo.", qExplica: "—" }));
+  }
+
   renderVals() {
     const cargando = !Object.keys(this.R.est).length;
     const feed = (this.state.feed.length ? this.state.feed : [{ hora: "—", marca: "consultando…", producto: "", cp: "", ciudad: "", precioTxt: "…" }]).map((f, k) => Object.assign({}, f, {
@@ -614,6 +707,25 @@ class Component extends DCLogic {
       estados, sel,
       subidas: conDelta.length ? conDelta.slice(0, 4).map(mv) : ph,
       bajadas: conDelta.length ? conDelta.slice(-4).reverse().map(mv) : ph,
+      qProds: ["regular", "premium", "diesel"].map(p => ({
+        t: this.qNombreProd(p),
+        bg: this.state.qProd === p ? "#0E2A47" : "#FFFFFF", fg: this.state.qProd === p ? "#FFFFFF" : "#0E2A47", bd: this.state.qProd === p ? "#0E2A47" : "#DCE3EB",
+        pick: () => this.setState({ qProd: p })
+      })),
+      qNiveles: [["estado", "Estado"], ["municipio", "Municipio"], ["cp", "Código Postal 🔒"], ["estacion", "Estación 🔒"]].map(([k, t]) => ({
+        t,
+        bg: this.state.qNivel === k ? "#0E2A47" : "#FFFFFF", fg: this.state.qNivel === k ? "#FFFFFF" : (k === "cp" || k === "estacion" ? "#8B99A6" : "#0E2A47"), bd: this.state.qNivel === k ? "#0E2A47" : "#DCE3EB",
+        pick: () => { this.setState({ qNivel: k }); if (k === "municipio" && !this.state.qMunis.length) this.qCargarMunis(this.state.qEstado); }
+      })),
+      qEstados: this.estadosData.map(e => ({ v: (this.R.est[e[1]] && this.R.est[e[1]].apiName) || e[0], t: e[0] })).sort((a, b) => a.t.localeCompare(b.t)),
+      qMunis: this.state.qMunis.map(m => ({ v: m, t: m })),
+      qMuniDisplay: this.state.qNivel === "municipio" ? "block" : "none",
+      qEstado: this.state.qEstado, qMunicipio: this.state.qMunicipio,
+      qOnEstado: (ev) => { const v = ev.target.value; this.setState({ qEstado: v, qMunis: [], qMunicipio: "" }); if (this.state.qNivel === "municipio") this.qCargarMunis(v); },
+      qOnMunicipio: (ev) => this.setState({ qMunicipio: ev.target.value }),
+      qEnviar: () => this.qEjecutar(),
+      qPath: this.qPathActual(),
+      qResp: this.state.qResp, qStatus: this.state.qStatus, qExplica: this.state.qExplica,
       fechaHoy: new Date().toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "America/Mexico_City" })
     };
   }
