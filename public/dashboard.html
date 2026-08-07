@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>GasGas · El precio de la gasolina hoy en México</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="%230E2A47"/><rect x="8" y="20" width="48" height="24" rx="12" fill="%2300A94F"/><text x="32" y="37" text-anchor="middle" font-family="Figtree,Arial,sans-serif" font-size="17" font-weight="800" letter-spacing="-.5" fill="white">GG</text></svg>'>
+<style>
+/* ============ GasGas Design System v1.1-draft — tokens ============
+   Canónico: tokens.css + componentes.css (aquí inline por ser artefacto) */
+:root{
+  --verde-50:#E8F7EE;--verde-500:#00A94F;--verde-600:#007A39;--verde-700:#005C2B;
+  --azul-50:#EEF3F8;--azul-800:#163A5E;--azul-900:#0E2A47;
+  --gris-0:#FFFFFF;--gris-50:#F7F9FB;--gris-100:#EDF1F5;--gris-200:#DCE3EB;
+  --gris-300:#C3CDD8;--gris-500:#7B8A9A;--gris-600:#5B6B7C;--gris-900:#111C28;
+  --precio-barato:#007A39;--precio-medio:#B45309;--precio-caro:#B91C1C;
+  --precio-barato-bg:#E8F7EE;--precio-medio-bg:#FEF3E2;--precio-caro-bg:#FDECEC;
+  --precio-barato-inv:var(--verde-500);--precio-medio-inv:#F59E0B;--precio-caro-inv:#F87171;
+  --texto-inv-2:var(--gris-300);
+  --fuel-magna:#16A34A;--fuel-premium:#DC2626;--fuel-diesel:#334155;
+  --exito:#007A39;--alerta:#B45309;--error:#B91C1C;--info:#163A5E;
+  --bg-pagina:var(--gris-50);--bg-superficie:var(--gris-0);--bg-hundido:var(--gris-100);
+  --borde:var(--gris-200);--texto-1:var(--gris-900);--texto-2:var(--gris-600);--texto-3:var(--gris-500);
+  --texto-inverso:var(--gris-0);--accion:var(--verde-600);--accion-hover:var(--verde-700);--foco:var(--verde-600);
+  --skeleton-base:var(--gris-100);--skeleton-shimmer:var(--gris-200);
+  --font-ui:'Figtree',system-ui,-apple-system,sans-serif;--font-mono:'JetBrains Mono',ui-monospace,monospace;
+  --radio-sm:6px;--radio-md:10px;--radio-lg:14px;--radio-xl:20px;--radio-full:999px;
+  --sombra-sm:0 1px 2px rgba(14,42,71,.06);--sombra-md:0 2px 8px rgba(14,42,71,.08);
+  --dur-rapido:120ms;--dur-base:200ms;--dur-lento:320ms;--easing:cubic-bezier(.2,.8,.2,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-ui);font-size:15px;line-height:22px;color:var(--texto-1);background:var(--bg-pagina);-webkit-font-smoothing:antialiased}
+.tabular{font-variant-numeric:tabular-nums}
+:focus-visible{outline:2px solid var(--foco);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:560px;margin:0 auto;padding:0 16px}
+svg.ic{width:16px;height:16px;flex:none}
+
+/* Nav + hero (superficie de marca) */
+.marca{background:var(--azul-900);color:var(--texto-inverso)}
+.nav{display:flex;align-items:center;justify-content:space-between;height:56px}
+.lockup{display:flex;align-items:center;gap:8px}
+.logo-pill{background:var(--gris-0);color:var(--azul-900);font-weight:800;font-size:13px;line-height:18px;letter-spacing:-.04em;border-radius:var(--radio-full);padding:3px 9px}
+.wordmark{font-weight:800;font-size:20px;letter-spacing:-.02em}
+.nav .fuente-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--texto-inv-2)}
+.nav .fuente-badge svg{color:var(--verde-500)}
+.nav-links{display:flex;align-items:center;gap:10px}
+.nav-links a{display:inline-flex;align-items:center;height:32px;padding:0 14px;border-radius:var(--radio-full);font-size:13px;font-weight:700;color:var(--texto-inverso);border:1px solid rgba(255,255,255,.28);transition:background var(--dur-rapido) var(--easing)}
+.nav-links a:hover{background:rgba(255,255,255,.12)}
+.nav-links a.cta{background:var(--verde-600);border-color:var(--verde-600)}
+.nav-links a.cta:hover{background:var(--verde-500)}
+@media (max-width:760px){.nav .fuente-badge{display:none}}
+@media (max-width:600px){.nav-links a{padding:0 10px;font-size:12px}}
+.hero{padding:24px 0 32px}
+.overline{font-size:11px;line-height:14px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--verde-500)}
+.precio-hero{display:flex;align-items:flex-start;gap:2px;margin-top:12px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
+.precio-hero .simbolo{font-size:34px;margin-top:4px;font-weight:700}
+.precio-hero .num{font-size:56px}
+.precio-hero .litro{font-size:12px;font-weight:500;color:var(--texto-inv-2);align-self:flex-end;margin:0 0 6px 6px}
+.hero .delta{margin-top:16px}
+.hero .fuente{margin-top:16px;font-size:12px;line-height:16px;color:var(--texto-inv-2)}
+.hero .antiguedad{margin-top:6px}
+
+/* Píldora de precio (§4.1) */
+.pildora{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:var(--radio-full);font-weight:700;font-variant-numeric:tabular-nums;font-size:15px}
+.pildora--barato{color:var(--precio-barato);background:var(--precio-barato-bg)}
+.pildora--medio{color:var(--precio-medio);background:var(--precio-medio-bg)}
+.pildora--caro{color:var(--precio-caro);background:var(--precio-caro-bg)}
+.pildora--sin-dato{color:var(--texto-3);background:var(--bg-hundido);font-weight:600}
+.sobre-azul .pildora--barato{color:var(--precio-barato-inv);background:rgba(0,169,79,.14)}
+.sobre-azul .pildora--medio{color:var(--precio-medio-inv);background:rgba(245,158,11,.16)}
+.sobre-azul .pildora--caro{color:var(--precio-caro-inv);background:rgba(248,113,113,.14)}
+.sobre-azul .pildora--sin-dato{color:var(--texto-inv-2);background:rgba(255,255,255,.08)}
+
+/* Chip de antigüedad (v1.1 §C) */
+.antiguedad{display:inline-flex;align-items:center;gap:6px;font-size:12px;line-height:16px;font-weight:500;color:var(--texto-2)}
+.antiguedad--inv{color:var(--texto-inv-2)}
+.antiguedad--vieja{color:var(--alerta);font-weight:600}
+
+/* Secciones */
+.seccion{padding:24px 0 0}
+.titulo-seccion{font-size:20px;line-height:28px;font-weight:600;margin-bottom:12px;display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 8px}
+.titulo-seccion .estado-dato{font-size:12px;font-weight:600;white-space:nowrap}
+.estado-dato--vivo{color:var(--verde-600)}
+.estado-dato--cache{color:var(--alerta)}
+
+/* Chips (§4.6) */
+.chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin-bottom:12px}
+.chip{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:var(--radio-full);background:var(--bg-hundido);color:var(--texto-2);border:none;font-family:var(--font-ui);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background var(--dur-rapido) var(--easing),color var(--dur-rapido) var(--easing)}
+.chip[aria-pressed="true"]{background:var(--azul-900);color:var(--texto-inverso)}
+.chip .dot{width:8px;height:8px;border-radius:50%;background:var(--dot,transparent)}
+.chip--magna{--dot:var(--fuel-magna)}
+.chip--premium{--dot:var(--fuel-premium)}
+.chip--diesel{--dot:var(--fuel-diesel)}
+select.selector-estado{height:32px;padding:0 10px;border-radius:var(--radio-full);border:1px solid var(--gris-300);background:var(--bg-superficie);font-family:var(--font-ui);font-size:13px;font-weight:600;color:var(--texto-1);cursor:pointer}
+select.selector-estado[hidden]{display:none}
+.nota-pocas{margin:0 0 12px;padding:8px 12px;border-radius:var(--radio-md);background:var(--precio-medio-bg);font-size:12.5px;line-height:17px;color:var(--precio-medio);font-weight:600}
+
+/* Cards (§4.2) */
+.card{background:var(--bg-superficie);border:1px solid var(--borde);border-radius:var(--radio-lg);box-shadow:var(--sombra-sm);padding:16px}
+.grid-precios{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.card-precio .fuel{display:inline-flex;align-items:center;gap:6px;font-size:13px;line-height:18px;font-weight:600;color:var(--texto-2)}
+.card-precio .fuel::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--fuel-dot)}
+.card-precio--magna{--fuel-dot:var(--fuel-magna)}
+.card-precio--premium{--fuel-dot:var(--fuel-premium)}
+.card-precio--diesel{--fuel-dot:var(--fuel-diesel)}
+.card-precio .valor{display:flex;align-items:flex-start;font-weight:700;font-variant-numeric:tabular-nums;line-height:1;margin:8px 0 6px}
+.card-precio .valor .simbolo{font-size:13px;margin-top:2px;font-weight:600;color:var(--texto-2)}
+.card-precio .valor .num{font-size:22px}
+.card-precio .delta{display:inline-flex;align-items:center;gap:3px;font-size:12px;line-height:16px;font-weight:600;white-space:nowrap}
+.card-precio .delta svg{width:14px;height:14px;flex:none}
+.delta--baja{color:var(--precio-barato)}
+.delta--sube{color:var(--precio-caro)}
+.delta--igual{color:var(--texto-3)}
+.card-precio[aria-current="true"]{border-color:var(--azul-900);box-shadow:var(--sombra-md)}
+
+/* Gráfica (spec §5.3: línea 2px, sin degradados) */
+.card-grafica{margin-top:12px;position:relative}
+.tooltip-grafica{position:absolute;display:none;background:var(--azul-900);color:var(--gris-0);font-size:12px;line-height:16px;padding:6px 9px;border-radius:var(--radio-sm);pointer-events:none;white-space:nowrap;box-shadow:var(--sombra-md);z-index:5;font-variant-numeric:tabular-nums}
+.tooltip-grafica b{font-weight:700}
+.tooltip-grafica .tt-delta{color:var(--gris-300)}
+.card-grafica .encabezado{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px}
+.card-grafica .encabezado .titulo{font-size:15px;font-weight:600}
+.card-grafica .encabezado .rango{font-family:var(--font-mono);font-size:12px;color:var(--texto-3)}
+svg.grafica{display:block;width:100%;height:150px}
+.eje-x{display:flex;justify-content:space-between;font-size:12px;color:var(--texto-3);margin-top:4px}
+
+/* Metabar */
+.metabar{display:flex;flex-wrap:wrap;gap:6px 0;margin-top:12px;padding:12px 0;border-top:1px solid var(--borde);font-size:12px;line-height:16px;color:var(--texto-2)}
+.metabar .m{display:inline-flex;align-items:center;gap:5px;padding:0 10px;border-right:1px solid var(--borde);white-space:nowrap}
+.metabar .m:first-child{padding-left:0}
+.metabar .m:last-child{border-right:none}
+.metabar .m b{font-family:var(--font-mono);font-weight:500;color:var(--texto-1);font-variant-numeric:tabular-nums}
+
+/* Aviso "último dato conocido" (v1.1 §B) */
+.aviso-cache{display:none;align-items:flex-start;gap:8px;margin-bottom:12px;padding:10px 12px;border-radius:var(--radio-md);background:var(--precio-medio-bg);color:var(--precio-medio);font-size:13px;line-height:18px;font-weight:500}
+.aviso-cache svg{width:16px;height:16px;flex:none;margin-top:1px}
+.aviso-cache button{margin-left:auto;border:none;background:transparent;color:var(--precio-medio);font-family:var(--font-ui);font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap}
+.aviso-cache.visible{display:flex}
+
+/* Skeleton (v1.1 §B) */
+.skeleton{position:relative;overflow:hidden;background:var(--skeleton-base);border-radius:var(--radio-sm);color:transparent!important}
+.skeleton::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,var(--skeleton-shimmer),transparent);animation:gg-shimmer 1.4s infinite}
+@keyframes gg-shimmer{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+
+/* API B2B (propuesta de valor de /datos) */
+.card-api{margin-top:24px;display:grid;gap:20px}
+.card-api .overline{color:var(--verde-600)}
+.card-api h3{font-size:20px;line-height:28px;font-weight:700;margin:6px 0 4px}
+.card-api p{color:var(--texto-2);margin-bottom:16px}
+.card-api .ctas{display:flex;flex-wrap:wrap;gap:8px}
+.api-bullets{list-style:none;display:grid;gap:10px;align-content:center}
+.api-bullets li{display:flex;gap:8px;font-size:13.5px;line-height:19px;color:var(--texto-2)}
+.api-bullets li::before{content:"✓";color:var(--verde-600);font-weight:800;flex:none}
+.api-bullets li b{color:var(--texto-1)}
+
+/* Correo */
+.card-correo{margin-top:24px}
+.card-correo h3{font-size:20px;line-height:28px;font-weight:600}
+.card-correo p{color:var(--texto-2);margin:4px 0 16px}
+.campo label{display:block;margin-bottom:4px;font-size:13px;line-height:18px;font-weight:600;color:var(--texto-2)}
+.fila-correo{display:flex;gap:8px}
+.fila-correo input{flex:1;min-width:0;height:44px;padding:0 12px;background:var(--bg-hundido);border:1px solid var(--borde);border-radius:var(--radio-md);font-family:var(--font-ui);font-size:15px;color:var(--texto-1)}
+.fila-correo input:focus{border-color:var(--foco)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 20px;border-radius:var(--radio-md);border:none;font-family:var(--font-ui);font-size:13px;font-weight:600;cursor:pointer;transition:background var(--dur-rapido) var(--easing),transform var(--dur-rapido) var(--easing)}
+.btn:active{transform:scale(.98)}
+.btn--primario{background:var(--accion);color:var(--texto-inverso)}
+.btn--primario:hover{background:var(--accion-hover)}
+.btn--secundario{background:transparent;color:var(--azul-900);border:1px solid var(--gris-300)}
+
+/* Footer */
+.footer{background:var(--azul-900);color:var(--texto-inv-2);margin-top:32px;padding:24px 0 34px;font-size:12px;line-height:18px}
+.footer b{color:var(--texto-inverso);font-weight:700}
+.footer .linea{margin-top:4px}
+
+/* ============ Desktop (≥900px): layout 2 columnas ============
+   La vista móvil queda intacta; todo lo de aquí abajo solo aplica
+   en pantallas anchas. */
+@media (min-width:900px){
+  .wrap{max-width:1040px;padding:0 24px}
+
+  /* Hero horizontal: precio grande a la izquierda, meta a la derecha */
+  .hero{display:grid;grid-template-columns:1fr auto;column-gap:24px;padding:32px 0 40px}
+  .hero .overline{grid-column:1/-1}
+  .precio-hero{grid-row:2;grid-column:1}
+  .precio-hero .num{font-size:72px}
+  .precio-hero .simbolo{font-size:42px;margin-top:6px}
+  .hero .delta{grid-row:3;grid-column:1;align-self:end}
+  .hero .fuente{grid-row:2;grid-column:2;align-self:end;justify-self:end;text-align:right;margin-top:0}
+  .hero .antiguedad{grid-row:3;grid-column:2;align-self:end;justify-self:end;margin-top:0}
+
+  /* Sección principal: controles + tarjetas a la izquierda, gráfica a la derecha */
+  .seccion{display:grid;grid-template-columns:360px minmax(0,1fr);column-gap:24px;align-content:start;
+    grid-template-rows:auto auto auto auto auto auto 1fr auto auto;
+    grid-template-areas:
+      "aviso aviso"
+      "titulo titulo"
+      "chipsm grafica"
+      "chipsf grafica"
+      "nota grafica"
+      "precios grafica"
+      "relleno grafica"
+      "metabar metabar"
+      "apib2b apib2b"}
+  .aviso-cache{grid-area:aviso}
+  .titulo-seccion{grid-area:titulo}
+  .chips-mercado{grid-area:chipsm;flex-wrap:wrap;overflow:visible;row-gap:8px}
+  .chips-mercado select.selector-estado{max-width:100%}
+  .chips-fuel{grid-area:chipsf}
+  .nota-pocas{grid-area:nota}
+  .grid-precios{grid-area:precios;grid-template-columns:1fr;gap:10px;align-content:start}
+  .card-precio{display:flex;align-items:center;gap:12px}
+  .card-precio .fuel{flex:1}
+  .card-precio .valor{margin:0}
+  .card-precio .valor .num{font-size:24px}
+  .card-grafica{grid-area:grafica;margin-top:0;display:flex;flex-direction:column}
+  .card-grafica svg.grafica{flex:1;min-height:280px;height:auto}
+  .metabar{grid-area:metabar}
+  .card-api{grid-area:apib2b;grid-template-columns:1.2fr 1fr;gap:24px;padding:24px}
+}
+</style>
+</head>
+<body>
+
+<header class="marca">
+  <div class="wrap nav">
+    <span class="lockup"><span class="logo-pill">GG</span><span class="wordmark">GasGas</span></span>
+    <nav class="nav-links">
+      <a class="cta" href="/datos">Datos para empresas</a>
+      <a href="/docs">Docs API</a>
+      <span class="fuente-badge"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.5-4.8 2.5.9-5.4L4.2 7.7l5.4-.8z" fill="currentColor" stroke="none" opacity="0"/><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>Datos oficiales CNE</span>
+    </nav>
+  </div>
+</header>
+
+<section class="marca sobre-azul">
+  <div class="wrap hero">
+    <div class="overline" id="hero-overline">Magna hoy · Nacional</div>
+    <div class="precio-hero" aria-live="polite">
+      <span class="simbolo">$</span><span class="num tabular" id="hero-precio">--.--</span><span class="litro">/L</span>
+    </div>
+    <div class="delta"><span class="pildora" id="hero-delta"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/></svg><span id="hero-delta-txt">Cargando…</span></span></div>
+    <p class="fuente" id="hero-fuente">Fuente: CNE · datos depurados por el algoritmo de calidad GasGas</p>
+    <div class="antiguedad antiguedad--inv" id="hero-antiguedad"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span id="hero-antiguedad-txt">Consultando…</span></div>
+  </div>
+</section>
+
+<main class="wrap">
+  <section class="seccion">
+    <div class="aviso-cache" id="aviso-cache" role="status">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
+      <span>No pudimos conectar en vivo. Estás viendo el último dato confirmado (<b id="aviso-fecha">18 jul, 6:00 a.m.</b>).</span>
+      <button onclick="cargar(true)">Reintentar</button>
+    </div>
+
+    <div class="titulo-seccion">
+      <span id="titulo-mercado">Precio nacional hoy</span>
+      <span class="estado-dato" id="estado-dato"></span>
+    </div>
+
+    <div class="chips chips-mercado" role="group" aria-label="Mercado">
+      <button class="chip" id="chip-nacional" aria-pressed="true" onclick="setMercado('nacional')">Nacional</button>
+      <button class="chip" id="chip-estado" aria-pressed="false" onclick="setMercado('estado')">Por estado</button>
+      <select class="selector-estado" id="sel-estado" hidden aria-label="Estado"></select>
+      <select class="selector-estado" id="sel-municipio" hidden aria-label="Municipio"></select>
+    </div>
+
+    <div class="chips chips-fuel" role="group" aria-label="Combustible">
+      <button class="chip chip--magna" data-f="regular" aria-pressed="true"><span class="dot"></span>Magna</button>
+      <button class="chip chip--premium" data-f="premium" aria-pressed="false"><span class="dot"></span>Premium</button>
+      <button class="chip chip--diesel" data-f="diesel" aria-pressed="false"><span class="dot"></span>Diésel</button>
+    </div>
+
+    <p class="nota-pocas" id="nota-pocas" hidden></p>
+    <div class="grid-precios" id="grid-precios">
+      <div class="card card-precio card-precio--magna"><span class="fuel">Magna</span><div class="valor skeleton" style="width:70px;height:22px"></div></div>
+      <div class="card card-precio card-precio--premium"><span class="fuel">Premium</span><div class="valor skeleton" style="width:70px;height:22px"></div></div>
+      <div class="card card-precio card-precio--diesel"><span class="fuel">Diésel</span><div class="valor skeleton" style="width:70px;height:22px"></div></div>
+    </div>
+
+    <div class="card card-grafica">
+      <div class="encabezado">
+        <span class="titulo" id="grafica-titulo">Magna · 30 días</span>
+        <span class="rango tabular" id="grafica-rango"></span>
+      </div>
+      <svg class="grafica" id="grafica" viewBox="0 0 328 150" preserveAspectRatio="none" role="img" aria-label="Tendencia del precio en 30 días"></svg>
+      <div class="tooltip-grafica" id="tooltip"></div>
+      <div class="eje-x" id="eje-x" style="padding-left:40px"></div>
+    </div>
+
+    <div class="metabar" id="metabar"></div>
+
+    <div class="card card-api">
+      <div>
+        <div class="overline">API y datos para empresas</div>
+        <h3>Precios listos para decidir, no un archivo que limpiar.</h3>
+        <p>Sí, el dato de la CNE es público — pero llega crudo: duplicados, precios de $0.00, sin marca comercial y sin código postal. GasGas lo convierte en <b>calidad enterprise</b> con un proceso continuo de limpieza, listo para usar por estado, municipio, CP o estación.</p>
+        <div class="ctas">
+          <a class="btn btn--primario" href="/datos">Conocer los datos</a>
+          <a class="btn btn--secundario" href="/docs">Ver documentación</a>
+        </div>
+      </div>
+      <ul class="api-bullets">
+        <li><b>Marca comercial resuelta:</b>&nbsp;OXXO Gas, Mobil, Pemex… la CNE solo publica el número de permiso; nosotros te decimos qué bandera es cada estación</li>
+        <li><b>Nivel código postal:</b>&nbsp;5,000+ CPs geolocalizados que no vienen en el dato crudo</li>
+        <li><b>Limpieza continua, no una vez:</b>&nbsp;cada corte (2 al día) pasa por validación de duplicados, rangos y estaciones fantasma</li>
+        <li><b>Histórico que no se puede reconstruir:</b>&nbsp;la CNE solo publica el hoy; nosotros guardamos cada día desde mayo 2024</li>
+        <li><b>Contexto incluido:</b>&nbsp;promedios precalculados y semáforo de caro/barato</li>
+      </ul>
+    </div>
+
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <b>GasGas</b> · El precio de la gasolina en México
+    <div class="linea">Fuente: CNE · datos depurados por el algoritmo de calidad GasGas · gasgas.com.mx · © 2026</div>
+    <div class="linea"><a href="/datos" style="text-decoration:underline">Datos y API para empresas</a></div>
+  </div>
+</footer>
+
+<script>
+/* ─────────────────────────────────────────────────────────────────
+   Política de dato (Design System v1.1 §B): NUNCA números inventados.
+   1) Skeletons → 2) API en vivo → 3) si falla, ÚLTIMO DATO REAL
+   (snapshot de Supabase, 18 jul 2026 6:00 a.m.) con aviso visible.   */
+const FUELS={regular:"Magna",premium:"Premium",diesel:"Diésel"};
+const API="https://api.gasgas.com.mx/api";
+const TZ="America/Mexico_City";
+
+/* Último dato confirmado (real, precios_historicos_agregados nacional) */
+const SNAPSHOT={
+  fechaTexto:"18 jul, 6:00 a.m.",
+  fecha:"2026-07-18",
+  meta:{stations:13410,min:21.00,max:27.00,std:0.58},
+  dates:["2026-06-18","2026-06-19","2026-06-20","2026-06-21","2026-06-22","2026-06-23","2026-06-24","2026-06-25","2026-06-26","2026-06-27","2026-06-28","2026-06-29","2026-06-30","2026-07-01","2026-07-02","2026-07-03","2026-07-04","2026-07-05","2026-07-06","2026-07-07","2026-07-08","2026-07-09","2026-07-10","2026-07-11","2026-07-12","2026-07-13","2026-07-14","2026-07-15","2026-07-16","2026-07-17","2026-07-18"],
+  regular:[23.8553,23.8558,23.8539,23.8531,23.8533,23.8546,23.8524,23.8527,23.8491,23.8517,23.8508,23.8516,23.8535,23.8549,23.8551,23.8552,23.8559,23.8552,23.8554,23.8556,23.8527,23.8534,23.8523,23.8547,23.8558,23.8560,23.8527,23.8500,23.8494,23.8495,23.8493],
+  premium:[28.5298,28.5305,28.5318,28.5296,28.5295,28.5278,28.5271,28.5249,28.5240,28.4988,28.4978,28.4982,28.4960,28.4949,28.4935,28.4937,28.4929,28.4948,28.4950,28.4944,28.4937,28.4933,28.4927,28.4899,28.4942,28.4950,28.4972,28.5000,28.5012,28.5014,28.5008],
+  diesel:[27.1684,27.1619,27.1591,27.1566,27.1563,27.1592,27.1536,27.1390,27.1380,27.1359,27.1448,27.1445,27.1407,27.1392,27.1381,27.1400,27.1337,27.1350,27.1349,27.1342,27.1353,27.1341,27.1295,27.1270,27.1308,27.1253,27.1045,27.0964,27.0913,27.0874,27.0843]
+};
+
+let fuel="regular";
+let mercado={tipo:"nacional",valor:"all"};
+let DATA=null;       /* {dates,regular,premium,diesel,meta,origen:'vivo'|'cache',antiguedad} */
+
+const $=id=>document.getElementById(id);
+const f2=n=>Number(n).toFixed(2);
+const fmtMiles=n=>Number(n).toLocaleString("es-MX");
+function fechaCorta(iso){const d=new Date(iso+"T12:00:00");return d.toLocaleDateString("es-MX",{day:"numeric",month:"short",timeZone:TZ}).replace(".","");}
+
+/* Delta de promedios agregados: contra el MISMO DÍA de la semana pasada
+   (D-7), no contra ayer — un promedio nacional/estatal casi no se mueve en
+   24 h, y D-7 elimina la estacionalidad de día de semana (regla Nielsen).
+   Si la serie no alcanza 8 puntos, cae con honestidad a "vs. ayer". */
+function deltaInfo(serie){
+  if(!serie||serie.length<2) return null;
+  const lag=serie.length>7?7:1;
+  const label=lag===7?"vs. hace una semana":"vs. ayer";
+  const d=serie[serie.length-1]-serie[serie.length-1-lag];
+  const cent=d*100;
+  if(Math.abs(cent)<0.5) return {clase:"sin-dato",dir:"igual",txt:"Sin cambio "+label,txtCorto:"Sin cambio",icon:"M5 12h14"};
+  const abs=Math.abs(d);
+  const monto=`$${f2(abs)}`;
+  return d<0?{clase:"barato",dir:"baja",txt:monto+" "+label,txtCorto:monto,icon:"M12 5v14M6 13l6 6 6-6"}
+            :{clase:"caro",dir:"sube",txt:monto+" "+label,txtCorto:monto,icon:"M12 19V5M6 11l6-6 6 6"};
+}
+
+function render(){
+  const s=DATA[fuel];
+  const hoy=s[s.length-1];
+  const nombreMercado=mercado.tipo==="nacional"?"Nacional":(mercado.tipo==="municipio"?mercado.valor.split("|")[1]:mercado.valor);
+
+  /* Hero */
+  $("hero-overline").textContent=`${FUELS[fuel]} hoy · ${nombreMercado}`;
+  $("hero-precio").textContent=f2(hoy);
+  const d=deltaInfo(s);
+  const pill=$("hero-delta");
+  pill.className="pildora pildora--"+(d?d.clase:"sin-dato");
+  pill.innerHTML=`<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="${d?d.icon:"M5 12h14"}"/></svg><span>${d?d.txt:"Sin dato"}</span>`;
+  $("hero-fuente").textContent=`Fuente: CNE · algoritmo de calidad GasGas · ${fmtMiles(DATA.meta.stations)} estaciones`;
+  $("hero-antiguedad-txt").textContent=DATA.antiguedad;
+
+  /* Título + estado del dato */
+  $("titulo-mercado").textContent=mercado.tipo==="nacional"?"Precio nacional hoy":`Precio en ${nombreMercado} hoy`;
+  /* Honestidad (v1.1 §A): con pocas estaciones, el promedio es referencia, no mercado */
+  const np=$("nota-pocas");
+  if(mercado.tipo==="municipio"&&DATA.meta.stations>0&&DATA.meta.stations<5){
+    np.hidden=false;
+    np.textContent=`En ${nombreMercado} solo hay ${DATA.meta.stations} ${DATA.meta.stations===1?"estación":"estaciones"} con precio. Tómalo como referencia puntual, no como promedio de mercado.`;
+  }else{np.hidden=true;}
+  const ed=$("estado-dato");
+  if(DATA.origen==="vivo"){ed.textContent="● En vivo"+(DATA.horaAct?" · actualizado "+DATA.horaAct:"");ed.className="estado-dato estado-dato--vivo";}
+  else{ed.textContent="Último dato: "+DATA.fechaTexto;ed.className="estado-dato estado-dato--cache";}
+  $("aviso-cache").classList.toggle("visible",DATA.origen!=="vivo");
+
+  /* Cards de precio */
+  const grid=$("grid-precios");grid.innerHTML="";
+  for(const key of ["regular","premium","diesel"]){
+    const serie=DATA[key];const v=serie[serie.length-1];const di=deltaInfo(serie);
+    const deltaHtml=di?`<span class="delta delta--${di.dir}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="${di.icon}"/></svg>${di.txtCorto}</span>`
+                      :`<span class="delta delta--igual">Sin dato</span>`;
+    grid.insertAdjacentHTML("beforeend",
+      `<div class="card card-precio card-precio--${key==="regular"?"magna":key}" aria-current="${key===fuel}">
+        <span class="fuel">${FUELS[key]}</span>
+        <div class="valor"><span class="simbolo">$</span><span class="num tabular">${v!=null?f2(v):"—"}</span></div>
+        ${deltaHtml}
+      </div>`);
+  }
+  document.querySelectorAll('[data-f]').forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.f===fuel)));
+  grafica();
+  metabar();
+}
+
+/* Gráfica según spec: línea 2px verde-600, grid gris-200, SIN degradados.
+   Eje Y con escala visible (ventana mínima de $0.10 para no exagerar
+   movimientos de centavos) + tooltip al pasar el cursor. */
+let CHART=null;
+const FUEL_COLOR={regular:"#007A39",premium:"#DC2626",diesel:"#334155"};
+function grafica(){
+  const svg=$("grafica");
+  const col=FUEL_COLOR[fuel]||"#007A39";
+  const s=DATA[fuel].filter(v=>v!=null&&!isNaN(v));
+  const W=Math.max(svg.clientWidth||328,260),H=Math.max(svg.clientHeight||150,150);
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+  const padL=40,padR=10,padT=12,padB=10;
+  let min=Math.min(...s),max=Math.max(...s);
+  /* Eje Y dinámico: la ventana es 2.5× el rango real de los datos (la curva
+     ocupa ~40% del alto — ni línea recta ni montaña rusa), con piso de
+     $0.02 para no amplificar ruido de milésimas. La escala siempre es
+     visible en el eje, así que nunca engaña. */
+  const rango=max-min;
+  const span=Math.max(rango*2.5,0.02);
+  const c=(max+min)/2;min=c-span/2;max=c+span/2;
+  const x=i=>padL+i*(W-padL-padR)/(s.length-1);
+  const y=v=>H-padB-((v-min)/span)*(H-padT-padB);
+  let linea="";s.forEach((v,i)=>{linea+=(i?"L":"M")+x(i).toFixed(1)+" "+y(v).toFixed(1)+" ";});
+  const ticks=[max,(min+max)/2,min];
+  const grid=ticks.map(t=>`<line x1="${padL}" x2="${W-padR}" y1="${y(t).toFixed(1)}" y2="${y(t).toFixed(1)}" stroke="#DCE3EB" stroke-width="1"/>
+    <text x="${padL-6}" y="${(y(t)+3.5).toFixed(1)}" text-anchor="end" font-family="'JetBrains Mono',monospace" font-size="10" fill="#7B8A9A">${f2(t)}</text>`).join("");
+  svg.innerHTML=grid+
+    `<path d="${linea}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`+
+    `<circle cx="${x(s.length-1).toFixed(1)}" cy="${y(s[s.length-1]).toFixed(1)}" r="3.5" fill="${col}"/>`+
+    `<line id="ch-l" y1="${padT}" y2="${H-padB}" stroke="#C3CDD8" stroke-width="1" stroke-dasharray="3 3" style="display:none"/>`+
+    `<circle id="ch-c" r="4" fill="#0E2A47" stroke="#fff" stroke-width="1.5" style="display:none"/>`;
+  CHART={s,x,y,W,H,padL,padR};
+  $("grafica-titulo").textContent=`${FUELS[fuel]} · 30 días`;
+  $("grafica-rango").textContent=`${f2(Math.min(...s))} – ${f2(Math.max(...s))}`;
+  const ds=DATA.dates;
+  $("eje-x").innerHTML=`<span>${fechaCorta(ds[0])}</span><span>${fechaCorta(ds[Math.floor(ds.length/2)])}</span><span>${fechaCorta(ds[ds.length-1])}</span>`;
+}
+/* Tooltip: fecha, precio y cambio vs el día anterior */
+(function(){
+  const svg=$("grafica"),tt=$("tooltip");
+  function mueve(ev){
+    if(!CHART)return;
+    const r=svg.getBoundingClientRect();
+    const fx=ev.clientX-r.left;
+    const rel=(fx-CHART.padL)/(CHART.W-CHART.padL-CHART.padR);
+    let i=Math.round(rel*(CHART.s.length-1));
+    i=Math.max(0,Math.min(CHART.s.length-1,i));
+    const px=CHART.x(i),py=CHART.y(CHART.s[i]);
+    const chl=$("ch-l"),chc=$("ch-c");
+    chl.setAttribute("x1",px);chl.setAttribute("x2",px);chl.style.display="";
+    chc.setAttribute("cx",px);chc.setAttribute("cy",py);chc.style.display="";
+    const fecha=new Date(DATA.dates[i]+"T12:00:00").toLocaleDateString("es-MX",{weekday:"short",day:"numeric",month:"short",timeZone:TZ}).replace(".","");
+    let deltaTxt="";
+    if(i>0){const dd=CHART.s[i]-CHART.s[i-1];
+      deltaTxt=Math.abs(dd)<0.005?`<span class="tt-delta">Sin cambio vs día anterior</span>`:`<span class="tt-delta">${dd<0?"↓":"↑"} $${f2(Math.abs(dd))} vs día anterior</span>`;}
+    tt.innerHTML=`${fecha} · <b>$${f2(CHART.s[i])}</b><br>${deltaTxt}`;
+    tt.style.display="block";
+    const cardR=tt.parentElement.getBoundingClientRect();
+    const sx=r.left-cardR.left,sy=r.top-cardR.top;
+    const cw=tt.parentElement.clientWidth,tw=tt.offsetWidth;
+    let left=sx+px*(r.width/CHART.W)-tw/2;
+    left=Math.max(4,Math.min(left,cw-tw-4));
+    tt.style.left=left+"px";
+    tt.style.top=(sy+py*(r.height/CHART.H)-tt.offsetHeight-12)+"px";
+  }
+  function fuera(){tt.style.display="none";const a=$("ch-l"),b=$("ch-c");if(a)a.style.display="none";if(b)b.style.display="none";}
+  svg.addEventListener("pointermove",mueve);
+  svg.addEventListener("pointerdown",mueve);
+  svg.addEventListener("pointerleave",fuera);
+  window.addEventListener("resize",()=>{if(DATA)grafica();});
+})();
+
+function metabar(){
+  const m=DATA.meta;
+  const filas=[["Estaciones",fmtMiles(m.stations)],["Mín","$"+f2(m.min)],["Máx","$"+f2(m.max)],["Desv. est.",f2(m.std)],["Fuente","CNE"]];
+  $("metabar").innerHTML=filas.map(([k,v])=>`<span class="m">${k}: <b>${v}</b></span>`).join("");
+}
+
+/* Carga: API en vivo → si falla, último dato real (nunca inventar) */
+async function cargar(reintento){
+  if(reintento){$("estado-dato").textContent="Cargando…";$("estado-dato").className="estado-dato";}
+  try{
+    const ctrl=new AbortController();const t=setTimeout(()=>ctrl.abort(),4500);
+    const q=mercado.tipo==="nacional"?"market=nacional&value=all":`market=${mercado.tipo}&value=${encodeURIComponent(mercado.valor)}`;
+    const [h,p]=await Promise.all([
+      fetch(`${API}/historico?${q}&days=30`,{signal:ctrl.signal}).then(r=>r.json()),
+      fetch(`${API}/precios?${q}&days=1&product=${fuel}&cb=${Date.now()}`,{signal:ctrl.signal}).then(r=>r.json())
+    ]);
+    clearTimeout(t);
+    if(Array.isArray(h)&&h.length>1&&p&&p.regular){
+      DATA={
+        dates:h.map(r=>(r.date||"").slice(0,10)),
+        regular:h.map(r=>+r.regular),premium:h.map(r=>+r.premium),diesel:h.map(r=>+r.diesel),
+        meta:{stations:p.stations_count||p.total_estaciones||0,min:+p.min||0,max:+p.max||0,std:+p.std||0},
+        origen:"vivo",fechaTexto:"",antiguedad:antiguedadDe(p.updated_at),horaAct:horaDe(p.updated_at)
+      };
+      render();return;
+    }
+    throw new Error("respuesta incompleta");
+  }catch(e){
+    if(mercado.tipo==="nacional"){
+      DATA={...SNAPSHOT,origen:"cache",antiguedad:"Último dato: "+SNAPSHOT.fechaTexto};
+      $("aviso-fecha").textContent=SNAPSHOT.fechaTexto;
+      render();
+    }else{
+      /* Sin snapshot por estado: error honesto, sin números (v1.1 §B) */
+      $("grid-precios").innerHTML=`<div class="card" style="grid-column:1/-1">
+        <div class="estado-vacio" style="text-align:center;padding:24px 16px">
+          <h3 style="font-size:17px;font-weight:600">No pudimos cargar ${mercado.valor.split("|").pop()}</h3>
+          <p style="color:var(--texto-2);margin:4px 0 12px">Revisa tu conexión o vuelve a intentarlo.</p>
+          <button class="btn btn--secundario" onclick="cargar(true)">Reintentar</button>
+        </div></div>`;
+      $("estado-dato").textContent="Sin conexión";$("estado-dato").className="estado-dato estado-dato--cache";
+    }
+  }
+}
+
+/* Chip de antigüedad v1.1 §C (relativo <6h, luego hora absoluta) */
+function antiguedadDe(updatedAt){
+  if(!updatedAt) return "Actualizado hoy";
+  const then=new Date(updatedAt.replace(" ","T")+(updatedAt.includes("Z")?"":"Z"));
+  const mins=Math.max(0,Math.round((Date.now()-then)/60000));
+  if(mins<60) return `Actualizado hace ${mins} min`;
+  const h=Math.round(mins/60);
+  if(h<6) return `Actualizado hace ${h} h`;
+  const esHoy=then.toLocaleDateString("en-CA",{timeZone:TZ})===new Date().toLocaleDateString("en-CA",{timeZone:TZ});
+  const hora=then.toLocaleTimeString("es-MX",{hour:"numeric",minute:"2-digit",hour12:true,timeZone:TZ});
+  return esHoy?`Actualizado hoy, ${hora}`:"Actualizado ayer";
+}
+
+/* Hora del último corte para el indicador "En vivo" (ej. "2:00 p.m.") */
+function horaDe(updatedAt){
+  if(!updatedAt) return "";
+  const then=new Date(updatedAt.replace(" ","T")+(updatedAt.includes("Z")?"":"Z"));
+  if(isNaN(then)) return "";
+  const hora=then.toLocaleTimeString("es-MX",{hour:"numeric",minute:"2-digit",hour12:true,timeZone:TZ});
+  const fecha=then.toLocaleDateString("es-MX",{day:"numeric",month:"short",timeZone:TZ}).replace(".","");
+  const esHoy=then.toLocaleDateString("en-CA",{timeZone:TZ})===new Date().toLocaleDateString("en-CA",{timeZone:TZ});
+  return (esHoy?"hoy ":"")+fecha+", "+hora;
+}
+
+function setMercado(tipo){
+  const sel=$("sel-estado"),selM=$("sel-municipio");
+  $("chip-nacional").setAttribute("aria-pressed",String(tipo==="nacional"));
+  $("chip-estado").setAttribute("aria-pressed",String(tipo==="estado"));
+  if(tipo==="estado"){
+    sel.hidden=false;
+    mercado={tipo:"estado",valor:sel.value||"Jalisco"};
+    cargarMunicipios(mercado.valor);
+  }else{
+    sel.hidden=true;selM.hidden=true;
+    mercado={tipo:"nacional",valor:"all"};
+  }
+  cargar();
+}
+/* Cascada estado → municipio (los nombres de municipio se repiten entre
+   estados, por eso la llave del mercado es "Estado|Municipio") */
+async function cargarMunicipios(estado){
+  const selM=$("sel-municipio");
+  selM.hidden=true;selM.innerHTML="";
+  try{
+    const r=await fetch(`${API}/municipios?estado=${encodeURIComponent(estado)}`).then(r=>r.json());
+    if(Array.isArray(r)&&r.length){
+      selM.innerHTML=`<option value="">Todo el estado</option>`+
+        r.map(m=>`<option value="${m.municipio.replace(/"/g,"&quot;")}">${m.municipio} (${m.estaciones})</option>`).join("");
+      selM.hidden=false;
+    }
+  }catch(e){/* sin lista de municipios: se queda el nivel estado, sin romper nada */}
+}
+$("sel-municipio").addEventListener("change",e=>{
+  const est=$("sel-estado").value;
+  if(e.target.value===""){mercado={tipo:"estado",valor:est};}
+  else{mercado={tipo:"municipio",valor:`${est}|${e.target.value}`};}
+  cargar();
+});
+async function cargarEstados(){
+  const sel=$("sel-estado");
+  const fallback=["Aguascalientes","Baja California","CDMX","Chihuahua","Guanajuato","Jalisco","Nuevo León","Puebla","Querétaro","Veracruz"];
+  try{
+    const r=await fetch(`${API}/estados`).then(r=>r.json());
+    sel.innerHTML=(Array.isArray(r)&&r.length?r.map(e=>e.estado):fallback).map(e=>`<option>${e}</option>`).join("");
+  }catch(e){sel.innerHTML=fallback.map(e=>`<option>${e}</option>`).join("");}
+}
+$("sel-estado").addEventListener("change",e=>{mercado={tipo:"estado",valor:e.target.value};cargarMunicipios(e.target.value);cargar();});
+document.querySelectorAll("[data-f]").forEach(b=>b.addEventListener("click",()=>{fuel=b.dataset.f;if(DATA)render();}));
+cargarEstados();cargar();
+</script>
+</body>
+</html>

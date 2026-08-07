@@ -1,607 +1,747 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>GasGas · El precio de la gasolina hoy en México</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="%230E2A47"/><rect x="8" y="20" width="48" height="24" rx="12" fill="%2300A94F"/><text x="32" y="37" text-anchor="middle" font-family="Figtree,Arial,sans-serif" font-size="17" font-weight="800" letter-spacing="-.5" fill="white">GG</text></svg>'>
-<style>
-/* ============ GasGas Design System v1.1-draft — tokens ============
-   Canónico: tokens.css + componentes.css (aquí inline por ser artefacto) */
-:root{
-  --verde-50:#E8F7EE;--verde-500:#00A94F;--verde-600:#007A39;--verde-700:#005C2B;
-  --azul-50:#EEF3F8;--azul-800:#163A5E;--azul-900:#0E2A47;
-  --gris-0:#FFFFFF;--gris-50:#F7F9FB;--gris-100:#EDF1F5;--gris-200:#DCE3EB;
-  --gris-300:#C3CDD8;--gris-500:#7B8A9A;--gris-600:#5B6B7C;--gris-900:#111C28;
-  --precio-barato:#007A39;--precio-medio:#B45309;--precio-caro:#B91C1C;
-  --precio-barato-bg:#E8F7EE;--precio-medio-bg:#FEF3E2;--precio-caro-bg:#FDECEC;
-  --precio-barato-inv:var(--verde-500);--precio-medio-inv:#F59E0B;--precio-caro-inv:#F87171;
-  --texto-inv-2:var(--gris-300);
-  --fuel-magna:#16A34A;--fuel-premium:#DC2626;--fuel-diesel:#334155;
-  --exito:#007A39;--alerta:#B45309;--error:#B91C1C;--info:#163A5E;
-  --bg-pagina:var(--gris-50);--bg-superficie:var(--gris-0);--bg-hundido:var(--gris-100);
-  --borde:var(--gris-200);--texto-1:var(--gris-900);--texto-2:var(--gris-600);--texto-3:var(--gris-500);
-  --texto-inverso:var(--gris-0);--accion:var(--verde-600);--accion-hover:var(--verde-700);--foco:var(--verde-600);
-  --skeleton-base:var(--gris-100);--skeleton-shimmer:var(--gris-200);
-  --font-ui:'Figtree',system-ui,-apple-system,sans-serif;--font-mono:'JetBrains Mono',ui-monospace,monospace;
-  --radio-sm:6px;--radio-md:10px;--radio-lg:14px;--radio-xl:20px;--radio-full:999px;
-  --sombra-sm:0 1px 2px rgba(14,42,71,.06);--sombra-md:0 2px 8px rgba(14,42,71,.08);
-  --dur-rapido:120ms;--dur-base:200ms;--dur-lento:320ms;--easing:cubic-bezier(.2,.8,.2,1);
-}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:var(--font-ui);font-size:15px;line-height:22px;color:var(--texto-1);background:var(--bg-pagina);-webkit-font-smoothing:antialiased}
-.tabular{font-variant-numeric:tabular-nums}
-:focus-visible{outline:2px solid var(--foco);outline-offset:2px}
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-a{color:inherit;text-decoration:none}
-.wrap{max-width:560px;margin:0 auto;padding:0 16px}
-svg.ic{width:16px;height:16px;flex:none}
-
-/* Nav + hero (superficie de marca) */
-.marca{background:var(--azul-900);color:var(--texto-inverso)}
-.nav{display:flex;align-items:center;justify-content:space-between;height:56px}
-.lockup{display:flex;align-items:center;gap:8px}
-.logo-pill{background:var(--gris-0);color:var(--azul-900);font-weight:800;font-size:13px;line-height:18px;letter-spacing:-.04em;border-radius:var(--radio-full);padding:3px 9px}
-.wordmark{font-weight:800;font-size:20px;letter-spacing:-.02em}
-.nav .fuente-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--texto-inv-2)}
-.nav .fuente-badge svg{color:var(--verde-500)}
-.nav-links{display:flex;align-items:center;gap:10px}
-.nav-links a{display:inline-flex;align-items:center;height:32px;padding:0 14px;border-radius:var(--radio-full);font-size:13px;font-weight:700;color:var(--texto-inverso);border:1px solid rgba(255,255,255,.28);transition:background var(--dur-rapido) var(--easing)}
-.nav-links a:hover{background:rgba(255,255,255,.12)}
-.nav-links a.cta{background:var(--verde-600);border-color:var(--verde-600)}
-.nav-links a.cta:hover{background:var(--verde-500)}
-@media (max-width:760px){.nav .fuente-badge{display:none}}
-@media (max-width:600px){.nav-links a{padding:0 10px;font-size:12px}}
-.hero{padding:24px 0 32px}
-.overline{font-size:11px;line-height:14px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--verde-500)}
-.precio-hero{display:flex;align-items:flex-start;gap:2px;margin-top:12px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
-.precio-hero .simbolo{font-size:34px;margin-top:4px;font-weight:700}
-.precio-hero .num{font-size:56px}
-.precio-hero .litro{font-size:12px;font-weight:500;color:var(--texto-inv-2);align-self:flex-end;margin:0 0 6px 6px}
-.hero .delta{margin-top:16px}
-.hero .fuente{margin-top:16px;font-size:12px;line-height:16px;color:var(--texto-inv-2)}
-.hero .antiguedad{margin-top:6px}
-
-/* Píldora de precio (§4.1) */
-.pildora{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:var(--radio-full);font-weight:700;font-variant-numeric:tabular-nums;font-size:15px}
-.pildora--barato{color:var(--precio-barato);background:var(--precio-barato-bg)}
-.pildora--medio{color:var(--precio-medio);background:var(--precio-medio-bg)}
-.pildora--caro{color:var(--precio-caro);background:var(--precio-caro-bg)}
-.pildora--sin-dato{color:var(--texto-3);background:var(--bg-hundido);font-weight:600}
-.sobre-azul .pildora--barato{color:var(--precio-barato-inv);background:rgba(0,169,79,.14)}
-.sobre-azul .pildora--medio{color:var(--precio-medio-inv);background:rgba(245,158,11,.16)}
-.sobre-azul .pildora--caro{color:var(--precio-caro-inv);background:rgba(248,113,113,.14)}
-.sobre-azul .pildora--sin-dato{color:var(--texto-inv-2);background:rgba(255,255,255,.08)}
-
-/* Chip de antigüedad (v1.1 §C) */
-.antiguedad{display:inline-flex;align-items:center;gap:6px;font-size:12px;line-height:16px;font-weight:500;color:var(--texto-2)}
-.antiguedad--inv{color:var(--texto-inv-2)}
-.antiguedad--vieja{color:var(--alerta);font-weight:600}
-
-/* Secciones */
-.seccion{padding:24px 0 0}
-.titulo-seccion{font-size:20px;line-height:28px;font-weight:600;margin-bottom:12px;display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 8px}
-.titulo-seccion .estado-dato{font-size:12px;font-weight:600;white-space:nowrap}
-.estado-dato--vivo{color:var(--verde-600)}
-.estado-dato--cache{color:var(--alerta)}
-
-/* Chips (§4.6) */
-.chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin-bottom:12px}
-.chip{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:var(--radio-full);background:var(--bg-hundido);color:var(--texto-2);border:none;font-family:var(--font-ui);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background var(--dur-rapido) var(--easing),color var(--dur-rapido) var(--easing)}
-.chip[aria-pressed="true"]{background:var(--azul-900);color:var(--texto-inverso)}
-.chip .dot{width:8px;height:8px;border-radius:50%;background:var(--dot,transparent)}
-.chip--magna{--dot:var(--fuel-magna)}
-.chip--premium{--dot:var(--fuel-premium)}
-.chip--diesel{--dot:var(--fuel-diesel)}
-select.selector-estado{height:32px;padding:0 10px;border-radius:var(--radio-full);border:1px solid var(--gris-300);background:var(--bg-superficie);font-family:var(--font-ui);font-size:13px;font-weight:600;color:var(--texto-1);cursor:pointer}
-select.selector-estado[hidden]{display:none}
-.nota-pocas{margin:0 0 12px;padding:8px 12px;border-radius:var(--radio-md);background:var(--precio-medio-bg);font-size:12.5px;line-height:17px;color:var(--precio-medio);font-weight:600}
-
-/* Cards (§4.2) */
-.card{background:var(--bg-superficie);border:1px solid var(--borde);border-radius:var(--radio-lg);box-shadow:var(--sombra-sm);padding:16px}
-.grid-precios{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-.card-precio .fuel{display:inline-flex;align-items:center;gap:6px;font-size:13px;line-height:18px;font-weight:600;color:var(--texto-2)}
-.card-precio .fuel::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--fuel-dot)}
-.card-precio--magna{--fuel-dot:var(--fuel-magna)}
-.card-precio--premium{--fuel-dot:var(--fuel-premium)}
-.card-precio--diesel{--fuel-dot:var(--fuel-diesel)}
-.card-precio .valor{display:flex;align-items:flex-start;font-weight:700;font-variant-numeric:tabular-nums;line-height:1;margin:8px 0 6px}
-.card-precio .valor .simbolo{font-size:13px;margin-top:2px;font-weight:600;color:var(--texto-2)}
-.card-precio .valor .num{font-size:22px}
-.card-precio .delta{display:inline-flex;align-items:center;gap:3px;font-size:12px;line-height:16px;font-weight:600;white-space:nowrap}
-.card-precio .delta svg{width:14px;height:14px;flex:none}
-.delta--baja{color:var(--precio-barato)}
-.delta--sube{color:var(--precio-caro)}
-.delta--igual{color:var(--texto-3)}
-.card-precio[aria-current="true"]{border-color:var(--azul-900);box-shadow:var(--sombra-md)}
-
-/* Gráfica (spec §5.3: línea 2px, sin degradados) */
-.card-grafica{margin-top:12px;position:relative}
-.tooltip-grafica{position:absolute;display:none;background:var(--azul-900);color:var(--gris-0);font-size:12px;line-height:16px;padding:6px 9px;border-radius:var(--radio-sm);pointer-events:none;white-space:nowrap;box-shadow:var(--sombra-md);z-index:5;font-variant-numeric:tabular-nums}
-.tooltip-grafica b{font-weight:700}
-.tooltip-grafica .tt-delta{color:var(--gris-300)}
-.card-grafica .encabezado{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px}
-.card-grafica .encabezado .titulo{font-size:15px;font-weight:600}
-.card-grafica .encabezado .rango{font-family:var(--font-mono);font-size:12px;color:var(--texto-3)}
-svg.grafica{display:block;width:100%;height:150px}
-.eje-x{display:flex;justify-content:space-between;font-size:12px;color:var(--texto-3);margin-top:4px}
-
-/* Metabar */
-.metabar{display:flex;flex-wrap:wrap;gap:6px 0;margin-top:12px;padding:12px 0;border-top:1px solid var(--borde);font-size:12px;line-height:16px;color:var(--texto-2)}
-.metabar .m{display:inline-flex;align-items:center;gap:5px;padding:0 10px;border-right:1px solid var(--borde);white-space:nowrap}
-.metabar .m:first-child{padding-left:0}
-.metabar .m:last-child{border-right:none}
-.metabar .m b{font-family:var(--font-mono);font-weight:500;color:var(--texto-1);font-variant-numeric:tabular-nums}
-
-/* Aviso "último dato conocido" (v1.1 §B) */
-.aviso-cache{display:none;align-items:flex-start;gap:8px;margin-bottom:12px;padding:10px 12px;border-radius:var(--radio-md);background:var(--precio-medio-bg);color:var(--precio-medio);font-size:13px;line-height:18px;font-weight:500}
-.aviso-cache svg{width:16px;height:16px;flex:none;margin-top:1px}
-.aviso-cache button{margin-left:auto;border:none;background:transparent;color:var(--precio-medio);font-family:var(--font-ui);font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap}
-.aviso-cache.visible{display:flex}
-
-/* Skeleton (v1.1 §B) */
-.skeleton{position:relative;overflow:hidden;background:var(--skeleton-base);border-radius:var(--radio-sm);color:transparent!important}
-.skeleton::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,var(--skeleton-shimmer),transparent);animation:gg-shimmer 1.4s infinite}
-@keyframes gg-shimmer{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
-
-/* API B2B (propuesta de valor de /datos) */
-.card-api{margin-top:24px;display:grid;gap:20px}
-.card-api .overline{color:var(--verde-600)}
-.card-api h3{font-size:20px;line-height:28px;font-weight:700;margin:6px 0 4px}
-.card-api p{color:var(--texto-2);margin-bottom:16px}
-.card-api .ctas{display:flex;flex-wrap:wrap;gap:8px}
-.api-bullets{list-style:none;display:grid;gap:10px;align-content:center}
-.api-bullets li{display:flex;gap:8px;font-size:13.5px;line-height:19px;color:var(--texto-2)}
-.api-bullets li::before{content:"✓";color:var(--verde-600);font-weight:800;flex:none}
-.api-bullets li b{color:var(--texto-1)}
-
-/* Correo */
-.card-correo{margin-top:24px}
-.card-correo h3{font-size:20px;line-height:28px;font-weight:600}
-.card-correo p{color:var(--texto-2);margin:4px 0 16px}
-.campo label{display:block;margin-bottom:4px;font-size:13px;line-height:18px;font-weight:600;color:var(--texto-2)}
-.fila-correo{display:flex;gap:8px}
-.fila-correo input{flex:1;min-width:0;height:44px;padding:0 12px;background:var(--bg-hundido);border:1px solid var(--borde);border-radius:var(--radio-md);font-family:var(--font-ui);font-size:15px;color:var(--texto-1)}
-.fila-correo input:focus{border-color:var(--foco)}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 20px;border-radius:var(--radio-md);border:none;font-family:var(--font-ui);font-size:13px;font-weight:600;cursor:pointer;transition:background var(--dur-rapido) var(--easing),transform var(--dur-rapido) var(--easing)}
-.btn:active{transform:scale(.98)}
-.btn--primario{background:var(--accion);color:var(--texto-inverso)}
-.btn--primario:hover{background:var(--accion-hover)}
-.btn--secundario{background:transparent;color:var(--azul-900);border:1px solid var(--gris-300)}
-
-/* Footer */
-.footer{background:var(--azul-900);color:var(--texto-inv-2);margin-top:32px;padding:24px 0 34px;font-size:12px;line-height:18px}
-.footer b{color:var(--texto-inverso);font-weight:700}
-.footer .linea{margin-top:4px}
-
-/* ============ Desktop (≥900px): layout 2 columnas ============
-   La vista móvil queda intacta; todo lo de aquí abajo solo aplica
-   en pantallas anchas. */
-@media (min-width:900px){
-  .wrap{max-width:1040px;padding:0 24px}
-
-  /* Hero horizontal: precio grande a la izquierda, meta a la derecha */
-  .hero{display:grid;grid-template-columns:1fr auto;column-gap:24px;padding:32px 0 40px}
-  .hero .overline{grid-column:1/-1}
-  .precio-hero{grid-row:2;grid-column:1}
-  .precio-hero .num{font-size:72px}
-  .precio-hero .simbolo{font-size:42px;margin-top:6px}
-  .hero .delta{grid-row:3;grid-column:1;align-self:end}
-  .hero .fuente{grid-row:2;grid-column:2;align-self:end;justify-self:end;text-align:right;margin-top:0}
-  .hero .antiguedad{grid-row:3;grid-column:2;align-self:end;justify-self:end;margin-top:0}
-
-  /* Sección principal: controles + tarjetas a la izquierda, gráfica a la derecha */
-  .seccion{display:grid;grid-template-columns:360px minmax(0,1fr);column-gap:24px;align-content:start;
-    grid-template-rows:auto auto auto auto auto auto 1fr auto auto;
-    grid-template-areas:
-      "aviso aviso"
-      "titulo titulo"
-      "chipsm grafica"
-      "chipsf grafica"
-      "nota grafica"
-      "precios grafica"
-      "relleno grafica"
-      "metabar metabar"
-      "apib2b apib2b"}
-  .aviso-cache{grid-area:aviso}
-  .titulo-seccion{grid-area:titulo}
-  .chips-mercado{grid-area:chipsm;flex-wrap:wrap;overflow:visible;row-gap:8px}
-  .chips-mercado select.selector-estado{max-width:100%}
-  .chips-fuel{grid-area:chipsf}
-  .nota-pocas{grid-area:nota}
-  .grid-precios{grid-area:precios;grid-template-columns:1fr;gap:10px;align-content:start}
-  .card-precio{display:flex;align-items:center;gap:12px}
-  .card-precio .fuel{flex:1}
-  .card-precio .valor{margin:0}
-  .card-precio .valor .num{font-size:24px}
-  .card-grafica{grid-area:grafica;margin-top:0;display:flex;flex-direction:column}
-  .card-grafica svg.grafica{flex:1;min-height:280px;height:auto}
-  .metabar{grid-area:metabar}
-  .card-api{grid-area:apib2b;grid-template-columns:1.2fr 1fr;gap:24px;padding:24px}
-}
-</style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GasGas · Datos y API de precios de gasolina en México</title>
+<meta name="description" content="La API de precios de gasolina de México: 14,194 estaciones, datos oficiales CNE depurados, por estado, municipio y código postal. Monitor nacional en vivo.">
+<script src="./support.js"></script>
 </head>
 <body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; font-family: 'Figtree', sans-serif; background: #F7F9FA; color: #0E2A47; -webkit-font-smoothing: antialiased; }
+  a { color: #007A39; text-decoration: none; }
+  a:hover { color: #00A94F; }
+  ::selection { background: #00A94F33; }
+  @keyframes ggPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+  @keyframes ggMarquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  @keyframes ggFadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes ggDash { to { stroke-dashoffset: 0; } }
 
-<header class="marca">
-  <div class="wrap nav">
-    <span class="lockup"><span class="logo-pill">GG</span><span class="wordmark">GasGas</span></span>
-    <nav class="nav-links">
-      <a class="cta" href="/datos">Datos para empresas</a>
-      <a href="/docs">Docs API</a>
-      <span class="fuente-badge"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.5-4.8 2.5.9-5.4L4.2 7.7l5.4-.8z" fill="currentColor" stroke="none" opacity="0"/><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>Datos oficiales CNE</span>
+  .mapa-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  @keyframes ggShimmer { from { background-position: -260px 0; } to { background-position: 260px 0; } }
+  .gg-skel { height: 13px; border-radius: 6px; background: linear-gradient(90deg, rgba(255,255,255,0.07) 25%, rgba(255,255,255,0.18) 50%, rgba(255,255,255,0.07) 75%); background-size: 520px 100%; animation: ggShimmer 1.1s linear infinite; margin-bottom: 13px; }
+  .gg-skel-verde { height: 12px; border-radius: 6px; background: linear-gradient(90deg, rgba(0,122,57,0.12) 25%, rgba(0,122,57,0.28) 50%, rgba(0,122,57,0.12) 75%); background-size: 520px 100%; animation: ggShimmer 1.1s linear infinite; margin-bottom: 11px; }
+  .gg-dots span { display: inline-block; animation: ggPulse 1.1s infinite; }
+  .gg-dots span:nth-child(2) { animation-delay: 0.18s; }
+  .gg-dots span:nth-child(3) { animation-delay: 0.36s; }
+  /* ===== Capa responsive (agregada post-export; el diseño desktop no cambia) ===== */
+  html, body { overflow-x: hidden; }
+  pre, code { white-space: pre-wrap !important; word-break: break-word; }
+  @media (max-width: 740px) {
+    [style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
+    [data-screen-label="Niveles"] [style*="repeat(4"] { grid-template-columns: 1fr 1fr !important; }
+    section#monitor [style*="repeat(10"] { grid-template-columns: repeat(10, 1fr) !important; }
+    [style*="gap: 72px"] { gap: 36px !important; }
+    [style*="display: flex"] { flex-wrap: wrap !important; }
+    [style*="ggMarquee"], [style*="ggMarquee"] span { flex-wrap: nowrap !important; }
+    h1 { font-size: 36px !important; }
+    h2 { font-size: 26px !important; }
+    [style*="font-size: 54px"] { font-size: 36px !important; }
+    [style*="padding: 96px"] { padding-top: 48px !important; }
+    header nav a:not([href="#contacto"]) { display: none !important; }
+    header nav { gap: 10px !important; }
+    header [style*="height: 72px"] { height: 60px !important; }
+    section[data-screen-label="Hero"] [style*="transition: background 0.8s"] { flex-wrap: nowrap !important; font-size: 10.5px !important; gap: 8px !important; }
+    section[data-screen-label="Hero"] [style*="transition: background 0.8s"] span { min-width: 0 !important; }
+    section[data-screen-label="Hero"] [style*="transition: background 0.8s"] span[style*="flex: 1"] { display: none !important; }
+    section#monitor [style*="padding: 48px"] { padding: 26px !important; }
+    /* Seccion API en movil: curl envuelve dentro de la tarjeta; bullets no separan el guion */
+    section#api [style*="#081B30"] > div { word-break: break-word; overflow-wrap: anywhere; }
+    section#api [style*="align-items: baseline"] { flex-wrap: nowrap !important; }
+    /* Mosaico compacto: los 32 estados caben en pantalla; el precio se ve al tocar (ficha) */
+    [style*="padding: 0 32px"] { padding-left: 16px !important; padding-right: 16px !important; }
+    section#monitor [style*="padding: 28px"] { padding: 16px !important; }
+    .mapa-scroll > div { gap: 3px !important; }
+    .mapa-scroll > div > div { padding: 7px 1px 6px !important; border-radius: 6px !important; }
+    .mapa-scroll > div > div > div:first-child { font-size: 9.5px !important; letter-spacing: -0.02em; }
+    .mapa-scroll > div > div > div:last-child { display: none; }
+  }
+
+</style>
+</helmet>
+
+<header data-screen-label="Nav" style="background: #0E2A47; border-bottom: 1px solid rgba(255,255,255,0.08)">
+  <div style="max-width: 1140px; margin: 0 auto; padding: 0 32px; height: 72px; display: flex; align-items: center; justify-content: space-between">
+    <a href="/" style="display: flex; align-items: center; gap: 12px">
+      <div style="background: #FFFFFF; border-radius: 999px; padding: 6px 14px; font-weight: 800; font-size: 15px; letter-spacing: 0.02em; color: #0E2A47">GG</div>
+      <span style="color: #FFFFFF; font-weight: 600; font-size: 15px">gasgas <span style="color: rgba(255,255,255,0.45); font-weight: 400">/ datos</span></span>
+    </a>
+    <nav style="display: flex; align-items: center; gap: 32px">
+      <a href="/dashboard" style="color: rgba(255,255,255,0.75); font-size: 14px; font-weight: 500" style-hover="color: #FFFFFF">Precios hoy</a>
+      <a href="#monitor" style="color: rgba(255,255,255,0.75); font-size: 14px; font-weight: 500" style-hover="color: #FFFFFF">Monitor</a>
+      <a href="/docs" style="color: rgba(255,255,255,0.75); font-size: 14px; font-weight: 500" style-hover="color: #FFFFFF">Docs</a>
+      <a href="#proceso" style="color: rgba(255,255,255,0.75); font-size: 14px; font-weight: 500" style-hover="color: #FFFFFF">Proceso</a>
+      <a href="#niveles" style="color: rgba(255,255,255,0.75); font-size: 14px; font-weight: 500" style-hover="color: #FFFFFF">Niveles de datos</a>
+      <a href="#api" style="color: rgba(255,255,255,0.75); font-size: 14px; font-weight: 500" style-hover="color: #FFFFFF">API</a>
+      <a href="#precios" style="color: rgba(255,255,255,0.75); font-size: 14px; font-weight: 500" style-hover="color: #FFFFFF">Precios</a>
+      <a href="#contacto" style="background: #00A94F; color: #FFFFFF; padding: 9px 20px; border-radius: 8px; font-size: 14px; font-weight: 600" style-hover="background: #007A39; color: #FFFFFF">Solicitar acceso</a>
     </nav>
   </div>
 </header>
 
-<section class="marca sobre-azul">
-  <div class="wrap hero">
-    <div class="overline" id="hero-overline">Magna hoy · Nacional</div>
-    <div class="precio-hero" aria-live="polite">
-      <span class="simbolo">$</span><span class="num tabular" id="hero-precio">--.--</span><span class="litro">/L</span>
+<section data-screen-label="Hero" style="background: #0E2A47; padding: 96px 0 0">
+  <div style="max-width: 1140px; margin: 0 auto; padding: 0 32px; display: grid; grid-template-columns: 1.15fr 1fr; gap: 72px; align-items: center">
+    <div>
+      <div style="display: inline-flex; align-items: center; gap: 8px; border: 1px solid rgba(0,169,79,0.4); border-radius: 999px; padding: 6px 14px; margin-bottom: 28px">
+        <span style="width: 7px; height: 7px; border-radius: 50%; background: #00A94F; animation: ggPulse 2s infinite"></span>
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #00A94F; letter-spacing: 0.05em">API DE PRECIOS DE GASOLINA · MÉXICO</span>
+      </div>
+      <h1 style="font-size: 54px; line-height: 1.08; font-weight: 800; color: #FFFFFF; margin: 0 0 24px; letter-spacing: -0.02em; text-wrap: pretty">Precios listos para decidir, no un archivo que limpiar.</h1>
+      <p style="font-size: 19px; line-height: 1.6; color: rgba(255,255,255,0.7); margin: 0 0 36px; max-width: 520px; text-wrap: pretty">El dato oficial de la CNE, validado, deduplicado y con marca de estación. Entregado por API a su fintech, plataforma de gasto o flotilla.</p>
+      <div style="display: flex; gap: 16px; align-items: center">
+        <a href="#contacto" style="background: #00A94F; color: #FFFFFF; padding: 14px 28px; border-radius: 8px; font-size: 16px; font-weight: 600" style-hover="background: #007A39; color: #FFFFFF">Solicitar acceso</a>
+        <a href="#api" style="color: rgba(255,255,255,0.8); padding: 14px 20px; font-size: 16px; font-weight: 500; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px" style-hover="border: 1px solid rgba(255,255,255,0.5); color: #FFFFFF">Ver la API →</a>
+      </div>
     </div>
-    <div class="delta"><span class="pildora" id="hero-delta"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/></svg><span id="hero-delta-txt">Cargando…</span></span></div>
-    <p class="fuente" id="hero-fuente">Fuente: CNE · datos depurados por el algoritmo de calidad GasGas</p>
-    <div class="antiguedad antiguedad--inv" id="hero-antiguedad"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span id="hero-antiguedad-txt">Consultando…</span></div>
+    <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12); border-radius: 14px; padding: 28px; backdrop-filter: blur(4px)">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: rgba(255,255,255,0.5); letter-spacing: 0.08em">PROMEDIOS EN VIVO · CNE → API</span>
+        <span style="display: flex; align-items: center; gap: 6px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #FF6B6B"><span style="width: 6px; height: 6px; border-radius: 50%; background: #FF6B6B; animation: ggPulse 2s infinite"></span>EN VIVO</span>
+      </div>
+      <div style="font-family: 'JetBrains Mono', monospace">
+        <div style="display: flex; align-items: baseline; justify-content: space-between">
+          <div style="font-size: 44px; font-weight: 600; color: #FFFFFF; letter-spacing: -0.01em">{{ actual.precioTxt }} <span style="font-size: 15px; color: rgba(255,255,255,0.45)">MXN/L</span></div>
+        </div>
+        <div style="margin-top: 6px; font-size: 13px; color: rgba(255,255,255,0.6)"><span style="color: #00A94F">{{ actual.marca }}</span> · {{ actual.producto }} · {{ actual.ciudad }}</div>
+        <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1)">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 10px">
+            <span style="font-size: 11px; color: rgba(255,255,255,0.45); letter-spacing: 0.08em">PROMEDIOS DEL ÚLTIMO CORTE</span>
+            <span style="font-size: 11px; color: rgba(255,255,255,0.45)">hoy: <span style="color: #FFFFFF">{{ procesados }}</span></span>
+          </div>
+          <div style="display: grid; gap: 4px; font-size: 12px">
+            <sc-for list="{{ feed }}" as="f" hint-placeholder-count="5">
+              <div style="display: flex; gap: 12px; align-items: center; background: {{ f.bg }}; border-radius: 6px; padding: 6px 10px; transition: background 0.8s">
+                <span style="color: {{ f.horaColor }}; min-width: 62px">{{ f.hora }}</span>
+                <span style="color: #FFFFFF; min-width: 72px">{{ f.marca }}</span>
+                <span style="color: rgba(255,255,255,0.55); min-width: 58px">{{ f.producto }}</span>
+                <span style="color: #FFFFFF; min-width: 52px; text-align: right">{{ f.precioTxt }}</span>
+                <span style="color: rgba(255,255,255,0.55); flex: 1; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ f.cp }}</span>
+                <span style="color: #00A94F">✓</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="margin-top: 88px; border-top: 1px solid rgba(255,255,255,0.08); border-bottom: 1px solid rgba(255,255,255,0.08)">
+    <div style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 24px; background: #081B30; border-bottom: 1px solid rgba(255,255,255,0.08); white-space: nowrap">
+      <span style="width: 6px; height: 6px; border-radius: 50%; background: #00A94F; animation: ggPulse 2s infinite"></span>
+      <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.08em; color: rgba(255,255,255,0.7)">EN VIVO · PROMEDIO REGULAR POR ESTADO</span>
+    </div>
+    <div style="overflow: hidden; width: 100%">
+    <div style="display: flex; gap: 48px; width: max-content; animation: ggMarquee 36s linear infinite; font-family: 'JetBrains Mono', monospace; font-size: 13px; padding: 14px 0 14px 48px">
+      <sc-for list="{{ tickerItems }}" as="t" hint-placeholder-count="10">
+        <span style="display: flex; gap: 10px; white-space: nowrap"><span style="color: rgba(255,255,255,0.45)">{{ t.e }}</span><span style="color: #FFFFFF">{{ t.p }}</span><span style="color: {{ t.dc }}; font-size: 11px">{{ t.d }}</span></span>
+      </sc-for>
+    </div>
+    </div>
   </div>
 </section>
 
-<main class="wrap">
-  <section class="seccion">
-    <div class="aviso-cache" id="aviso-cache" role="status">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
-      <span>No pudimos conectar en vivo. Estás viendo el último dato confirmado (<b id="aviso-fecha">18 jul, 6:00 a.m.</b>).</span>
-      <button onclick="cargar(true)">Reintentar</button>
-    </div>
-
-    <div class="titulo-seccion">
-      <span id="titulo-mercado">Precio nacional hoy</span>
-      <span class="estado-dato" id="estado-dato"></span>
-    </div>
-
-    <div class="chips chips-mercado" role="group" aria-label="Mercado">
-      <button class="chip" id="chip-nacional" aria-pressed="true" onclick="setMercado('nacional')">Nacional</button>
-      <button class="chip" id="chip-estado" aria-pressed="false" onclick="setMercado('estado')">Por estado</button>
-      <select class="selector-estado" id="sel-estado" hidden aria-label="Estado"></select>
-      <select class="selector-estado" id="sel-municipio" hidden aria-label="Municipio"></select>
-    </div>
-
-    <div class="chips chips-fuel" role="group" aria-label="Combustible">
-      <button class="chip chip--magna" data-f="regular" aria-pressed="true"><span class="dot"></span>Magna</button>
-      <button class="chip chip--premium" data-f="premium" aria-pressed="false"><span class="dot"></span>Premium</button>
-      <button class="chip chip--diesel" data-f="diesel" aria-pressed="false"><span class="dot"></span>Diésel</button>
-    </div>
-
-    <p class="nota-pocas" id="nota-pocas" hidden></p>
-    <div class="grid-precios" id="grid-precios">
-      <div class="card card-precio card-precio--magna"><span class="fuel">Magna</span><div class="valor skeleton" style="width:70px;height:22px"></div></div>
-      <div class="card card-precio card-precio--premium"><span class="fuel">Premium</span><div class="valor skeleton" style="width:70px;height:22px"></div></div>
-      <div class="card card-precio card-precio--diesel"><span class="fuel">Diésel</span><div class="valor skeleton" style="width:70px;height:22px"></div></div>
-    </div>
-
-    <div class="card card-grafica">
-      <div class="encabezado">
-        <span class="titulo" id="grafica-titulo">Magna · 30 días</span>
-        <span class="rango tabular" id="grafica-rango"></span>
-      </div>
-      <svg class="grafica" id="grafica" viewBox="0 0 328 150" preserveAspectRatio="none" role="img" aria-label="Tendencia del precio en 30 días"></svg>
-      <div class="tooltip-grafica" id="tooltip"></div>
-      <div class="eje-x" id="eje-x" style="padding-left:40px"></div>
-    </div>
-
-    <div class="metabar" id="metabar"></div>
-
-    <div class="card card-api">
+<section id="monitor" data-screen-label="Monitor" style="padding: 96px 0; background: #F7F9FA; border-bottom: 1px solid #E7ECF0">
+  <div style="max-width: 1140px; margin: 0 auto; padding: 0 32px">
+    <div style="background: #0E2A47; border-radius: 18px; padding: 48px; display: grid; grid-template-columns: 1.25fr 1fr; gap: 48px; align-items: center; box-shadow: 0 20px 60px rgba(14,42,71,0.25)">
       <div>
-        <div class="overline">API y datos para empresas</div>
-        <h3>Precios listos para decidir, no un archivo que limpiar.</h3>
-        <p>Sí, el dato de la CNE es público — pero llega crudo: duplicados, precios de $0.00, sin marca comercial y sin código postal. GasGas lo convierte en <b>calidad enterprise</b> con un proceso continuo de limpieza, listo para usar por estado, municipio, CP o estación.</p>
-        <div class="ctas">
-          <a class="btn btn--primario" href="/datos">Conocer los datos</a>
-          <a class="btn btn--secundario" href="/docs">Ver documentación</a>
+        <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 18px">
+          <span style="display: inline-flex; align-items: center; gap: 8px; background: #D22F2F; color: #FFFFFF; border-radius: 6px; padding: 6px 12px; font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.08em"><span style="width: 7px; height: 7px; border-radius: 50%; background: #FFFFFF; animation: ggPulse 2s infinite"></span>EN VIVO</span>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #00A94F; letter-spacing: 0.1em">EL MONITOR NACIONAL</span>
+        </div>
+        <h2 style="font-size: 36px; font-weight: 800; margin: 0 0 14px; letter-spacing: -0.02em; color: #FFFFFF; text-wrap: pretty">El pulso de la gasolina, estado por estado.</h2>
+        <p style="font-size: 17px; color: rgba(255,255,255,0.65); line-height: 1.6; margin: 0 0 28px; text-wrap: pretty">Mapa nacional en vivo: promedios de los 32 estados por combustible, mayores movimientos de 7 días y ficha de cada estado con su tendencia de 30 días.</p>
+        <div style="display: flex; align-items: center; gap: 18px; flex-wrap: wrap">
+          <a href="/mapa" style="display: inline-flex; align-items: center; gap: 10px; background: #00A94F; color: #FFFFFF; border-radius: 10px; padding: 15px 30px; font-size: 17px; font-weight: 700" style-hover="background: #007A39; color: #FFFFFF">Abrir el Modo Mapa →</a>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: rgba(255,255,255,0.45)">{{ fechaHoy }} · corte {{ corteHora }}</span>
         </div>
       </div>
-      <ul class="api-bullets">
-        <li><b>Marca comercial resuelta:</b>&nbsp;OXXO Gas, Mobil, Pemex… la CNE solo publica el número de permiso; nosotros te decimos qué bandera es cada estación</li>
-        <li><b>Nivel código postal:</b>&nbsp;5,000+ CPs geolocalizados que no vienen en el dato crudo</li>
-        <li><b>Limpieza continua, no una vez:</b>&nbsp;cada corte (2 al día) pasa por validación de duplicados, rangos y estaciones fantasma</li>
-        <li><b>Histórico que no se puede reconstruir:</b>&nbsp;la CNE solo publica el hoy; nosotros guardamos cada día desde mayo 2024</li>
-        <li><b>Contexto incluido:</b>&nbsp;promedios precalculados y semáforo de caro/barato</li>
-      </ul>
+      <div style="display: grid; gap: 12px; font-family: 'JetBrains Mono', monospace">
+        <div style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; gap: 12px">
+          <span style="font-size: 11px; letter-spacing: 0.08em; color: rgba(255,255,255,0.5)">HOY MÁS CARO · REGULAR</span>
+          <span style="font-size: 15px; color: #FFFFFF"><span style="color: #E88A8A">{{ tCaro.n }}</span> {{ tCaro.p }}</span>
+        </div>
+        <div style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; gap: 12px">
+          <span style="font-size: 11px; letter-spacing: 0.08em; color: rgba(255,255,255,0.5)">HOY MÁS BARATO · REGULAR</span>
+          <span style="font-size: 15px; color: #FFFFFF"><span style="color: #00A94F">{{ tBarato.n }}</span> {{ tBarato.p }}</span>
+        </div>
+        <div style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; gap: 12px">
+          <span style="font-size: 11px; letter-spacing: 0.08em; color: rgba(255,255,255,0.5)">MAYOR MOVIMIENTO · 7 DÍAS</span>
+          <span style="font-size: 15px; color: #FFFFFF"><span style="color: #FFD98A">{{ tMov.n }}</span> {{ tMov.p }}</span>
+        </div>
+      </div>
     </div>
+  </div>
+</section>
 
-  </section>
-</main>
+<section id="proceso" data-screen-label="Proceso" style="padding: 112px 0; background: #FFFFFF; border-bottom: 1px solid #E7ECF0">
+  <div style="max-width: 1140px; margin: 0 auto; padding: 0 32px">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px">
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #007A39; letter-spacing: 0.1em">EL PROCESO</div>
+      <div style="display: flex; align-items: center; gap: 10px; border: 1px solid #E7ECF0; border-radius: 999px; padding: 8px 16px; background: #F7F9FA">
+        <span style="width: 7px; height: 7px; border-radius: 50%; background: #00A94F; animation: ggPulse 2s infinite"></span>
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #4C6379">precios procesados hoy</span>
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; color: #0E2A47">{{ procesados }}</span>
+      </div>
+    </div>
+    <h2 style="font-size: 38px; font-weight: 800; margin: 0 0 12px; letter-spacing: -0.02em; max-width: 640px; text-wrap: pretty">Del archivo crudo de la CNE al dato que su equipo puede usar.</h2>
+    <p style="font-size: 17px; color: #4C6379; line-height: 1.6; margin: 0 0 56px; max-width: 620px; text-wrap: pretty">El dato público llega con duplicados, precios en cero y estaciones sin identificar. Nosotros lo procesamos todos los días para que usted no tenga que hacerlo.</p>
+    <div style="display: grid; grid-template-columns: 1fr 64px 1fr; gap: 24px; align-items: stretch">
+      <div style="border: 1px solid #E7ECF0; border-radius: 12px; overflow: hidden">
+        <div style="background: #F7F9FA; padding: 14px 20px; border-bottom: 1px solid #E7ECF0; display: flex; justify-content: space-between; align-items: center">
+          <span style="font-weight: 700; font-size: 14px">Dato crudo · CNE</span>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8B99A6">XML / CSV</span>
+        </div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.5">
+          <div style="padding: 12px 20px; border-bottom: 1px solid #F0F3F5; display: flex; justify-content: space-between; gap: 12px"><span style="color: #4C6379">PL/12345 · regular · $23.49</span><span style="color: #C24040; font-size: 11px; white-space: nowrap">duplicado ×3</span></div>
+          <div style="padding: 12px 20px; border-bottom: 1px solid #F0F3F5; display: flex; justify-content: space-between; gap: 12px"><span style="color: #4C6379">PL/08211 · premium · $0.00</span><span style="color: #C24040; font-size: 11px; white-space: nowrap">precio inválido</span></div>
+          <div style="padding: 12px 20px; border-bottom: 1px solid #F0F3F5; display: flex; justify-content: space-between; gap: 12px"><span style="color: #4C6379">PL/04102 · diesel · $25.87</span><span style="color: #C24040; font-size: 11px; white-space: nowrap">sin marca</span></div>
+          <div style="padding: 12px 20px; display: flex; justify-content: space-between; gap: 12px"><span style="color: #4C6379">PL/10993 · regular · $23.51</span><span style="color: #C24040; font-size: 11px; white-space: nowrap">sin ubicación</span></div>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: center">
+        <div style="width: 44px; height: 44px; border-radius: 50%; background: #00A94F; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700">→</div>
+      </div>
+      <div style="border: 1px solid #00A94F55; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,169,79,0.08)">
+        <div style="background: #0E2A47; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center">
+          <span style="font-weight: 700; font-size: 14px; color: #FFFFFF">Dato GasGas</span>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #00A94F">API JSON</span>
+        </div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.5">
+          <div style="padding: 12px 20px; border-bottom: 1px solid #F0F3F5; display: flex; justify-content: space-between; gap: 12px"><span style="color: #0E2A47">Pemex · regular · $23.49 · CP 06600</span><span style="color: #007A39; font-size: 11px; white-space: nowrap">✓ validado</span></div>
+          <div style="padding: 12px 20px; border-bottom: 1px solid #F0F3F5; display: flex; justify-content: space-between; gap: 12px"><span style="color: #0E2A47">OXXO Gas · premium · $25.12 · CP 64000</span><span style="color: #007A39; font-size: 11px; white-space: nowrap">✓ validado</span></div>
+          <div style="padding: 12px 20px; border-bottom: 1px solid #F0F3F5; display: flex; justify-content: space-between; gap: 12px"><span style="color: #0E2A47">Mobil · diesel · $25.87 · CP 44100</span><span style="color: #007A39; font-size: 11px; white-space: nowrap">✓ validado</span></div>
+          <div style="padding: 12px 20px; display: flex; justify-content: space-between; gap: 12px"><span style="color: #0E2A47">Pemex · regular · $23.51 · CP 03100</span><span style="color: #007A39; font-size: 11px; white-space: nowrap">✓ validado</span></div>
+        </div>
+      </div>
+    </div>
+    <div style="display: flex; gap: 40px; margin-top: 40px; font-size: 14px; color: #4C6379">
+      <span><strong style="color: #0E2A47">Deduplicación</strong> por estación y producto</span>
+      <span><strong style="color: #0E2A47">Filtrado</strong> de precios en $0.00 e inválidos</span>
+      <span><strong style="color: #0E2A47">Enriquecido</strong> con marca y código postal</span>
+    </div>
+  </div>
+</section>
 
-<footer class="footer">
-  <div class="wrap">
-    <b>GasGas</b> · El precio de la gasolina en México
-    <div class="linea">Fuente: CNE · datos depurados por el algoritmo de calidad GasGas · gasgas.com.mx · © 2026</div>
-    <div class="linea"><a href="/datos" style="text-decoration:underline">Datos y API para empresas</a></div>
+<section id="niveles" data-screen-label="Niveles" style="padding: 112px 0; background: #F7F9FA">
+  <div style="max-width: 1140px; margin: 0 auto; padding: 0 32px">
+    <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #007A39; letter-spacing: 0.1em; margin-bottom: 16px">NIVELES DE AGREGACIÓN</div>
+    <h2 style="font-size: 38px; font-weight: 800; margin: 0 0 12px; letter-spacing: -0.02em; text-wrap: pretty">La granularidad que su modelo necesita.</h2>
+    <p style="font-size: 17px; color: #4C6379; line-height: 1.6; margin: 0 0 56px; max-width: 560px; text-wrap: pretty">Desde el promedio estatal hasta el precio exacto de una estación. Todos los niveles, un solo esquema.</p>
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px">
+      <div style="background: #FFFFFF; border: 1px solid #E7ECF0; border-radius: 12px; padding: 28px" style-hover="border: 1px solid #00A94F; box-shadow: 0 6px 24px rgba(14,42,71,0.08)">
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #8B99A6; margin-bottom: 14px">nivel 1</div>
+        <div style="font-size: 20px; font-weight: 700; margin-bottom: 8px">Estado</div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 26px; font-weight: 600; color: #007A39; margin-bottom: 10px">32</div>
+        <p style="font-size: 14px; color: #4C6379; line-height: 1.55; margin: 0">Promedios estatales para tableros ejecutivos y análisis macro.</p>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #E7ECF0; border-radius: 12px; padding: 28px" style-hover="border: 1px solid #00A94F; box-shadow: 0 6px 24px rgba(14,42,71,0.08)">
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #8B99A6; margin-bottom: 14px">nivel 2</div>
+        <div style="font-size: 20px; font-weight: 700; margin-bottom: 8px">Municipio</div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 26px; font-weight: 600; color: #007A39; margin-bottom: 10px">2,900+</div>
+        <p style="font-size: 14px; color: #4C6379; line-height: 1.55; margin: 0">Comparativos por plaza para estrategia regional de precios.</p>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #E7ECF0; border-radius: 12px; padding: 28px" style-hover="border: 1px solid #00A94F; box-shadow: 0 6px 24px rgba(14,42,71,0.08)">
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #8B99A6; margin-bottom: 14px">nivel 3</div>
+        <div style="font-size: 20px; font-weight: 700; margin-bottom: 8px">Código Postal</div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 26px; font-weight: 600; color: #007A39; margin-bottom: 10px">5,000+</div>
+        <p style="font-size: 14px; color: #4C6379; line-height: 1.55; margin: 0">Precisión de vecindario: todos los CPs del país con estación de servicio.</p>
+      </div>
+      <div style="background: #0E2A47; border: 1px solid #0E2A47; border-radius: 12px; padding: 28px" style-hover="box-shadow: 0 6px 24px rgba(14,42,71,0.3)">
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 14px">nivel 4</div>
+        <div style="font-size: 20px; font-weight: 700; margin-bottom: 8px; color: #FFFFFF">Estación</div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 26px; font-weight: 600; color: #00A94F; margin-bottom: 10px">14,194</div>
+        <p style="font-size: 14px; color: rgba(255,255,255,0.65); line-height: 1.55; margin: 0">El precio exacto de cada estación del país, con marca y ubicación.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="api" data-screen-label="API" style="padding: 112px 0; background: #0E2A47">
+  <div style="max-width: 1140px; margin: 0 auto; padding: 0 32px">
+    <div style="display: grid; grid-template-columns: 0.85fr 1.15fr; gap: 72px; align-items: start">
+      <div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #00A94F; letter-spacing: 0.1em; margin-bottom: 16px">PARA SU EQUIPO TÉCNICO</div>
+        <h2 style="font-size: 38px; font-weight: 800; margin: 0 0 20px; letter-spacing: -0.02em; color: #FFFFFF; text-wrap: pretty">Una llamada. JSON limpio. A producción.</h2>
+        <p style="font-size: 17px; color: rgba(255,255,255,0.65); line-height: 1.65; margin: 0 0 32px; text-wrap: pretty">REST sobre HTTPS, autenticación por API key, esquema estable y versionado. Su equipo integra en una tarde, no en un sprint.</p>
+        <div style="display: grid; gap: 16px">
+          <div style="display: flex; gap: 12px; align-items: baseline"><span style="color: #00A94F; font-family: 'JetBrains Mono', monospace">—</span><span style="color: rgba(255,255,255,0.8); font-size: 15px">Nacional, estado y municipio abiertos a evaluación · CP y estación por contrato</span></div>
+          <div style="display: flex; gap: 12px; align-items: baseline"><span style="color: #00A94F; font-family: 'JetBrains Mono', monospace">—</span><span style="color: rgba(255,255,255,0.8); font-size: 15px">Histórico diario desde mayo 2024</span></div>
+          <div style="display: flex; gap: 12px; align-items: baseline"><span style="color: #00A94F; font-family: 'JetBrains Mono', monospace">—</span><span style="color: rgba(255,255,255,0.8); font-size: 15px">Uptime y latencia con SLA por contrato</span></div>
+        </div>
+      </div>
+      <div style="background: #081B30; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; overflow: hidden; font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.65">
+        <div style="padding: 12px 20px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; gap: 8px; align-items: center">
+          <span style="width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.15)"></span>
+          <span style="width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.15)"></span>
+          <span style="width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.15)"></span>
+          <span style="margin-left: 12px; color: rgba(255,255,255,0.4); font-size: 12px">GET /api/precios</span>
+        </div>
+        <div style="padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.85)">
+          <span style="color: #8B99A6">$</span> curl "https://api.gasgas.com.mx/api/precios<span style="color: #00A94F">?market=estado&value=Jalisco&days=1&product=regular</span>"
+        </div>
+        <pre style="margin: 0; padding: 20px 24px; color: rgba(255,255,255,0.85); font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.65; overflow-x: auto">{
+  <span style="color: #7FD4A8">"regular"</span>: <span style="color: #FFD98A">"23.93"</span>, <span style="color: #7FD4A8">"premium"</span>: <span style="color: #FFD98A">"29.08"</span>, <span style="color: #7FD4A8">"diesel"</span>: <span style="color: #FFD98A">"27.04"</span>,
+  <span style="color: #7FD4A8">"min"</span>: <span style="color: #FFD98A">"22.99"</span>, <span style="color: #7FD4A8">"max"</span>: <span style="color: #FFD98A">"24.49"</span>, <span style="color: #7FD4A8">"std"</span>: <span style="color: #FFD98A">"0.29"</span>,
+  <span style="color: #7FD4A8">"stations_count"</span>: <span style="color: #00A94F">333</span>,
+  <span style="color: #7FD4A8">"semaforo"</span>: {
+    <span style="color: #7FD4A8">"estado"</span>: <span style="color: #FFD98A">"medio"</span>,
+    <span style="color: #7FD4A8">"delta_pct"</span>: <span style="color: #00A94F">0.5</span>,
+    <span style="color: #7FD4A8">"referencia"</span>: <span style="color: #FFD98A">"nacional"</span>
+  },
+  <span style="color: #7FD4A8">"updated_at"</span>: <span style="color: #FFD98A">"2026-08-05T12:00:46.227Z"</span>
+}</pre>
+      </div>
+    </div>
+    <div style="margin-top: 64px; background: #081B30; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 20px 28px; display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap">
+      <div style="display: flex; align-items: center; gap: 10px">
+        <span style="width: 8px; height: 8px; border-radius: 50%; background: #00A94F; animation: ggPulse 2s infinite"></span>
+        <span style="font-size: 14px; font-weight: 600; color: #FFFFFF">Todos los sistemas operativos</span>
+      </div>
+      <div style="display: flex; gap: 40px; font-family: 'JetBrains Mono', monospace; flex-wrap: wrap">
+        <div><div style="font-size: 10px; letter-spacing: 0.08em; color: rgba(255,255,255,0.45)">CORTES AL DÍA</div><div style="font-size: 16px; font-weight: 600; color: #00A94F; margin-top: 4px">2 <span style="font-size:11px;color:rgba(255,255,255,0.5)">6 AM · 2 PM</span></div></div>
+        <div><div style="font-size: 10px; letter-spacing: 0.08em; color: rgba(255,255,255,0.45)">LATENCIA P50</div><div style="font-size: 16px; font-weight: 600; color: #FFFFFF; margin-top: 4px">{{ lat }}</div></div>
+        <div><div style="font-size: 10px; letter-spacing: 0.08em; color: rgba(255,255,255,0.45)">PRECIOS PROCESADOS HOY</div><div style="font-size: 16px; font-weight: 600; color: #FFFFFF; margin-top: 4px">{{ procesados }}</div></div>
+        <div><div style="font-size: 10px; letter-spacing: 0.08em; color: rgba(255,255,255,0.45)">ÚLTIMO CORTE CNE</div><div style="font-size: 16px; font-weight: 600; color: #FFFFFF; margin-top: 4px">{{ corteHora }} ✓</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="playground" data-screen-label="Playground" style="padding: 112px 0; background: #FFFFFF; border-bottom: 1px solid #E7ECF0">
+  <div style="max-width: 1140px; margin: 0 auto; padding: 0 32px">
+    <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #007A39; letter-spacing: 0.1em; margin-bottom: 16px">PRUÉBELA USTED MISMO</div>
+    <h2 style="font-size: 38px; font-weight: 800; margin: 0 0 12px; letter-spacing: -0.02em; text-wrap: pretty">Arme una consulta sin escribir código.</h2>
+    <p style="font-size: 17px; color: #4C6379; line-height: 1.6; margin: 0 0 48px; max-width: 600px; text-wrap: pretty">Elija qué quiere saber y vea cómo se construye la petición y qué responde la API — en vivo, contra producción. Exactamente así la consumiría su equipo.</p>
+    <div style="display: grid; grid-template-columns: 1fr 1.15fr; gap: 24px; align-items: start">
+      <div style="background: #FFFFFF; border: 1px solid #E7ECF0; border-radius: 14px; padding: 26px; box-shadow: 0 2px 12px rgba(14,42,71,0.05)">
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: #8B99A6; margin-bottom: 10px">1 · ¿QUÉ COMBUSTIBLE?</div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 22px">
+          <sc-for list="{{ qProds }}" as="p" hint-placeholder-count="3">
+            <div onClick="{{ p.pick }}" style="border: 1px solid {{ p.bd }}; background: {{ p.bg }}; color: {{ p.fg }}; border-radius: 8px; padding: 9px 18px; font-size: 14px; font-weight: 600; cursor: pointer">{{ p.t }}</div>
+          </sc-for>
+        </div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: #8B99A6; margin-bottom: 10px">2 · ¿EN DÓNDE?</div>
+        <select value="{{ qEstado }}" onChange="{{ qOnEstado }}" style="display: {{ qEstadoDisplay }}; width: 100%; height: 44px; border: 1px solid #DCE3EB; border-radius: 8px; padding: 0 12px; font-family: 'Figtree', sans-serif; font-size: 15px; color: #0E2A47; background: #FFFFFF; margin-bottom: 10px">
+          <sc-for list="{{ qEstados }}" as="o" hint-placeholder-count="32"><option value="{{ o.v }}">{{ o.t }}</option></sc-for>
+        </select>
+        <select value="{{ qMunicipio }}" onChange="{{ qOnMunicipio }}" style="display: {{ qMuniDisplay }}; width: 100%; height: 44px; border: 1px solid #DCE3EB; border-radius: 8px; padding: 0 12px; font-family: 'Figtree', sans-serif; font-size: 15px; color: #0E2A47; background: #FFFFFF; margin-bottom: 10px">
+          <sc-for list="{{ qMunis }}" as="m" hint-placeholder-count="5"><option value="{{ m.v }}">{{ m.t }}</option></sc-for>
+        </select>
+        <select value="{{ qCp }}" onChange="{{ qOnCp }}" style="display: {{ qCpDisplay }}; width: 100%; height: 44px; border: 1px solid #DCE3EB; border-radius: 8px; padding: 0 12px; font-family: 'Figtree', sans-serif; font-size: 15px; color: #0E2A47; background: #FFFFFF; margin-bottom: 10px">
+          <sc-for list="{{ qCps }}" as="c" hint-placeholder-count="8"><option value="{{ c.v }}">{{ c.t }}</option></sc-for>
+        </select>
+        <div style="display: {{ qCpDisplay }}; font-size: 12px; color: #8B99A6; margin-bottom: 4px">CPs de demostración — el catálogo completo de 5,000+ CPs se contrata con API key.</div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: #8B99A6; margin: 12px 0 10px">3 · ¿QUÉ TAN AL DETALLE?</div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 22px">
+          <sc-for list="{{ qNiveles }}" as="n" hint-placeholder-count="4">
+            <div onClick="{{ n.pick }}" style="border: 1px solid {{ n.bd }}; background: {{ n.bg }}; color: {{ n.fg }}; border-radius: 8px; padding: 9px 16px; font-size: 14px; font-weight: 600; cursor: pointer">{{ n.t }}</div>
+          </sc-for>
+        </div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: #8B99A6; margin-bottom: 10px">SU PETICIÓN SE ESCRIBE SOLA</div>
+        <div style="background: #0E2A47; border-radius: 10px; padding: 14px 16px; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.6; color: #D9E2EC; word-break: break-all; margin-bottom: 18px">GET api.gasgas.com.mx<span style="color: #00A94F">{{ qPath }}</span></div>
+        <div onClick="{{ qEnviar }}" style="background: #00A94F; color: #FFFFFF; border-radius: 10px; padding: 14px; text-align: center; font-size: 16px; font-weight: 700; cursor: pointer" style-hover="background: #007A39">Enviar consulta →</div>
+      </div>
+      <div>
+        <div style="background: #081B30; border-radius: 14px; overflow: hidden">
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; border-bottom: 1px solid rgba(255,255,255,0.1)">
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: rgba(255,255,255,0.55)">RESPUESTA DE LA API</span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #00A94F">{{ qStatus }}</span>
+          </div>
+          <div style="display: {{ qCargandoDisplay }}; padding: 24px 22px; min-height: 260px">
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #00A94F; margin-bottom: 18px">consultando la API en vivo <span class="gg-dots"><span>●</span><span>●</span><span>●</span></span></div>
+            <div class="gg-skel" style="width: 72%"></div>
+            <div class="gg-skel" style="width: 88%"></div>
+            <div class="gg-skel" style="width: 58%"></div>
+            <div class="gg-skel" style="width: 80%"></div>
+            <div class="gg-skel" style="width: 44%"></div>
+            <div class="gg-skel" style="width: 66%"></div>
+          </div>
+          <div style="display: {{ qListoDisplay }}; margin: 0; padding: 20px 22px; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.65; overflow-x: auto; min-height: 260px">
+            <sc-for list="{{ qRespLineas }}" as="ln" hint-placeholder-count="12">
+              <div style="white-space: pre-wrap; word-break: break-word"><span style="color: {{ ln.kc }}">{{ ln.k }}</span><span style="color: #D9E2EC">{{ ln.sep }}</span><span style="color: {{ ln.vc }}">{{ ln.v }}</span><span style="color: #D9E2EC">{{ ln.coma }}</span></div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="background: #E8F5EE; border: 1px solid #B9E4CC; border-radius: 14px; padding: 20px 24px; margin-top: 16px">
+          <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: #007A39; margin-bottom: 8px">EN ESPAÑOL SIMPLE, ESTO DICE:</div>
+          <div style="display: {{ qCargandoDisplay }}"><div class="gg-skel-verde" style="width: 92%"></div><div class="gg-skel-verde" style="width: 78%"></div><div class="gg-skel-verde" style="width: 50%"></div></div>
+          <div style="display: {{ qListoDisplay }}; font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.75; color: #1D5C3B">{{ qExplica }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="precios" data-screen-label="Precios" style="padding: 112px 0; background: #FFFFFF; border-bottom: 1px solid #E7ECF0">
+  <div style="max-width: 1140px; margin: 0 auto; padding: 0 32px">
+    <div style="text-align: center; margin-bottom: 64px">
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #007A39; letter-spacing: 0.1em; margin-bottom: 16px">PRECIOS</div>
+      <h2 style="font-size: 38px; font-weight: 800; margin: 0 0 12px; letter-spacing: -0.02em">Un plan por nivel de decisión.</h2>
+      <p style="font-size: 17px; color: #4C6379; margin: 0">Precios "desde", ajustados por cobertura y volumen. Facturación en MXN con CFDI. El histórico (desde mayo 2024) se cotiza como complemento.</p>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; align-items: stretch">
+      <div style="border: 1px solid #E7ECF0; border-radius: 14px; padding: 28px; display: flex; flex-direction: column">
+        <div style="font-size: 18px; font-weight: 700; margin-bottom: 6px">Estado</div>
+        <div style="font-size: 14px; color: #4C6379; margin-bottom: 24px">32 mercados + nacional</div>
+        <div style="font-family: 'JetBrains Mono', monospace; margin-bottom: 28px"><span style="font-size: 13px; color: #8B99A6">desde</span> <span style="font-size: 30px; font-weight: 600">$17,250</span> <span style="font-size: 13px; color: #8B99A6">MXN/mes</span></div>
+        <div style="display: grid; gap: 12px; font-size: 14px; color: #33475B; flex: 1">
+          <span>✓ Promedios estatales y nacional</span>
+          <span>✓ 3 combustibles, actualización diaria</span>
+          <span>✓ Datos desde tu contratación</span>
+        </div>
+        <a href="#contacto" style="margin-top: 28px; display: block; text-align: center; border: 1px solid #0E2A47; color: #0E2A47; padding: 12px; border-radius: 8px; font-weight: 600; font-size: 15px" style-hover="background: #0E2A47; color: #FFFFFF">Solicitar acceso</a>
+      </div>
+      <div style="border: 1px solid #E7ECF0; border-radius: 14px; padding: 28px; display: flex; flex-direction: column">
+        <div style="font-size: 18px; font-weight: 700; margin-bottom: 6px">Municipio</div>
+        <div style="font-size: 14px; color: #4C6379; margin-bottom: 24px">2,900+ plazas</div>
+        <div style="font-family: 'JetBrains Mono', monospace; margin-bottom: 28px"><span style="font-size: 13px; color: #8B99A6">desde</span> <span style="font-size: 30px; font-weight: 600">$28,750</span> <span style="font-size: 13px; color: #8B99A6">MXN/mes</span></div>
+        <div style="display: grid; gap: 12px; font-size: 14px; color: #33475B; flex: 1">
+          <span>✓ Todo lo de Estado</span>
+          <span>✓ Promedios y dispersión por plaza</span>
+          <span>✓ Para logística y estrategia regional</span>
+        </div>
+        <a href="#contacto" style="margin-top: 28px; display: block; text-align: center; border: 1px solid #0E2A47; color: #0E2A47; padding: 12px; border-radius: 8px; font-weight: 600; font-size: 15px" style-hover="background: #0E2A47; color: #FFFFFF">Solicitar acceso</a>
+      </div>
+      <div style="border: 2px solid #00A94F; border-radius: 14px; padding: 28px; display: flex; flex-direction: column; position: relative; box-shadow: 0 12px 40px rgba(0,169,79,0.12)">
+        <div style="position: absolute; top: -13px; left: 50%; transform: translateX(-50%); background: #00A94F; color: #FFFFFF; font-size: 12px; font-weight: 700; padding: 4px 14px; border-radius: 999px; letter-spacing: 0.03em; white-space: nowrap">MÁS CONTRATADO</div>
+        <div style="font-size: 18px; font-weight: 700; margin-bottom: 6px">Código Postal</div>
+        <div style="font-size: 14px; color: #4C6379; margin-bottom: 24px">5,000+ zonas</div>
+        <div style="font-family: 'JetBrains Mono', monospace; margin-bottom: 28px"><span style="font-size: 13px; color: #8B99A6">desde</span> <span style="font-size: 30px; font-weight: 600">$40,250</span> <span style="font-size: 13px; color: #8B99A6">MXN/mes</span></div>
+        <div style="display: grid; gap: 12px; font-size: 14px; color: #33475B; flex: 1">
+          <span>✓ Todo lo de Municipio</span>
+          <span>✓ Nivel código postal</span>
+          <span>✓ Verificación de tickets e hiperlocal</span>
+          <span>✓ Soporte prioritario</span>
+        </div>
+        <a href="#contacto" style="margin-top: 28px; display: block; text-align: center; background: #00A94F; color: #FFFFFF; padding: 12px; border-radius: 8px; font-weight: 600; font-size: 15px" style-hover="background: #007A39; color: #FFFFFF">Solicitar acceso</a>
+      </div>
+      <div style="border: 1px solid #E7ECF0; border-radius: 14px; padding: 36px; display: flex; flex-direction: column; background: #0E2A47">
+        <div style="font-size: 18px; font-weight: 700; margin-bottom: 6px; color: #FFFFFF">Estación</div>
+        <div style="font-size: 14px; color: rgba(255,255,255,0.6); margin-bottom: 24px">Las 14,194 estaciones</div>
+        <div style="font-family: 'JetBrains Mono', monospace; margin-bottom: 28px; color: #FFFFFF"><span style="font-size: 34px; font-weight: 600">A la medida</span></div>
+        <div style="display: grid; gap: 12px; font-size: 14.5px; color: rgba(255,255,255,0.8); flex: 1">
+          <span>✓ Precio por estación individual</span>
+          <span>✓ SLA y volumen dedicados</span>
+          <span>✓ Entregas personalizadas (API, S3, feed)</span>
+        </div>
+        <a href="#contacto" style="margin-top: 32px; display: block; text-align: center; border: 1px solid rgba(255,255,255,0.4); color: #FFFFFF; padding: 12px; border-radius: 8px; font-weight: 600; font-size: 15px" style-hover="background: #FFFFFF; color: #0E2A47">Hablar con nosotros</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section data-screen-label="Confianza" style="padding: 96px 0; background: #F7F9FA">
+  <div style="max-width: 1140px; margin: 0 auto; padding: 0 32px">
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; text-align: center">
+      <div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 34px; font-weight: 600; color: #0E2A47">2017</div>
+        <div style="font-size: 14px; color: #4C6379; margin-top: 8px">Operando ininterrumpidamente desde</div>
+      </div>
+      <div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 34px; font-weight: 600; color: #0E2A47">CNE</div>
+        <div style="font-size: 14px; color: #4C6379; margin-top: 8px">Fuente oficial de datos, procesada a diario</div>
+      </div>
+      <div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 34px; font-weight: 600; color: #0E2A47">14,194</div>
+        <div style="font-size: 14px; color: #4C6379; margin-top: 8px">Estaciones cubiertas en todo México</div>
+      </div>
+      <div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 34px; font-weight: 600; color: #0E2A47">24/7</div>
+        <div style="font-size: 14px; color: #4C6379; margin-top: 8px">Monitoreo continuo del pipeline de datos</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="contacto" data-screen-label="CTA final" style="padding: 112px 0; background: #0E2A47; text-align: center">
+  <div style="max-width: 720px; margin: 0 auto; padding: 0 32px">
+    <h2 style="font-size: 40px; font-weight: 800; color: #FFFFFF; margin: 0 0 16px; letter-spacing: -0.02em; text-wrap: pretty">Deje de limpiar archivos. Empiece a decidir.</h2>
+    <p style="font-size: 17px; color: rgba(255,255,255,0.65); margin: 0 0 36px">Acceso de evaluación con datos reales para su equipo técnico.</p>
+    <div style="display: flex; gap: 16px; justify-content: center">
+      <a href="mailto:hola@gasgas.com.mx" style="background: #00A94F; color: #FFFFFF; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600" style-hover="background: #007A39; color: #FFFFFF">hola@gasgas.com.mx</a>
+    </div>
+  </div>
+</section>
+
+<footer style="background: #081B30; padding: 40px 0">
+  <div style="max-width: 1140px; margin: 0 auto; padding: 0 32px; display: flex; justify-content: space-between; align-items: center">
+    <div style="display: flex; align-items: center; gap: 12px">
+      <div style="background: #FFFFFF; border-radius: 999px; padding: 4px 11px; font-weight: 800; font-size: 13px; color: #0E2A47">GG</div>
+      <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: rgba(255,255,255,0.5)">gasgas.com.mx</span>
+    </div>
+    <span style="font-size: 13px; color: rgba(255,255,255,0.35)">© 2026 GasGas · Fuente: CNE · datos depurados por el algoritmo de calidad GasGas</span>
   </div>
 </footer>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;datoEnVivoAnimado&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Hero&quot;}}">
+class Component extends DCLogic {
+  /* ── 100% datos reales de la API de GasGas; placeholders mientras carga ── */
+  state = { i: 0, procesados: 0, selEstado: "CDMX", lat: 0, feed: [], corteHora: "—", ready: 0, qProd: "regular", qEstado: "Jalisco", qNivel: "estado", qMunicipio: "", qMunis: [], qCp: "11800", qCargando: false, qResp: "Elija sus opciones y pulse \"Enviar consulta\".", qStatus: "listo", qExplica: "Aquí traduciremos la respuesta a lenguaje de negocio." };
+  // [nombre, abbr, col, fila] — geometría del mapa de mosaicos (sin datos inventados)
+  estadosData = [
+    ["Baja California","BC",1,1],["Sonora","SON",2,1],["Chihuahua","CHIH",3,1],["Coahuila","COAH",4,1],["Nuevo León","NL",5,1],["Tamaulipas","TAM",6,1],
+    ["Baja California Sur","BCS",1,2],["Sinaloa","SIN",2,2],["Durango","DGO",3,2],["Zacatecas","ZAC",4,2],["San Luis Potosí","SLP",5,2],
+    ["Nayarit","NAY",2,3],["Aguascalientes","AGS",3,3],["Guanajuato","GTO",4,3],["Querétaro","QRO",5,3],["Hidalgo","HGO",6,3],["Veracruz","VER",7,3],["Yucatán","YUC",9,3],
+    ["Jalisco","JAL",2,4],["Michoacán","MICH",3,4],["Estado de México","MEX",4,4],["Tlaxcala","TLAX",5,4],["Puebla","PUE",6,4],["Tabasco","TAB",8,4],["Campeche","CAMP",9,4],["Quintana Roo","QROO",10,4],
+    ["Colima","COL",2,5],["Guerrero","GRO",3,5],["CDMX","CDMX",4,5],["Morelos","MOR",5,5],["Oaxaca","OAX",6,5],["Chiapas","CHIS",8,5]
+  ];
+  vecinos = { BC:["BCS","SON"], SON:["BC","CHIH","SIN"], CHIH:["SON","COAH","DGO"], COAH:["CHIH","NL","DGO"], NL:["COAH","TAM","SLP"], TAM:["NL","SLP","VER"], BCS:["BC"], SIN:["SON","DGO","NAY"], DGO:["CHIH","COAH","ZAC"], ZAC:["DGO","SLP","AGS"], SLP:["ZAC","NL","GTO"], NAY:["SIN","JAL","ZAC"], AGS:["ZAC","JAL"], GTO:["JAL","QRO","MICH"], QRO:["GTO","HGO","MEX"], HGO:["QRO","MEX","PUE"], VER:["PUE","TAM","OAX"], YUC:["CAMP","QROO"], JAL:["NAY","ZAC","MICH"], MICH:["JAL","GTO","MEX"], MEX:["CDMX","MICH","MOR"], TLAX:["PUE","HGO","MEX"], PUE:["TLAX","VER","MOR"], TAB:["CHIS","CAMP","VER"], CAMP:["YUC","QROO","TAB"], QROO:["YUC","CAMP"], COL:["JAL","MICH"], GRO:["MICH","MEX","OAX"], CDMX:["MEX","MOR"], MOR:["CDMX","MEX","PUE"], OAX:["GRO","PUE","CHIS"], CHIS:["OAX","TAB"] };
+  R = { est: {}, nac: null, hist: {}, lats: [] };
+  API = "/api";
+  PRODS = ["regular", "premium", "diesel"];
 
-<script>
-/* ─────────────────────────────────────────────────────────────────
-   Política de dato (Design System v1.1 §B): NUNCA números inventados.
-   1) Skeletons → 2) API en vivo → 3) si falla, ÚLTIMO DATO REAL
-   (snapshot de Supabase, 18 jul 2026 6:00 a.m.) con aviso visible.   */
-const FUELS={regular:"Magna",premium:"Premium",diesel:"Diésel"};
-const API="https://api.gasgas.com.mx/api";
-const TZ="America/Mexico_City";
-
-/* Último dato confirmado (real, precios_historicos_agregados nacional) */
-const SNAPSHOT={
-  fechaTexto:"18 jul, 6:00 a.m.",
-  fecha:"2026-07-18",
-  meta:{stations:13410,min:21.00,max:27.00,std:0.58},
-  dates:["2026-06-18","2026-06-19","2026-06-20","2026-06-21","2026-06-22","2026-06-23","2026-06-24","2026-06-25","2026-06-26","2026-06-27","2026-06-28","2026-06-29","2026-06-30","2026-07-01","2026-07-02","2026-07-03","2026-07-04","2026-07-05","2026-07-06","2026-07-07","2026-07-08","2026-07-09","2026-07-10","2026-07-11","2026-07-12","2026-07-13","2026-07-14","2026-07-15","2026-07-16","2026-07-17","2026-07-18"],
-  regular:[23.8553,23.8558,23.8539,23.8531,23.8533,23.8546,23.8524,23.8527,23.8491,23.8517,23.8508,23.8516,23.8535,23.8549,23.8551,23.8552,23.8559,23.8552,23.8554,23.8556,23.8527,23.8534,23.8523,23.8547,23.8558,23.8560,23.8527,23.8500,23.8494,23.8495,23.8493],
-  premium:[28.5298,28.5305,28.5318,28.5296,28.5295,28.5278,28.5271,28.5249,28.5240,28.4988,28.4978,28.4982,28.4960,28.4949,28.4935,28.4937,28.4929,28.4948,28.4950,28.4944,28.4937,28.4933,28.4927,28.4899,28.4942,28.4950,28.4972,28.5000,28.5012,28.5014,28.5008],
-  diesel:[27.1684,27.1619,27.1591,27.1566,27.1563,27.1592,27.1536,27.1390,27.1380,27.1359,27.1448,27.1445,27.1407,27.1392,27.1381,27.1400,27.1337,27.1350,27.1349,27.1342,27.1353,27.1341,27.1295,27.1270,27.1308,27.1253,27.1045,27.0964,27.0913,27.0874,27.0843]
-};
-
-let fuel="regular";
-let mercado={tipo:"nacional",valor:"all"};
-let DATA=null;       /* {dates,regular,premium,diesel,meta,origen:'vivo'|'cache',antiguedad} */
-
-const $=id=>document.getElementById(id);
-const f2=n=>Number(n).toFixed(2);
-const fmtMiles=n=>Number(n).toLocaleString("es-MX");
-function fechaCorta(iso){const d=new Date(iso+"T12:00:00");return d.toLocaleDateString("es-MX",{day:"numeric",month:"short",timeZone:TZ}).replace(".","");}
-
-/* Delta de promedios agregados: contra el MISMO DÍA de la semana pasada
-   (D-7), no contra ayer — un promedio nacional/estatal casi no se mueve en
-   24 h, y D-7 elimina la estacionalidad de día de semana (regla Nielsen).
-   Si la serie no alcanza 8 puntos, cae con honestidad a "vs. ayer". */
-function deltaInfo(serie){
-  if(!serie||serie.length<2) return null;
-  const lag=serie.length>7?7:1;
-  const label=lag===7?"vs. hace una semana":"vs. ayer";
-  const d=serie[serie.length-1]-serie[serie.length-1-lag];
-  const cent=d*100;
-  if(Math.abs(cent)<0.5) return {clase:"sin-dato",dir:"igual",txt:"Sin cambio "+label,txtCorto:"Sin cambio",icon:"M5 12h14"};
-  const abs=Math.abs(d);
-  const monto=`$${f2(abs)}`;
-  return d<0?{clase:"barato",dir:"baja",txt:monto+" "+label,txtCorto:monto,icon:"M12 5v14M6 13l6 6 6-6"}
-            :{clase:"caro",dir:"sube",txt:monto+" "+label,txtCorto:monto,icon:"M12 19V5M6 11l6-6 6 6"};
-}
-
-function render(){
-  const s=DATA[fuel];
-  const hoy=s[s.length-1];
-  const nombreMercado=mercado.tipo==="nacional"?"Nacional":(mercado.tipo==="municipio"?mercado.valor.split("|")[1]:mercado.valor);
-
-  /* Hero */
-  $("hero-overline").textContent=`${FUELS[fuel]} hoy · ${nombreMercado}`;
-  $("hero-precio").textContent=f2(hoy);
-  const d=deltaInfo(s);
-  const pill=$("hero-delta");
-  pill.className="pildora pildora--"+(d?d.clase:"sin-dato");
-  pill.innerHTML=`<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="${d?d.icon:"M5 12h14"}"/></svg><span>${d?d.txt:"Sin dato"}</span>`;
-  $("hero-fuente").textContent=`Fuente: CNE · algoritmo de calidad GasGas · ${fmtMiles(DATA.meta.stations)} estaciones`;
-  $("hero-antiguedad-txt").textContent=DATA.antiguedad;
-
-  /* Título + estado del dato */
-  $("titulo-mercado").textContent=mercado.tipo==="nacional"?"Precio nacional hoy":`Precio en ${nombreMercado} hoy`;
-  /* Honestidad (v1.1 §A): con pocas estaciones, el promedio es referencia, no mercado */
-  const np=$("nota-pocas");
-  if(mercado.tipo==="municipio"&&DATA.meta.stations>0&&DATA.meta.stations<5){
-    np.hidden=false;
-    np.textContent=`En ${nombreMercado} solo hay ${DATA.meta.stations} ${DATA.meta.stations===1?"estación":"estaciones"} con precio. Tómalo como referencia puntual, no como promedio de mercado.`;
-  }else{np.hidden=true;}
-  const ed=$("estado-dato");
-  if(DATA.origen==="vivo"){ed.textContent="● En vivo"+(DATA.horaAct?" · actualizado "+DATA.horaAct:"");ed.className="estado-dato estado-dato--vivo";}
-  else{ed.textContent="Último dato: "+DATA.fechaTexto;ed.className="estado-dato estado-dato--cache";}
-  $("aviso-cache").classList.toggle("visible",DATA.origen!=="vivo");
-
-  /* Cards de precio */
-  const grid=$("grid-precios");grid.innerHTML="";
-  for(const key of ["regular","premium","diesel"]){
-    const serie=DATA[key];const v=serie[serie.length-1];const di=deltaInfo(serie);
-    const deltaHtml=di?`<span class="delta delta--${di.dir}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="${di.icon}"/></svg>${di.txtCorto}</span>`
-                      :`<span class="delta delta--igual">Sin dato</span>`;
-    grid.insertAdjacentHTML("beforeend",
-      `<div class="card card-precio card-precio--${key==="regular"?"magna":key}" aria-current="${key===fuel}">
-        <span class="fuel">${FUELS[key]}</span>
-        <div class="valor"><span class="simbolo">$</span><span class="num tabular">${v!=null?f2(v):"—"}</span></div>
-        ${deltaHtml}
-      </div>`);
+  norm(s) { return (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }
+  porNombre(n) {
+    const MAP = { "distrito federal":"CDMX","ciudad de mexico":"CDMX","cdmx":"CDMX","mexico":"MEX","edomex":"MEX","estado de mexico":"MEX","michoacan de ocampo":"MICH","veracruz de ignacio de la llave":"VER","coahuila de zaragoza":"COAH" };
+    n = this.norm(n);
+    const ab = MAP[n];
+    if (ab) return this.estadosData.find(e => e[1] === ab);
+    return this.estadosData.find(e => this.norm(e[0]) === n) || null;
   }
-  document.querySelectorAll('[data-f]').forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.f===fuel)));
-  grafica();
-  metabar();
-}
-
-/* Gráfica según spec: línea 2px verde-600, grid gris-200, SIN degradados.
-   Eje Y con escala visible (ventana mínima de $0.10 para no exagerar
-   movimientos de centavos) + tooltip al pasar el cursor. */
-let CHART=null;
-const FUEL_COLOR={regular:"#007A39",premium:"#DC2626",diesel:"#334155"};
-function grafica(){
-  const svg=$("grafica");
-  const col=FUEL_COLOR[fuel]||"#007A39";
-  const s=DATA[fuel].filter(v=>v!=null&&!isNaN(v));
-  const W=Math.max(svg.clientWidth||328,260),H=Math.max(svg.clientHeight||150,150);
-  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
-  const padL=40,padR=10,padT=12,padB=10;
-  let min=Math.min(...s),max=Math.max(...s);
-  /* Eje Y dinámico: la ventana es 2.5× el rango real de los datos (la curva
-     ocupa ~40% del alto — ni línea recta ni montaña rusa), con piso de
-     $0.02 para no amplificar ruido de milésimas. La escala siempre es
-     visible en el eje, así que nunca engaña. */
-  const rango=max-min;
-  const span=Math.max(rango*2.5,0.02);
-  const c=(max+min)/2;min=c-span/2;max=c+span/2;
-  const x=i=>padL+i*(W-padL-padR)/(s.length-1);
-  const y=v=>H-padB-((v-min)/span)*(H-padT-padB);
-  let linea="";s.forEach((v,i)=>{linea+=(i?"L":"M")+x(i).toFixed(1)+" "+y(v).toFixed(1)+" ";});
-  const ticks=[max,(min+max)/2,min];
-  const grid=ticks.map(t=>`<line x1="${padL}" x2="${W-padR}" y1="${y(t).toFixed(1)}" y2="${y(t).toFixed(1)}" stroke="#DCE3EB" stroke-width="1"/>
-    <text x="${padL-6}" y="${(y(t)+3.5).toFixed(1)}" text-anchor="end" font-family="'JetBrains Mono',monospace" font-size="10" fill="#7B8A9A">${f2(t)}</text>`).join("");
-  svg.innerHTML=grid+
-    `<path d="${linea}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`+
-    `<circle cx="${x(s.length-1).toFixed(1)}" cy="${y(s[s.length-1]).toFixed(1)}" r="3.5" fill="${col}"/>`+
-    `<line id="ch-l" y1="${padT}" y2="${H-padB}" stroke="#C3CDD8" stroke-width="1" stroke-dasharray="3 3" style="display:none"/>`+
-    `<circle id="ch-c" r="4" fill="#0E2A47" stroke="#fff" stroke-width="1.5" style="display:none"/>`;
-  CHART={s,x,y,W,H,padL,padR};
-  $("grafica-titulo").textContent=`${FUELS[fuel]} · 30 días`;
-  $("grafica-rango").textContent=`${f2(Math.min(...s))} – ${f2(Math.max(...s))}`;
-  const ds=DATA.dates;
-  $("eje-x").innerHTML=`<span>${fechaCorta(ds[0])}</span><span>${fechaCorta(ds[Math.floor(ds.length/2)])}</span><span>${fechaCorta(ds[ds.length-1])}</span>`;
-}
-/* Tooltip: fecha, precio y cambio vs el día anterior */
-(function(){
-  const svg=$("grafica"),tt=$("tooltip");
-  function mueve(ev){
-    if(!CHART)return;
-    const r=svg.getBoundingClientRect();
-    const fx=ev.clientX-r.left;
-    const rel=(fx-CHART.padL)/(CHART.W-CHART.padL-CHART.padR);
-    let i=Math.round(rel*(CHART.s.length-1));
-    i=Math.max(0,Math.min(CHART.s.length-1,i));
-    const px=CHART.x(i),py=CHART.y(CHART.s[i]);
-    const chl=$("ch-l"),chc=$("ch-c");
-    chl.setAttribute("x1",px);chl.setAttribute("x2",px);chl.style.display="";
-    chc.setAttribute("cx",px);chc.setAttribute("cy",py);chc.style.display="";
-    const fecha=new Date(DATA.dates[i]+"T12:00:00").toLocaleDateString("es-MX",{weekday:"short",day:"numeric",month:"short",timeZone:TZ}).replace(".","");
-    let deltaTxt="";
-    if(i>0){const dd=CHART.s[i]-CHART.s[i-1];
-      deltaTxt=Math.abs(dd)<0.005?`<span class="tt-delta">Sin cambio vs día anterior</span>`:`<span class="tt-delta">${dd<0?"↓":"↑"} $${f2(Math.abs(dd))} vs día anterior</span>`;}
-    tt.innerHTML=`${fecha} · <b>$${f2(CHART.s[i])}</b><br>${deltaTxt}`;
-    tt.style.display="block";
-    const cardR=tt.parentElement.getBoundingClientRect();
-    const sx=r.left-cardR.left,sy=r.top-cardR.top;
-    const cw=tt.parentElement.clientWidth,tw=tt.offsetWidth;
-    let left=sx+px*(r.width/CHART.W)-tw/2;
-    left=Math.max(4,Math.min(left,cw-tw-4));
-    tt.style.left=left+"px";
-    tt.style.top=(sy+py*(r.height/CHART.H)-tt.offsetHeight-12)+"px";
+  f2(v) { return "$" + Number(v).toFixed(2); }
+  jget(url) {
+    const t = performance.now();
+    return fetch(url).then(r => { this.R.lats.push(performance.now() - t); return r.json(); });
   }
-  function fuera(){tt.style.display="none";const a=$("ch-l"),b=$("ch-c");if(a)a.style.display="none";if(b)b.style.display="none";}
-  svg.addEventListener("pointermove",mueve);
-  svg.addEventListener("pointerdown",mueve);
-  svg.addEventListener("pointerleave",fuera);
-  window.addEventListener("resize",()=>{if(DATA)grafica();});
-})();
+  horaDe(ts) {
+    try { const d = new Date(ts); if (isNaN(d)) return "—";
+      return d.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "America/Mexico_City" });
+    } catch (e) { return "—"; }
+  }
+  filaFeed() {
+    const keys = Object.keys(this.R.est); if (!keys.length) return null;
+    const ab = keys[Math.floor(Math.random() * keys.length)];
+    const p = this.PRODS[Math.floor(Math.random() * this.PRODS.length)];
+    const d = this.R.est[ab]; if (!d || d[p] == null) return null;
+    const e = this.estadosData.find(x => x[1] === ab);
+    const hc = this.R.corte || "—";
+    return { hora: hc, marca: e ? e[0] : ab, producto: p, cp: "promedio", ciudad: "promedio estatal · corte " + hc, precioTxt: this.f2(d[p]) };
+  }
+  cargarSpark(ab) {
+    if (this.R.hist[ab] !== undefined) return;
+    this.R.hist[ab] = "";
+    const d = this.R.est[ab];
+    const nombre = (d && d.apiName) || (this.estadosData.find(x => x[1] === ab) || [""])[0];
+    this.jget(this.API + "/historico?market=estado&value=" + encodeURIComponent(nombre) + "&days=30").then(h => {
+      if (Array.isArray(h) && h.length > 1) {
+        const s = h.map(r => +r.regular).filter(v => !isNaN(v)).slice(-30);
+        if (s.length > 1) {
+          const step = 120 / (s.length - 1), mn = Math.min.apply(null, s), mx = Math.max.apply(null, s), rg = (mx - mn) || 1;
+          this.R.hist[ab] = s.map((v, k) => (k * step).toFixed(1) + "," + (28 - ((v - mn) / rg) * 24).toFixed(1)).join(" ");
+          this.setState({ ready: this.state.ready + 1 });
+        }
+      }
+    }).catch(() => {});
+  }
+  componentDidMount() {
+    /* Carga inicial: nacional + ranking (con delta7 y estaciones) + stats del día */
+    Promise.all([
+      this.jget(this.API + "/precios?market=nacional&value=all&days=1&product=regular"),
+      this.jget(this.API + "/ranking-estados?product=regular"),
+      this.jget("/api/stats-hoy").catch(() => ({}))
+    ]).then(([nac, rk, st]) => {
+      const upd = {};
+      if (nac && nac.regular) { this.R.nac = { regular: +nac.regular, premium: +nac.premium, diesel: +nac.diesel }; upd.corteHora = this.horaDe(nac.updated_at); this.R.corte = upd.corteHora; }
+      if (Array.isArray(rk)) rk.forEach(r => {
+        const m = this.porNombre(r.estado); if (!m) return;
+        this.R.est[m[1]] = {
+          regular: r.regular != null ? +r.regular : null,
+          premium: r.premium != null ? +r.premium : null,
+          diesel: r.diesel != null ? +r.diesel : null,
+          est: r.stations_count != null ? +r.stations_count : null,
+          d7: r.delta7_regular != null ? +r.delta7_regular : null,
+          apiName: r.estado
+        };
+      });
+      upd.procesados = Number(st && st.precios_hoy) || 0;
+      const l = this.R.lats.slice().sort((a, b) => a - b);
+      upd.lat = l.length ? Math.round(l[Math.floor(l.length / 2)]) : 0;
+      const feed = []; for (let k = 0; k < 5; k++) { const f = this.filaFeed(); if (f) feed.push(f); }
+      upd.feed = feed;
+      this.setState(upd);
+      this.cargarSpark(this.state.selEstado);
+    }).catch(() => {});
+    this.timer = setInterval(() => {
+      if ((this.props.datoEnVivoAnimado ?? true) && Object.keys(this.R.est).length) {
+        const f = this.filaFeed();
+        if (f) this.setState(s => ({ feed: [f].concat(s.feed).slice(0, 5) }));
+      }
+    }, 2600);
+  }
+  componentWillUnmount() { clearInterval(this.timer); }
 
-function metabar(){
-  const m=DATA.meta;
-  const filas=[["Estaciones",fmtMiles(m.stations)],["Mín","$"+f2(m.min)],["Máx","$"+f2(m.max)],["Desv. est.",f2(m.std)],["Fuente","CNE"]];
-  $("metabar").innerHTML=filas.map(([k,v])=>`<span class="m">${k}: <b>${v}</b></span>`).join("");
-}
+  /* ── Playground: consultas reales sin escribir código ── */
+  qNombreProd(p) { return p === "regular" ? "regular" : (p === "premium" ? "premium" : "diésel"); }
+  tzStat(tipo) {
+    const con = this.estadosData.filter(e => this.R.est[e[1]] && this.R.est[e[1]].regular != null)
+      .map(e => ({ n: e[0], d: this.R.est[e[1]] }));
+    if (!con.length) return { n: "…", p: "" };
+    if (tipo === "caro") { const x = con.reduce((a, b) => b.d.regular > a.d.regular ? b : a); return { n: x.n, p: this.f2(x.d.regular) }; }
+    if (tipo === "barato") { const x = con.reduce((a, b) => b.d.regular < a.d.regular ? b : a); return { n: x.n, p: this.f2(x.d.regular) }; }
+    const conD = con.filter(x => x.d.d7 != null);
+    if (!conD.length) return { n: "…", p: "" };
+    const x = conD.reduce((a, b) => Math.abs(b.d.d7) > Math.abs(a.d.d7) ? b : a);
+    return { n: x.n, p: (x.d.d7 >= 0 ? "+" : "") + x.d.d7.toFixed(2) };
+  }
+  qLineas(txt) {
+    return String(txt).split("\n").map(line => {
+      const m = line.match(/^(\s*)("[^"]*")(:\s*)(.*?)(,?)$/);
+      if (m) {
+        const val = m[4];
+        const vc = val.charAt(0) === '"' ? "#FFD98A" : (val.charAt(0) === "{" || val.charAt(0) === "[" ? "#D9E2EC" : "#00A94F");
+        return { k: m[1] + m[2], kc: "#7FD4A8", sep: m[3], v: val, vc, coma: m[5] };
+      }
+      return { k: line, kc: "#D9E2EC", sep: "", v: "", vc: "#D9E2EC", coma: "" };
+    });
+  }
+  qPathActual() {
+    const s = this.state;
+    if (s.qNivel === "estacion") return "/api/… · nivel disponible por contrato";
+    if (s.qNivel === "cp") return "/api/demo/cp?cp=" + s.qCp + "&product=" + s.qProd;
+    if (s.qNivel === "municipio" && s.qMunicipio) return "/api/precios?market=municipio&value=" + encodeURIComponent(s.qEstado + "|" + s.qMunicipio) + "&days=1&product=" + s.qProd;
+    return "/api/precios?market=estado&value=" + encodeURIComponent(s.qEstado) + "&days=1&product=" + s.qProd;
+  }
+  qCargarMunis(estado) {
+    this.jget(this.API + "/municipios?estado=" + encodeURIComponent(estado)).then(r => {
+      if (Array.isArray(r) && r.length) this.setState({ qMunis: r.map(m => m.municipio), qMunicipio: r[0].municipio });
+      else this.setState({ qMunis: [], qMunicipio: "" });
+    }).catch(() => this.setState({ qMunis: [], qMunicipio: "" }));
+  }
+  qEjecutar() {
+    const s = this.state;
+    if (s.qNivel === "estacion") {
+      const niv = "estación individual";
+      this.setState({
+        qStatus: "· nivel por contrato",
+        qResp: JSON.stringify({ info: "El nivel " + niv + " opera con API key por contrato.", incluye: s.qNivel === "cp" ? "5,000+ códigos postales geolocalizados" : "las 14,194 estaciones con marca y ubicación", contacto: "hola@gasgas.com.mx" }, null, 2),
+        qExplica: "El nivel " + niv + " es parte de los planes comerciales — así operan nuestros clientes en producción. Escríbanos a hola@gasgas.com.mx y le damos acceso de evaluación."
+      });
+      return;
+    }
+    this.setState({ qCargando: true, qStatus: "consultando…", qResp: "…", qExplica: "…" });
+    const t0 = performance.now();
+    fetch(this.API + this.qPathActual().replace("/api", "").replace("/precios", "/precios"))
+      .then(r => Promise.all([r.status, r.json()]))
+      .then(([st, j]) => {
+        const ms = Math.round(performance.now() - t0);
+        const lugar = s.qNivel === "cp" ? "el CP " + s.qCp + " (" + (j.lugar || "") + ")" : (s.qNivel === "municipio" && s.qMunicipio ? s.qMunicipio + ", " + s.qEstado : s.qEstado);
+        this.setState({ qCargando: false, qStatus: st + " OK · " + ms + " ms", qResp: JSON.stringify(j, null, 2) });
+        const v = j && j[s.qProd] != null ? Number(j[s.qProd]) : null;
+        if (v == null || isNaN(v) || !v) { this.setState({ qExplica: "Sin dato disponible para esta combinación." }); return; }
+        let tx = "La gasolina " + this.qNombreProd(s.qProd) + " en " + lugar + " promedia $" + v.toFixed(2) + " MXN por litro hoy (corte " + (this.R.corte || "del día") + ")";
+        if (j.min && j.max) tx += ", con estaciones entre $" + Number(j.min).toFixed(2) + " y $" + Number(j.max).toFixed(2);
+        if (j.stations_count) tx += ", con base en " + Number(j.stations_count).toLocaleString("en-US") + " estaciones verificadas";
+        tx += ".";
+        if (j.stations_count && Number(j.stations_count) < 5) tx += " Con tan pocas estaciones, tómelo como referencia puntual, no como promedio de mercado.";
+        if (j.semaforo && j.semaforo.estado) tx += " Frente al promedio nacional está en nivel " + j.semaforo.estado + ".";
+        if (j.demo) tx += " Este es un CP de demostración — el catálogo completo de 5,000+ CPs opera por contrato.";
+        this.setState({ qExplica: tx });
+      })
+      .catch(() => this.setState({ qCargando: false, qStatus: "sin conexión", qResp: "No pudimos conectar. Intente de nuevo.", qExplica: "—" }));
+  }
 
-/* Carga: API en vivo → si falla, último dato real (nunca inventar) */
-async function cargar(reintento){
-  if(reintento){$("estado-dato").textContent="Cargando…";$("estado-dato").className="estado-dato";}
-  try{
-    const ctrl=new AbortController();const t=setTimeout(()=>ctrl.abort(),4500);
-    const q=mercado.tipo==="nacional"?"market=nacional&value=all":`market=${mercado.tipo}&value=${encodeURIComponent(mercado.valor)}`;
-    const [h,p]=await Promise.all([
-      fetch(`${API}/historico?${q}&days=30`,{signal:ctrl.signal}).then(r=>r.json()),
-      fetch(`${API}/precios?${q}&days=1&product=${fuel}&cb=${Date.now()}`,{signal:ctrl.signal}).then(r=>r.json())
-    ]);
-    clearTimeout(t);
-    if(Array.isArray(h)&&h.length>1&&p&&p.regular){
-      DATA={
-        dates:h.map(r=>(r.date||"").slice(0,10)),
-        regular:h.map(r=>+r.regular),premium:h.map(r=>+r.premium),diesel:h.map(r=>+r.diesel),
-        meta:{stations:p.stations_count||p.total_estaciones||0,min:+p.min||0,max:+p.max||0,std:+p.std||0},
-        origen:"vivo",fechaTexto:"",antiguedad:antiguedadDe(p.updated_at),horaAct:horaDe(p.updated_at)
+  renderVals() {
+    const cargando = !Object.keys(this.R.est).length;
+    const feed = (this.state.feed.length ? this.state.feed : [{ hora: "—", marca: "consultando…", producto: "", cp: "", ciudad: "", precioTxt: "…" }]).map((f, k) => Object.assign({}, f, {
+      bg: k === 0 ? "rgba(0,169,79,0.14)" : "transparent",
+      horaColor: k === 0 ? "#00A94F" : "rgba(255,255,255,0.4)"
+    }));
+    const actual = feed[0];
+    /* Ticker real: 12 estados con Magna más cara hoy */
+    const ticker = this.estadosData.filter(e => this.R.est[e[1]] && this.R.est[e[1]].regular != null)
+      .sort((a, b) => this.R.est[b[1]].regular - this.R.est[a[1]].regular).slice(0, 12)
+      .map(e => { const d = this.R.est[e[1]];
+        return { e: e[1], p: this.f2(d.regular), d: (d.d7 == null || Math.abs(d.d7) < 0.005) ? "" : (d.d7 >= 0 ? "▲" : "▼"), dc: d.d7 != null && d.d7 >= 0 ? "#E88A8A" : "#00A94F" }; });
+    const tick = ticker.length ? ticker : [{ e: "…", p: "", d: "", dc: "#00A94F" }];
+    /* Mosaico con colores por precio real */
+    const vals = Object.values(this.R.est).map(o => o.regular).filter(v => v != null);
+    const min = vals.length ? Math.min.apply(null, vals) : 0, max = vals.length ? Math.max.apply(null, vals) : 1;
+    const estados = this.estadosData.map(e => {
+      const [nombre, abbr, col, row] = e;
+      const d = this.R.est[abbr];
+      const precio = d ? d.regular : null;
+      const selected = abbr === this.state.selEstado;
+      const t = precio != null ? (precio - min) / ((max - min) || 1) : 0.5;
+      const warm = t > 0.55;
+      return {
+        nombre, abbr, col, row,
+        precioTxt: precio != null ? this.f2(precio) : "…",
+        bg: selected ? "#0E2A47" : (warm ? "#FDEDED" : "#E8F5EE"),
+        fg: selected ? "#FFFFFF" : (warm ? "#8A3232" : "#1D5C3B"),
+        bd: selected ? "#0E2A47" : (warm ? "#F0C5C5" : "#B9E4CC"),
+        select: () => { this.setState({ selEstado: abbr }); this.cargarSpark(abbr); }
       };
-      render();return;
-    }
-    throw new Error("respuesta incompleta");
-  }catch(e){
-    if(mercado.tipo==="nacional"){
-      DATA={...SNAPSHOT,origen:"cache",antiguedad:"Último dato: "+SNAPSHOT.fechaTexto};
-      $("aviso-fecha").textContent=SNAPSHOT.fechaTexto;
-      render();
-    }else{
-      /* Sin snapshot por estado: error honesto, sin números (v1.1 §B) */
-      $("grid-precios").innerHTML=`<div class="card" style="grid-column:1/-1">
-        <div class="estado-vacio" style="text-align:center;padding:24px 16px">
-          <h3 style="font-size:17px;font-weight:600">No pudimos cargar ${mercado.valor.split("|").pop()}</h3>
-          <p style="color:var(--texto-2);margin:4px 0 12px">Revisa tu conexión o vuelve a intentarlo.</p>
-          <button class="btn btn--secundario" onclick="cargar(true)">Reintentar</button>
-        </div></div>`;
-      $("estado-dato").textContent="Sin conexión";$("estado-dato").className="estado-dato estado-dato--cache";
-    }
+    });
+    /* Ficha estatal real */
+    const abSel = this.state.selEstado;
+    const eSel = this.estadosData.find(x => x[1] === abSel) || this.estadosData[28];
+    const dSel = this.R.est[abSel] || {};
+    const d7 = dSel.d7 != null ? dSel.d7 : null;
+    const sel = {
+      nombre: eSel[0],
+      regular: dSel.regular != null ? this.f2(dSel.regular) : "—",
+      premium: dSel.premium != null ? this.f2(dSel.premium) : "—",
+      diesel: dSel.diesel != null ? this.f2(dSel.diesel) : "—",
+      cambioTxt: d7 == null ? "" : (Math.abs(d7) < 0.005 ? "· s/c" : (d7 >= 0 ? "▲ +" : "▼ ") + Math.abs(d7).toFixed(2)),
+      cambioColor: d7 == null || Math.abs(d7) < 0.005 ? "rgba(255,255,255,0.45)" : (d7 >= 0 ? "#E88A8A" : "#00A94F"),
+      spark: this.R.hist[abSel] || "",
+      estaciones: dSel.est != null ? Number(dSel.est).toLocaleString("en-US") : "—"
+    };
+    const cmpRow = (nom, p) => {
+      const dif = dSel.regular != null ? p - dSel.regular : 0;
+      return { nombre: nom, precioTxt: this.f2(p), difTxt: (dif >= 0 ? "+" : "−") + "$" + Math.abs(dif).toFixed(2), difColor: dif >= 0 ? "#00A94F" : "#E88A8A" };
+    };
+    sel.comparativa = [];
+    if (this.R.nac && this.R.nac.regular != null) sel.comparativa.push(cmpRow("Promedio nacional", this.R.nac.regular));
+    (this.vecinos[abSel] || []).forEach(v => { const dv = this.R.est[v]; if (dv && dv.regular != null) { const ev = this.estadosData.find(x => x[1] === v); sel.comparativa.push(cmpRow(ev[0], dv.regular)); } });
+    /* Mayores subidas / bajadas reales (Δ7 días) */
+    const conDelta = this.estadosData.filter(e => this.R.est[e[1]] && this.R.est[e[1]].d7 != null)
+      .map(e => ({ e, d: this.R.est[e[1]] })).sort((a, b) => b.d.d7 - a.d.d7);
+    const mv = o => ({ nombre: o.e[0], precioTxt: this.f2(o.d.regular), cambioTxt: Math.abs(o.d.d7) < 0.005 ? "s/c" : (o.d.d7 >= 0 ? "+" : "") + o.d.d7.toFixed(2) });
+    const ph = [{ nombre: "consultando…", precioTxt: "", cambioTxt: "" }];
+    return {
+      feed, actual,
+      tickerItems: tick.concat(tick),
+      procesados: this.state.procesados ? this.state.procesados.toLocaleString("en-US") : "…",
+      lat: this.state.lat ? this.state.lat + " ms" : "—",
+      corteHora: this.state.corteHora,
+      estados, sel,
+      subidas: conDelta.length ? conDelta.slice(0, 4).map(mv) : ph,
+      bajadas: conDelta.length ? conDelta.slice(-4).reverse().map(mv) : ph,
+      qProds: ["regular", "premium", "diesel"].map(p => ({
+        t: this.qNombreProd(p),
+        bg: this.state.qProd === p ? "#0E2A47" : "#FFFFFF", fg: this.state.qProd === p ? "#FFFFFF" : "#0E2A47", bd: this.state.qProd === p ? "#0E2A47" : "#DCE3EB",
+        pick: () => this.setState({ qProd: p })
+      })),
+      qNiveles: [["estado", "Estado"], ["municipio", "Municipio"], ["cp", "Código Postal"], ["estacion", "Estación 🔒"]].map(([k, t]) => ({
+        t,
+        bg: this.state.qNivel === k ? "#0E2A47" : "#FFFFFF", fg: this.state.qNivel === k ? "#FFFFFF" : (k === "estacion" ? "#8B99A6" : "#0E2A47"), bd: this.state.qNivel === k ? "#0E2A47" : "#DCE3EB",
+        pick: () => { this.setState({ qNivel: k }); if (k === "municipio" && !this.state.qMunis.length) this.qCargarMunis(this.state.qEstado); }
+      })),
+      qEstados: this.estadosData.map(e => ({ v: (this.R.est[e[1]] && this.R.est[e[1]].apiName) || e[0], t: e[0] })).sort((a, b) => a.t.localeCompare(b.t)),
+      qMunis: this.state.qMunis.map(m => ({ v: m, t: m })),
+      qMuniDisplay: this.state.qNivel === "municipio" ? "block" : "none",
+      qEstadoDisplay: this.state.qNivel === "cp" ? "none" : "block",
+      qCpDisplay: this.state.qNivel === "cp" ? "block" : "none",
+      qCp: this.state.qCp,
+      qCps: [["11800", "11800 · CDMX"], ["64000", "64000 · Monterrey"], ["45640", "45640 · ZM Guadalajara"], ["27000", "27000 · Torreón"], ["22000", "22000 · Tijuana"], ["88500", "88500 · Reynosa"], ["77712", "77712 · Playa del Carmen"], ["81200", "81200 · Los Mochis"]].map(([v, t]) => ({ v, t })),
+      qOnCp: (ev) => this.setState({ qCp: ev.target.value }),
+      qEstado: this.state.qEstado, qMunicipio: this.state.qMunicipio,
+      qOnEstado: (ev) => { const v = ev.target.value; this.setState({ qEstado: v, qMunis: [], qMunicipio: "" }); if (this.state.qNivel === "municipio") this.qCargarMunis(v); },
+      qOnMunicipio: (ev) => this.setState({ qMunicipio: ev.target.value }),
+      qEnviar: () => this.qEjecutar(),
+      qPath: this.qPathActual(),
+      qRespLineas: this.qLineas(this.state.qResp), qCargandoDisplay: this.state.qCargando ? "block" : "none", qListoDisplay: this.state.qCargando ? "none" : "block", qStatus: this.state.qStatus, qExplica: this.state.qExplica,
+      tCaro: this.tzStat("caro"), tBarato: this.tzStat("barato"), tMov: this.tzStat("mov"),
+      fechaHoy: new Date().toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "America/Mexico_City" })
+    };
   }
 }
 
-/* Chip de antigüedad v1.1 §C (relativo <6h, luego hora absoluta) */
-function antiguedadDe(updatedAt){
-  if(!updatedAt) return "Actualizado hoy";
-  const then=new Date(updatedAt.replace(" ","T")+(updatedAt.includes("Z")?"":"Z"));
-  const mins=Math.max(0,Math.round((Date.now()-then)/60000));
-  if(mins<60) return `Actualizado hace ${mins} min`;
-  const h=Math.round(mins/60);
-  if(h<6) return `Actualizado hace ${h} h`;
-  const esHoy=then.toLocaleDateString("en-CA",{timeZone:TZ})===new Date().toLocaleDateString("en-CA",{timeZone:TZ});
-  const hora=then.toLocaleTimeString("es-MX",{hour:"numeric",minute:"2-digit",hour12:true,timeZone:TZ});
-  return esHoy?`Actualizado hoy, ${hora}`:"Actualizado ayer";
-}
-
-/* Hora del último corte para el indicador "En vivo" (ej. "2:00 p.m.") */
-function horaDe(updatedAt){
-  if(!updatedAt) return "";
-  const then=new Date(updatedAt.replace(" ","T")+(updatedAt.includes("Z")?"":"Z"));
-  if(isNaN(then)) return "";
-  const hora=then.toLocaleTimeString("es-MX",{hour:"numeric",minute:"2-digit",hour12:true,timeZone:TZ});
-  const fecha=then.toLocaleDateString("es-MX",{day:"numeric",month:"short",timeZone:TZ}).replace(".","");
-  const esHoy=then.toLocaleDateString("en-CA",{timeZone:TZ})===new Date().toLocaleDateString("en-CA",{timeZone:TZ});
-  return (esHoy?"hoy ":"")+fecha+", "+hora;
-}
-
-function setMercado(tipo){
-  const sel=$("sel-estado"),selM=$("sel-municipio");
-  $("chip-nacional").setAttribute("aria-pressed",String(tipo==="nacional"));
-  $("chip-estado").setAttribute("aria-pressed",String(tipo==="estado"));
-  if(tipo==="estado"){
-    sel.hidden=false;
-    mercado={tipo:"estado",valor:sel.value||"Jalisco"};
-    cargarMunicipios(mercado.valor);
-  }else{
-    sel.hidden=true;selM.hidden=true;
-    mercado={tipo:"nacional",valor:"all"};
-  }
-  cargar();
-}
-/* Cascada estado → municipio (los nombres de municipio se repiten entre
-   estados, por eso la llave del mercado es "Estado|Municipio") */
-async function cargarMunicipios(estado){
-  const selM=$("sel-municipio");
-  selM.hidden=true;selM.innerHTML="";
-  try{
-    const r=await fetch(`${API}/municipios?estado=${encodeURIComponent(estado)}`).then(r=>r.json());
-    if(Array.isArray(r)&&r.length){
-      selM.innerHTML=`<option value="">Todo el estado</option>`+
-        r.map(m=>`<option value="${m.municipio.replace(/"/g,"&quot;")}">${m.municipio} (${m.estaciones})</option>`).join("");
-      selM.hidden=false;
-    }
-  }catch(e){/* sin lista de municipios: se queda el nivel estado, sin romper nada */}
-}
-$("sel-municipio").addEventListener("change",e=>{
-  const est=$("sel-estado").value;
-  if(e.target.value===""){mercado={tipo:"estado",valor:est};}
-  else{mercado={tipo:"municipio",valor:`${est}|${e.target.value}`};}
-  cargar();
-});
-async function cargarEstados(){
-  const sel=$("sel-estado");
-  const fallback=["Aguascalientes","Baja California","CDMX","Chihuahua","Guanajuato","Jalisco","Nuevo León","Puebla","Querétaro","Veracruz"];
-  try{
-    const r=await fetch(`${API}/estados`).then(r=>r.json());
-    sel.innerHTML=(Array.isArray(r)&&r.length?r.map(e=>e.estado):fallback).map(e=>`<option>${e}</option>`).join("");
-  }catch(e){sel.innerHTML=fallback.map(e=>`<option>${e}</option>`).join("");}
-}
-$("sel-estado").addEventListener("change",e=>{mercado={tipo:"estado",valor:e.target.value};cargarMunicipios(e.target.value);cargar();});
-document.querySelectorAll("[data-f]").forEach(b=>b.addEventListener("click",()=>{fuel=b.dataset.f;if(DATA)render();}));
-cargarEstados();cargar();
 </script>
 </body>
 </html>
