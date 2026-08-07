@@ -162,7 +162,7 @@ console.log(await r.json());</pre></div>
   <h2 id="convenciones">Convenciones</h2>
   <ul>
     <li><b>Números como texto.</b> Los precios llegan como strings con 4 decimales (<span class="mono">"23.9295"</span>) para no perder precisión. Conviértelos a decimal en tu sistema; para mostrar, redondea a 2.</li>
-    <li><b><span class="mono">updated_at</span> en cada respuesta.</b> Timestamp UTC (ISO 8601) del último cálculo. La base se actualiza con 2 cortes al día (6 AM y 2 PM, hora de México) a partir de la publicación de la CNE — verificable en <span class="mono">updated_at</span>.</li>
+    <li><b><span class="mono">updated_at</span> en cada respuesta.</b> Timestamp UTC (ISO 8601) del último cálculo. La base se actualiza con 7 cortes al día (entre 6:30 y 20:30 h, hora de México) a partir de la publicación de la CNE — verificable en <span class="mono">updated_at</span>.</li>
     <li><b>Fechas de negocio en hora de México.</b> El corte <span class="mono">days=1</span> corresponde al último día con datos publicados (zona America/Mexico_City), no al día UTC.</li>
     <li><b>Niveles geográficos.</b> <span class="mono">nacional</span> · <span class="mono">estado</span> · <span class="mono">municipio</span> (llave compuesta <span class="mono">Estado|Municipio</span>, la barra se codifica <span class="mono">%7C</span>) · código postal y estación individual disponibles por contrato.</li>
     <li><b>Nombres insensibles a mayúsculas.</b> <span class="mono">value=jalisco</span> y <span class="mono">value=Jalisco</span> son equivalentes.</li>
@@ -276,8 +276,8 @@ console.log(await r.json());</pre></div>
   <h2 id="cache">Caché</h2>
   <ul>
     <li>Los <b>GET</b> responden con <span class="mono">Cache-Control: public, max-age=300, s-maxage=300</span> — la respuesta puede servirse desde el borde (CDN) o tu navegador hasta <b>5 minutos</b>.</li>
-    <li>Como la base se actualiza con 2 cortes al día, esos 5 minutos <b>no afectan la frescura práctica del dato</b>. La fuente de verdad de la antigüedad es siempre <span class="mono">updated_at</span>, no la hora de la respuesta.</li>
-    <li>Recomendación: si tu sistema consulta con alta frecuencia, cachea de tu lado por mercado y refresca tras los cortes (6 AM y 2 PM, hora de México).</li>
+    <li>Como la base se actualiza con 7 cortes al día, esos 5 minutos <b>no afectan la frescura práctica del dato</b>. La fuente de verdad de la antigüedad es siempre <span class="mono">updated_at</span>, no la hora de la respuesta.</li>
+    <li>Recomendación: si tu sistema consulta con alta frecuencia, cachea de tu lado por mercado y refresca tras los cortes (7 al día, entre 6:30 y 20:30 h, hora de México).</li>
     <li>Las peticiones que no son GET responden <span class="mono">Cache-Control: no-store</span>.</li>
   </ul>
 

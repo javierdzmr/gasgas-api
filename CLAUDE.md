@@ -189,7 +189,7 @@ Health check. Responde `{ status: 'ok' }`.
 | Nombre | Script | Schedule (UTC) | Hora México | Función |
 |---|---|---|---|---|
 | update-precios-historico | updateHistoricos.js | `50 11 * * *` | 5:50 AM | Stats históricos legacy — corre primero |
-| update-precios-agregados | updateAgregados.js | `0 12,20 * * *` | 6:00 AM y 2:00 PM | Crea tablas si no existen + recalcula promedios |
+| update-precios-agregados | updateAgregados.js | `30 2,12,16,18,20,22,23 * * *` | 7 cortes: 6:30, 10:30, 12:30, 14:30, 16:30, 17:30 y 20:30 (hora MX) | Crea tablas si no existen + recalcula promedios (7 Ago 2026) |
 | update-historicos-daily | updateHistoricosDaily.js | 4x al día (8,14,20,2 UTC) | — | Crea tabla + auto-rebuild si vacía + inserta día |
 
 **Lógica de orden:** `update-precios-historico` corre 10 minutos antes que `update-precios-agregados` para que aunque el legacy corrompa algo, el agregados lo limpia inmediatamente después.
