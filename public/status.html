@@ -68,6 +68,15 @@ main{max-width:900px;margin:0 auto;padding:22px 18px 40px;display:none}
   <div class="resumen"><span id="resumen-txt">consultando…</span><button id="btn-ref">Actualizar ahora</button></div>
   <div class="card" id="c-clara"><span class="foco duda"></span><div class="info"><div class="nombre">API de Clara <span class="mono" style="font-size:11px;color:rgba(255,255,255,.4)">precios-por-cp</span></div><div class="det">—</div></div><span class="lat"></span></div>
   <div class="card" id="c-cobee"><span class="foco duda"></span><div class="info"><div class="nombre">API de cobee <span class="mono" style="font-size:11px;color:rgba(255,255,255,.4)">daily-average-price</span></div><div class="det">—</div></div><span class="lat"></span></div>
+
+  <div class="card" id="c-usoclientes" style="align-items:flex-start">
+    <span class="foco ok" style="margin-top:4px"></span>
+    <div class="info">
+      <div class="nombre">Consultas de clientes · últimas 24 h</div>
+      <div class="det" id="uc-det">midiendo…</div>
+      <div class="det" id="uc-lista" style="margin-top:8px;line-height:1.8"></div>
+    </div>
+  </div>
   <div class="card" id="c-seed"><span class="foco duda"></span><div class="info"><div class="nombre">Último seed de precios</div><div class="det">—</div></div><span class="gran" id="seed-gran"></span></div>
   <div class="card" id="c-cortes"><span class="foco duda"></span><div class="info"><div class="nombre">Cortes de promedios <span class="mono" style="font-size:11px;color:rgba(255,255,255,.4)">7 al día</span></div><div class="det">—</div></div><span class="gran" id="cortes-gran"></span></div>
   <div class="card" id="c-publica"><span class="foco duda"></span><div class="info"><div class="nombre">API pública <span class="mono" style="font-size:11px;color:rgba(255,255,255,.4)">api.gasgas.com.mx</span></div><div class="det">—</div></div><span class="lat"></span></div>
@@ -118,6 +127,21 @@ async function cargar(){
     pinta("c-cortes", j.cortes, j.cortes && j.cortes.ultimo ? ("último corte: " + horaMX(j.cortes.ultimo) + " · hace " + j.cortes.horas + " h") : null,
       chk => { $("cortes-gran").textContent = chk && chk.ok ? "al día" : "atrasado"; $("cortes-gran").style.color = chk && chk.ok ? "#00A94F" : "#E05656"; });
     pinta("c-publica", j.publica);
+    if (j.usoClientes) {
+      const u = j.usoClientes;
+      const foco = $("c-usoclientes").querySelector(".foco");
+      if (u.disponible) {
+        foco.className = "foco ok";
+        $("uc-det").textContent = "ventana medida: " + u.ventana_horas + " h · contadas directamente en la base de datos";
+        $("uc-lista").innerHTML =
+          '<span style="color:rgba(255,255,255,.8)">Clara</span> · <b style="color:#fff">' + Number(u.clara).toLocaleString("en-US") + '</b> consultas<br>' +
+          '<span style="color:rgba(255,255,255,.8)">cobee</span> · <b style="color:#fff">' + Number(u.cobee).toLocaleString("en-US") + '</b> consultas';
+      } else {
+        foco.className = "foco duda";
+        $("uc-det").textContent = u.motivo || "no disponible";
+        $("uc-lista").textContent = "";
+      }
+    }
     if (j.uso) {
       $("uso-gran").textContent = Number(j.uso.total24h || 0).toLocaleString("en-US");
       $("uso-gran").style.color = "#00A94F";

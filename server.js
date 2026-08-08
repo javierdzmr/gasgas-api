@@ -622,6 +622,48 @@ app.post("/api/status/login", (req, res) => {
   res.json({ ok: true });
 });
 
+// 📈 Uso de Clara y cobee: se miden con las estadísticas de Postgres (pg_stat_statements),
+//    que cuentan cada consulta aunque el tráfico no pase por este servidor.
+//    Como son contadores acumulados, tomamos fotos cada 10 min y restamos para la ventana de 24 h.
+const SQL_USO_CLIENTES = `
+  SELECT
+    COALESCE(SUM(calls) FILTER (WHERE query ILIKE '%gs.cp AS cp%'),0)::bigint AS clara,
+    COALESCE(SUM(calls) FILTER (WHERE query ILIKE '%AS state%' AND query ILIKE '%average_price%'),0)::bigint AS cobee
+  FROM pg_stat_statements`;
+const fotosUso = []; // [{ t, clara, cobee }]
+let usoDisponible = null; // null = sin probar, false = sin permisos
+
+async function tomarFotoUso() {
+  try {
+    const q = await pool.query(SQL_USO_CLIENTES);
+    const r = q.rows[0] || {};
+    fotosUso.push({ t: Date.now(), clara: Number(r.clara || 0), cobee: Number(r.cobee || 0) });
+    const corte = Date.now() - 25 * 3600000;
+    while (fotosUso.length && fotosUso[0].t < corte) fotosUso.shift();
+    usoDisponible = true;
+  } catch (e) {
+    usoDisponible = false; // p. ej. sin permiso para leer pg_stat_statements
+  }
+}
+tomarFotoUso();
+setInterval(tomarFotoUso, 10 * 60000);
+
+function usoClientes24h() {
+  if (usoDisponible === false) return { disponible: false, motivo: "Sin acceso a las estadísticas de Postgres" };
+  if (fotosUso.length < 2) return { disponible: false, motivo: "Midiendo… (la primera lectura toma unos minutos)" };
+  const ahora = fotosUso[fotosUso.length - 1];
+  const corte = Date.now() - 24 * 3600000;
+  const base = fotosUso.find(f => f.t >= corte) || fotosUso[0];
+  const horas = Math.max(0.1, (ahora.t - base.t) / 3600000);
+  const dif = (k) => Math.max(0, ahora[k] - base[k]);
+  return {
+    disponible: true,
+    ventana_horas: Math.round(horas * 10) / 10,
+    clara: dif("clara"),
+    cobee: dif("cobee")
+  };
+}
+
 const stMide = async (fn) => { const t0 = Date.now(); try { const r = await fn(); return Object.assign({ ms: Date.now() - t0 }, r); } catch (e) { return { ok: false, ms: Date.now() - t0, detalle: String(e && e.message || e).slice(0, 140) }; } };
 const stTimeout = (ms) => { const c = new AbortController(); setTimeout(() => c.abort(), ms); return c.signal; };
 const stFechaMX = (offsetDias) => new Date(Date.now() - (offsetDias || 0) * 86400000).toLocaleDateString("en-CA", { timeZone: "America/Mexico_City" });
@@ -699,7 +741,8 @@ app.get("/api/status/checks", async (req, res) => {
       .map(([ruta, arr]) => ({ ruta, n: arr.filter(t => t >= corte24).length }))
       .filter(x => x.n > 0).sort((a, b) => b.n - a.n).slice(0, 5);
     const uso = { total24h: usoApi.filter(t => t >= corte24).length, top, desde: procesoDesde };
-    res.json({ generado: new Date().toISOString(), clara, cobee, seed, cortes, publica, uso });
+    const usoClientes = usoClientes24h();
+    res.json({ generado: new Date().toISOString(), clara, cobee, seed, cortes, publica, uso, usoClientes });
   } catch (err) {
     console.error("ERROR /status/checks:", err);
     res.status(500).json({ error: "Error corriendo los checks" });
