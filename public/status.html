@@ -113,7 +113,7 @@ async function cargar(){
     const j = await r.json();
     pinta("c-clara", j.clara);
     pinta("c-cobee", j.cobee);
-    pinta("c-seed", j.seed, j.seed && j.seed.ultimo ? ("último lote: " + horaMX(j.seed.ultimo) + " · hace " + j.seed.horas + " h · " + Number(j.seed.precios||0).toLocaleString("en-US") + " precios de " + Number(j.seed.estaciones||0).toLocaleString("en-US") + " estaciones") : null,
+    pinta("c-seed", j.seed, j.seed && j.seed.fecha_lote ? ("datos fechados " + j.seed.fecha_lote + " (" + j.seed.cuando + ") · " + Number(j.seed.precios||0).toLocaleString("en-US") + " precios de " + Number(j.seed.estaciones||0).toLocaleString("en-US") + " estaciones") : null,
       chk => { $("seed-gran").textContent = chk && chk.ok ? "al día" : "revisar"; $("seed-gran").style.color = chk && chk.ok ? "#00A94F" : "#E05656"; });
     pinta("c-cortes", j.cortes, j.cortes && j.cortes.ultimo ? ("último corte: " + horaMX(j.cortes.ultimo) + " · hace " + j.cortes.horas + " h") : null,
       chk => { $("cortes-gran").textContent = chk && chk.ok ? "al día" : "atrasado"; $("cortes-gran").style.color = chk && chk.ok ? "#00A94F" : "#E05656"; });

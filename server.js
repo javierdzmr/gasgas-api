@@ -657,17 +657,27 @@ app.get("/api/status/checks", async (req, res) => {
         return { ok: n > 0, registros: n, detalle: n > 0 ? n + " registros para " + stFechaMX(1) : "sin registros para " + stFechaMX(1) };
       }),
       // 3) Último seed de precios a la base
+      //    Los lotes se marcan con la FECHA DEL DATO (medianoche UTC), no con la hora de carga:
+      //    por eso la frescura se mide comparando esa fecha contra el día de hoy en México.
       stMide(async () => {
         const q = await pool.query(`
-          SELECT MAX(date) AS ultimo,
-                 (SELECT (COUNT(regular)+COUNT(premium)+COUNT(diesel))::int FROM prices
-                   WHERE date::date = (SELECT MAX(date::date) FROM prices)) AS precios,
-                 (SELECT COUNT(*)::int FROM prices
-                   WHERE date::date = (SELECT MAX(date::date) FROM prices)) AS estaciones
-          FROM prices`);
+          WITH ult AS (SELECT MAX(date::date) AS d FROM prices)
+          SELECT (SELECT d FROM ult)::text AS fecha_lote,
+                 (CURRENT_DATE AT TIME ZONE 'UTC' AT TIME ZONE 'America/Mexico_City')::date::text AS hoy_mx,
+                 ((SELECT CURRENT_DATE) - (SELECT d FROM ult))::int AS dias_atras,
+                 (SELECT (COUNT(regular)+COUNT(premium)+COUNT(diesel))::int FROM prices WHERE date::date = (SELECT d FROM ult)) AS precios,
+                 (SELECT COUNT(*)::int FROM prices WHERE date::date = (SELECT d FROM ult)) AS estaciones`);
         const row = q.rows[0] || {};
-        const horas = row.ultimo ? (Date.now() - new Date(row.ultimo).getTime()) / 3600000 : 999;
-        return { ok: horas < 26, ultimo: row.ultimo, precios: row.precios, estaciones: row.estaciones, horas: Math.round(horas * 10) / 10 };
+        const hoyMX = new Date().toLocaleDateString("en-CA", { timeZone: "America/Mexico_City" });
+        const ayerMX = new Date(Date.now() - 86400000).toLocaleDateString("en-CA", { timeZone: "America/Mexico_City" });
+        const f = row.fecha_lote;
+        const esHoy = f === hoyMX, esAyer = f === ayerMX;
+        return {
+          ok: esHoy || esAyer,
+          fecha_lote: f,
+          cuando: esHoy ? "hoy" : (esAyer ? "ayer" : "hace " + (row.dias_atras || "?") + " días"),
+          precios: row.precios, estaciones: row.estaciones
+        };
       }),
       // 4) Cortes de promedios (updateAgregados, 7 al día)
       stMide(async () => {
