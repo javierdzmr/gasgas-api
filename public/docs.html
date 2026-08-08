@@ -285,7 +285,7 @@ console.log(await r.json());</pre></div>
   <ul>
     <li><b>TLS obligatorio.</b> Toda la API se sirve sobre HTTPS; las peticiones HTTP se redirigen.</li>
     <li><b>Llaves por cliente.</b> Los contratos operan con API key propia (encabezado <span class="mono">x-api-key</span>), rotable a solicitud sin costo. Nunca compartas tu llave en código del lado del cliente (navegador o apps móviles); llámanos desde tu backend.</li>
-    <li><b>Sin datos personales.</b> La API sirve exclusivamente datos públicos agregados de precios de combustible — no maneja PII, por lo que integrarte no agrega superficie de riesgo de privacidad a tu sistema.</li>
+    <li><b>Sin datos personales.</b> La API sirve exclusivamente precios de combustible agregados — no maneja PII, por lo que integrarte no agrega superficie de riesgo de privacidad a tu sistema.</li>
     <li><b>Retención.</b> El histórico se conserva de forma continua desde mayo 2024; los agregados publicados no se reescriben tras su corte.</li>
   </ul>
 
