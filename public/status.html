@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>GasGas · Status interno</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Figtree',sans-serif;background:#081B30;color:#fff;-webkit-font-smoothing:antialiased;min-height:100vh}
+.mono{font-family:'JetBrains Mono',monospace}
+@keyframes ggPulse{0%,100%{opacity:1}50%{opacity:.35}}
+.top{height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;border-bottom:1px solid rgba(255,255,255,.1)}
+.lockup{display:flex;align-items:center;gap:10px}
+.pill{background:#fff;color:#0E2A47;font-weight:800;font-size:13px;border-radius:999px;padding:4px 11px}
+.wm{font-weight:700;font-size:15px}
+.wm small{color:rgba(255,255,255,.45);font-weight:400}
+#reloj{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:rgba(255,255,255,.7)}
+/* PIN */
+#gate{position:fixed;inset:0;background:#081B30;display:flex;align-items:center;justify-content:center;z-index:50;padding:20px}
+.gate-card{background:#0E2A47;border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:36px 32px;width:100%;max-width:380px;text-align:center}
+.gate-card h1{font-size:20px;font-weight:800;margin:14px 0 6px}
+.gate-card p{font-size:13.5px;color:rgba(255,255,255,.55);margin-bottom:22px}
+#pin{width:100%;height:54px;background:#081B30;border:1px solid rgba(255,255,255,.2);border-radius:10px;color:#fff;font-family:'JetBrains Mono',monospace;font-size:24px;letter-spacing:.35em;text-align:center;outline:none}
+#pin:focus{border-color:#00A94F}
+#gate-btn{width:100%;margin-top:14px;background:#00A94F;color:#fff;border:none;border-radius:10px;padding:14px;font-family:'Figtree',sans-serif;font-size:15px;font-weight:700;cursor:pointer}
+#gate-btn:hover{background:#007A39}
+#gate-err{margin-top:12px;font-size:13px;color:#FF6B6B;min-height:18px}
+/* Tablero */
+main{max-width:900px;margin:0 auto;padding:22px 18px 40px;display:none}
+.resumen{display:flex;align-items:center;gap:10px;margin:6px 0 18px;font-family:'JetBrains Mono',monospace;font-size:12.5px;color:rgba(255,255,255,.6)}
+.card{background:#0E2A47;border:1px solid rgba(255,255,255,.09);border-radius:12px;padding:18px 20px;margin-bottom:12px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.foco{width:14px;height:14px;border-radius:50%;flex:none}
+.foco.ok{background:#00A94F;box-shadow:0 0 12px rgba(0,169,79,.7)}
+.foco.mal{background:#E05656;box-shadow:0 0 12px rgba(224,86,86,.7);animation:ggPulse 1.2s infinite}
+.foco.duda{background:#E8C36A}
+.card .info{flex:1;min-width:200px}
+.card .nombre{font-size:16px;font-weight:700}
+.card .det{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:rgba(255,255,255,.55);margin-top:4px}
+.card .lat{font-family:'JetBrains Mono',monospace;font-size:12px;color:rgba(255,255,255,.4);flex:none}
+.gran{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:600;flex:none}
+.footer{text-align:center;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:rgba(255,255,255,.35);margin-top:18px}
+#btn-ref{background:transparent;border:1px solid rgba(255,255,255,.25);color:rgba(255,255,255,.8);border-radius:8px;padding:7px 14px;font-family:'Figtree',sans-serif;font-size:13px;font-weight:600;cursor:pointer;margin-left:auto}
+#btn-ref:hover{border-color:#00A94F;color:#fff}
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <div class="gate-card">
+    <span class="pill">GG</span>
+    <h1>Status interno GasGas</h1>
+    <p>Acceso restringido. Escribe el PIN.</p>
+    <input id="pin" type="password" inputmode="numeric" autocomplete="off" autofocus>
+    <button id="gate-btn">Entrar</button>
+    <div id="gate-err"></div>
+  </div>
+</div>
+
+<header class="top">
+  <span class="lockup"><span class="pill">GG</span><span class="wm">GasGas <small>· status interno</small></span></span>
+  <span id="reloj" class="mono"></span>
+</header>
+
+<main id="tablero">
+  <div class="resumen"><span id="resumen-txt">consultando…</span><button id="btn-ref">Actualizar ahora</button></div>
+  <div class="card" id="c-clara"><span class="foco duda"></span><div class="info"><div class="nombre">API de Clara <span class="mono" style="font-size:11px;color:rgba(255,255,255,.4)">precios-por-cp</span></div><div class="det">—</div></div><span class="lat"></span></div>
+  <div class="card" id="c-cobee"><span class="foco duda"></span><div class="info"><div class="nombre">API de cobee <span class="mono" style="font-size:11px;color:rgba(255,255,255,.4)">daily-average-price</span></div><div class="det">—</div></div><span class="lat"></span></div>
+  <div class="card" id="c-seed"><span class="foco duda"></span><div class="info"><div class="nombre">Último seed de precios</div><div class="det">—</div></div><span class="gran" id="seed-gran"></span></div>
+  <div class="card" id="c-cortes"><span class="foco duda"></span><div class="info"><div class="nombre">Cortes de promedios <span class="mono" style="font-size:11px;color:rgba(255,255,255,.4)">7 al día</span></div><div class="det">—</div></div><span class="gran" id="cortes-gran"></span></div>
+  <div class="card" id="c-publica"><span class="foco duda"></span><div class="info"><div class="nombre">API pública <span class="mono" style="font-size:11px;color:rgba(255,255,255,.4)">api.gasgas.com.mx</span></div><div class="det">—</div></div><span class="lat"></span></div>
+  <div class="footer" id="pie">se actualiza solo cada 60 segundos</div>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+function reloj(){ $("reloj").textContent = new Date().toLocaleDateString("es-MX",{day:"2-digit",month:"short"}) + " · " + new Date().toLocaleTimeString("es-MX",{hour12:false}); }
+reloj(); setInterval(reloj, 1000);
+
+function horaMX(iso){
+  try{ const d=new Date(iso); if(isNaN(d)) return "—";
+    return d.toLocaleString("es-MX",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit",hour12:false,timeZone:"America/Mexico_City"}).replace(".","");
+  }catch(e){ return "—"; }
+}
+function pinta(id, chk, texto, extra){
+  const card=$(id);
+  const foco=card.querySelector(".foco");
+  foco.className = "foco " + (chk ? (chk.ok ? "ok" : "mal") : "duda");
+  card.querySelector(".det").textContent = texto || (chk && chk.detalle) || "—";
+  const lat=card.querySelector(".lat");
+  if(lat && chk && chk.ms != null) lat.textContent = chk.ms + " ms";
+  if(extra) extra(chk);
+}
+async function cargar(){
+  $("resumen-txt").textContent = "consultando…";
+  try{
+    const r = await fetch("/api/status/checks");
+    if(r.status === 401){ $("gate").style.display="flex"; $("tablero").style.display="none"; return; }
+    const j = await r.json();
+    pinta("c-clara", j.clara);
+    pinta("c-cobee", j.cobee);
+    pinta("c-seed", j.seed, j.seed && j.seed.ultimo ? ("último lote: " + horaMX(j.seed.ultimo) + " · hace " + j.seed.horas + " h · " + Number(j.seed.precios||0).toLocaleString("en-US") + " precios de " + Number(j.seed.estaciones||0).toLocaleString("en-US") + " estaciones") : null,
+      chk => { $("seed-gran").textContent = chk && chk.ok ? "al día" : "revisar"; $("seed-gran").style.color = chk && chk.ok ? "#00A94F" : "#E05656"; });
+    pinta("c-cortes", j.cortes, j.cortes && j.cortes.ultimo ? ("último corte: " + horaMX(j.cortes.ultimo) + " · hace " + j.cortes.horas + " h") : null,
+      chk => { $("cortes-gran").textContent = chk && chk.ok ? "al día" : "atrasado"; $("cortes-gran").style.color = chk && chk.ok ? "#00A94F" : "#E05656"; });
+    pinta("c-publica", j.publica);
+    const todos = [j.clara, j.cobee, j.seed, j.cortes, j.publica];
+    const malos = todos.filter(x => !(x && x.ok)).length;
+    $("resumen-txt").textContent = malos === 0 ? "● todos los sistemas en verde" : ("● " + malos + " sistema(s) requieren atención");
+    $("resumen-txt").style.color = malos === 0 ? "#00A94F" : "#E05656";
+    $("pie").textContent = "generado " + horaMX(j.generado) + " · se actualiza solo cada 60 segundos";
+  }catch(e){
+    $("resumen-txt").textContent = "sin conexión con el servidor";
+    $("resumen-txt").style.color = "#E05656";
+  }
+}
+async function entrar(){
+  $("gate-err").textContent = "";
+  try{
+    const r = await fetch("/api/status/login", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ pin: $("pin").value }) });
+    const j = await r.json().catch(() => ({}));
+    if(r.ok){ $("gate").style.display="none"; $("tablero").style.display="block"; cargar(); }
+    else { $("gate-err").textContent = j.error || "PIN incorrecto"; $("pin").value=""; $("pin").focus(); }
+  }catch(e){ $("gate-err").textContent = "Sin conexión. Intenta de nuevo."; }
+}
+$("gate-btn").addEventListener("click", entrar);
+$("pin").addEventListener("keydown", e => { if(e.key === "Enter") entrar(); });
+$("btn-ref").addEventListener("click", cargar);
+setInterval(() => { if($("tablero").style.display !== "none") cargar(); }, 60000);
+/* Si ya hay cookie válida, entra directo */
+fetch("/api/status/checks").then(r => { if(r.ok){ $("gate").style.display="none"; $("tablero").style.display="block"; cargar(); } });
+</script>
+</body>
+</html>

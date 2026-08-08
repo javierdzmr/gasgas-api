@@ -39,6 +39,15 @@ app.use('/api', (req, res, next) => {
   next();
 });
 
+// 🔒 status.gasgas.com.mx entrega directamente la página de status (con su PIN)
+app.use((req, res, next) => {
+  if ((req.hostname || "").startsWith("status.") && req.path === "/") {
+    res.set("Cache-Control", "no-store");
+    return res.sendFile(require("path").join(__dirname, "public", "status.html"));
+  }
+  next();
+});
+
 // 📄 Servir el dashboard desde public/ (gasgas-api-dev.onrender.com)
 app.use(express.static('public', { extensions: ['html'] }));
 
@@ -554,6 +563,110 @@ app.get("/api/demo/cp", async (req, res) => {
   } catch (err) {
     console.error("ERROR /demo/cp:", err);
     res.status(500).json({ error: "Error obteniendo demo de CP" });
+  }
+});
+
+// ==============================
+// 🔒 STATUS PRIVADO (status.gasgas.com.mx / /status) — solo con PIN
+//    - PIN en variable de entorno STATUS_PIN (nunca en el código)
+//    - Cookie firmada (hash del PIN) para no teclearlo a cada rato
+//    - Máx 10 intentos de PIN por IP cada 15 min
+//    - Checks corren en el SERVIDOR: las llaves de Clara/cobee jamás llegan al navegador
+// ==============================
+const crypto = require("crypto");
+const statusIntentos = new Map();
+
+function statusToken() {
+  return crypto.createHash("sha256").update("gasgas-status-v1|" + (process.env.STATUS_PIN || "")).digest("hex");
+}
+function statusAutorizado(req) {
+  if (!process.env.STATUS_PIN) return false;
+  const m = (req.headers.cookie || "").match(/gg_status=([a-f0-9]{64})/);
+  return !!m && m[1] === statusToken();
+}
+
+app.post("/api/status/login", (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const ip = (req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.socket.remoteAddress || "?";
+  const ahora = Date.now();
+  let reg = statusIntentos.get(ip);
+  if (!reg || ahora > reg.reset) { reg = { n: 0, reset: ahora + 15 * 60000 }; statusIntentos.set(ip, reg); }
+  reg.n++;
+  if (reg.n > 10) return res.status(429).json({ error: "Demasiados intentos. Espera 15 minutos." });
+  if (!process.env.STATUS_PIN) return res.status(503).json({ error: "Falta configurar STATUS_PIN en Render → Environment" });
+  if (String((req.body && req.body.pin) || "") !== process.env.STATUS_PIN) {
+    return res.status(401).json({ error: "PIN incorrecto" });
+  }
+  statusIntentos.delete(ip);
+  res.set("Set-Cookie", "gg_status=" + statusToken() + "; Path=/; Max-Age=2592000; HttpOnly; Secure; SameSite=Lax");
+  res.json({ ok: true });
+});
+
+const stMide = async (fn) => { const t0 = Date.now(); try { const r = await fn(); return Object.assign({ ms: Date.now() - t0 }, r); } catch (e) { return { ok: false, ms: Date.now() - t0, detalle: String(e && e.message || e).slice(0, 140) }; } };
+const stTimeout = (ms) => { const c = new AbortController(); setTimeout(() => c.abort(), ms); return c.signal; };
+const stFechaMX = (offsetDias) => new Date(Date.now() - (offsetDias || 0) * 86400000).toLocaleDateString("en-CA", { timeZone: "America/Mexico_City" });
+
+app.get("/api/status/checks", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  if (!statusAutorizado(req)) return res.status(401).json({ error: "PIN requerido" });
+  try {
+    const [clara, cobee, seed, cortes, publica] = await Promise.all([
+      // 1) API de Clara: consulta real por CP con la llave del entorno
+      stMide(async () => {
+        const r = await fetch("https://clara.gasgas.app/api/precios-por-cp/99600?v=2", {
+          headers: process.env.CLARA_API_KEY ? { "x-api-key": process.env.CLARA_API_KEY } : {},
+          signal: stTimeout(8000)
+        });
+        if (!r.ok) return { ok: false, detalle: "HTTP " + r.status };
+        const j = await r.json();
+        const fresca = !!(j && j.fecha && j.fecha >= stFechaMX(1));
+        const conPrecios = !!(j && j.precios && j.precios.regular);
+        return { ok: conPrecios && fresca, fecha: j && j.fecha, detalle: conPrecios ? (fresca ? "responde con dato de " + j.fecha : "responde, pero con dato viejo (" + (j && j.fecha) + ")") : "responde sin precios" };
+      }),
+      // 2) API de cobee: promedio diario de ayer (siempre debe existir)
+      stMide(async () => {
+        const r = await fetch("https://cobee.gasgas.app/api/daily-average-price", {
+          method: "POST",
+          headers: Object.assign({ "Content-Type": "application/json" }, process.env.COBEE_API_KEY ? { "x-api-key": process.env.COBEE_API_KEY } : {}),
+          body: JSON.stringify({ date: stFechaMX(1) }),
+          signal: stTimeout(8000)
+        });
+        if (!r.ok) return { ok: false, detalle: "HTTP " + r.status };
+        const j = await r.json();
+        const n = j && Array.isArray(j.data) ? j.data.length : 0;
+        return { ok: n > 0, registros: n, detalle: n > 0 ? n + " registros para " + stFechaMX(1) : "sin registros para " + stFechaMX(1) };
+      }),
+      // 3) Último seed de precios a la base
+      stMide(async () => {
+        const q = await pool.query(`
+          SELECT MAX(date) AS ultimo,
+                 (SELECT (COUNT(regular)+COUNT(premium)+COUNT(diesel))::int FROM prices
+                   WHERE date::date = (SELECT MAX(date::date) FROM prices)) AS precios,
+                 (SELECT COUNT(*)::int FROM prices
+                   WHERE date::date = (SELECT MAX(date::date) FROM prices)) AS estaciones
+          FROM prices`);
+        const row = q.rows[0] || {};
+        const horas = row.ultimo ? (Date.now() - new Date(row.ultimo).getTime()) / 3600000 : 999;
+        return { ok: horas < 26, ultimo: row.ultimo, precios: row.precios, estaciones: row.estaciones, horas: Math.round(horas * 10) / 10 };
+      }),
+      // 4) Cortes de promedios (updateAgregados, 7 al día)
+      stMide(async () => {
+        const q = await pool.query(`SELECT MAX(updated_at) AS ultimo FROM precios_agregados`);
+        const row = q.rows[0] || {};
+        const horas = row.ultimo ? (Date.now() - new Date(row.ultimo).getTime()) / 3600000 : 999;
+        return { ok: horas < 11, ultimo: row.ultimo, horas: Math.round(horas * 10) / 10 }; // 11h cubre la pausa nocturna 20:30→6:30
+      }),
+      // 5) API pública propia
+      stMide(async () => {
+        const r = await fetch("https://api.gasgas.com.mx/api/test", { signal: stTimeout(8000) });
+        const j = r.ok ? await r.json() : null;
+        return { ok: !!(j && j.status === "ok"), detalle: r.ok ? "responde ok" : "HTTP " + r.status };
+      })
+    ]);
+    res.json({ generado: new Date().toISOString(), clara, cobee, seed, cortes, publica });
+  } catch (err) {
+    console.error("ERROR /status/checks:", err);
+    res.status(500).json({ error: "Error corriendo los checks" });
   }
 });
 
