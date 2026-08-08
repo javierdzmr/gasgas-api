@@ -145,9 +145,12 @@ async function cargar(){
         $("pros-lista").innerHTML = P.lista.map(p => {
           const usa = Number(p.llamadas || 0);
           const señal = usa > 0 ? '<span style="color:#00A94F">' + usa + ' llamadas</span>' : '<span style="color:rgba(255,255,255,.35)">sin usar la llave</span>';
+          const correo = p.correo_enviado
+            ? ''
+            : '<br><span style="color:#E8C36A">⚠ correo no enviado — mandar llave a mano: <span style="color:#fff">' + (p.api_key || '') + '</span></span>';
           const est = p.estimado_min ? ('$' + Number(p.estimado_min).toLocaleString("en-US")) : '—';
           return '<span style="color:#fff">' + (p.empresa || '—') + '</span> · ' + (p.nivel || '') + ' · ' + est + '/mes · ' + señal +
-                 '<br><span style="font-size:11px;color:rgba(255,255,255,.4)">' + (p.nombre || '') + ' · ' + (p.email || '') + ' · ' + horaMX(p.created_at) + '</span>';
+                 '<br><span style="font-size:11px;color:rgba(255,255,255,.4)">' + (p.nombre || '') + ' · ' + (p.email || '') + ' · ' + horaMX(p.created_at) + '</span>' + correo;
         }).join("<br><br>");
       }
     }

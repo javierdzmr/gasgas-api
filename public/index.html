@@ -526,28 +526,28 @@
         <div style="display: {{ w.errDisplay }}; font-size: 13.5px; color: #B91C1C; margin-top: 10px">{{ w.error }}</div>
 
         <div onClick="{{ w.enviar }}" style="margin-top: 20px; background: {{ w.btnBg }}; color: #FFFFFF; border-radius: 12px; padding: 16px; text-align: center; font-size: 17px; font-weight: 700; cursor: pointer" style-hover="background: #007A39">{{ w.btnTxt }}</div>
-        <div style="font-size: 12.5px; color: #8B99A6; margin-top: 12px; text-align: center">Llave válida 7 días · 500 consultas · niveles estado y municipio</div>
+        <div style="font-size: 12.5px; color: #8B99A6; margin-top: 12px; text-align: center">La llave llega a su correo · válida 7 días · 500 consultas</div>
         <div onClick="{{ w.atras }}" style="margin-top: 16px; font-size: 14px; color: #8B99A6; cursor: pointer; display: inline-block" style-hover="color: #0E2A47">← Volver</div>
       </div>
 
       <!-- ============ LISTO ============ -->
       <div style="display: {{ w.p4 }}; text-align: center">
-        <div style="width: 62px; height: 62px; border-radius: 50%; background: #E8F5EE; color: #007A39; font-size: 30px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 18px">✓</div>
-        <div style="font-size: 26px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.01em">Listo, {{ w.nombreCorto }} — su llave está activa</div>
-        <p style="font-size: 15.5px; color: #4C6379; margin: 0 auto 22px; max-width: 460px">Cópiela y pruébela ahora mismo. Válida 7 días con 500 consultas.</p>
+        <div style="width: 62px; height: 62px; border-radius: 50%; background: #E8F5EE; color: #007A39; font-size: 28px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 18px">✉</div>
+        <div style="font-size: 26px; font-weight: 800; margin-bottom: 10px; letter-spacing: -0.01em">Listo, {{ w.nombreCorto }} — revise su correo</div>
+        <p style="font-size: 15.5px; color: #4C6379; margin: 0 auto 8px; max-width: 480px">{{ w.envioTxt }}</p>
+        <p style="font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #0E2A47; margin: 0 auto 24px">{{ w.correoDestino }}</p>
 
-        <div style="background: #081B30; border-radius: 12px; padding: 18px 20px; display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 14px; flex-wrap: wrap">
-          <span style="font-family: 'JetBrains Mono', monospace; font-size: 13.5px; color: #7FD4A8; word-break: break-all; text-align: left">{{ w.apiKey }}</span>
-          <div onClick="{{ w.copiar }}" style="background: rgba(255,255,255,0.12); color: #FFFFFF; border-radius: 8px; padding: 9px 16px; font-size: 13.5px; font-weight: 600; cursor: pointer; flex: none" style-hover="background: rgba(255,255,255,0.22)">{{ w.copiarTxt }}</div>
-        </div>
-
-        <div style="background: #F7F9FA; border: 1px solid #E7ECF0; border-radius: 12px; padding: 16px 18px; text-align: left; margin-bottom: 26px">
-          <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.09em; color: #8B99A6; margin-bottom: 8px">PRUÉBELA AHORA</div>
-          <div style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: #0E2A47; word-break: break-all; line-height: 1.6">curl -H "x-api-key: {{ w.apiKeyCorta }}" "https://api.gasgas.com.mx/api/precios?market=estado&value=Jalisco&days=1&product=regular"</div>
+        <div style="background: #F7F9FA; border: 1px solid #E7ECF0; border-radius: 12px; padding: 18px 20px; text-align: left; margin-bottom: 24px">
+          <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.09em; color: #8B99A6; margin-bottom: 10px">EN ESE CORREO ENCONTRARÁ</div>
+          <div style="font-size: 14.5px; color: #4C6379; line-height: 1.9">
+            <b style="color:#0E2A47">Su llave</b> — válida 7 días, 500 consultas, niveles estado y municipio<br>
+            <b style="color:#0E2A47">La primera llamada</b> lista para copiar y pegar<br>
+            <b style="color:#0E2A47">La documentación</b> con la especificación y la colección de Postman
+          </div>
         </div>
 
         <a href="{{ w.waHref }}" target="_blank" style="display: block; background: #00A94F; color: #FFFFFF; border-radius: 12px; padding: 16px; font-size: 17px; font-weight: 700" style-hover="background: #007A39; color: #FFFFFF">{{ w.waTxt }}</a>
-        <p style="font-size: 13px; color: #8B99A6; margin: 14px 0 0">Le llega el resumen de lo que necesita. Ahí vemos propuesta formal, alta como proveedor y facturación.</p>
+        <p style="font-size: 13px; color: #8B99A6; margin: 14px 0 0">Lleva el resumen de lo que necesita. Ahí vemos propuesta formal, niveles de código postal o estación, alta como proveedor y facturación.</p>
       </div>
 
     </div>
@@ -567,7 +567,7 @@
 <script type="text/x-dc" data-dc-script data-props="{&quot;datoEnVivoAnimado&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Hero&quot;}}">
 class Component extends DCLogic {
   /* ── 100% datos reales de la API de GasGas; placeholders mientras carga ── */
-  state = { i: 0, procesados: 0, selEstado: "CDMX", lat: 0, feed: [], corteHora: "—", ready: 0, qProd: "regular", qEstado: "Jalisco", qNivel: "estado", qMunicipio: "", qMunis: [], qCp: "11800", qCargando: false, wPaso: 1, wNivel: "municipio", wCobertura: "nacional", wHistorico: false, wNombre: "", wEmpresa: "", wEmail: "", wWhatsapp: "", wError: "", wEnviando: false, wApiKey: "", wWaTexto: "", wWaUrl: "", wCanal: "whatsapp", wCopiado: false, qResp: "Elija sus opciones y pulse \"Enviar consulta\".", qStatus: "listo", qExplica: "Aquí traduciremos la respuesta a lenguaje de negocio." };
+  state = { i: 0, procesados: 0, selEstado: "CDMX", lat: 0, feed: [], corteHora: "—", ready: 0, qProd: "regular", qEstado: "Jalisco", qNivel: "estado", qMunicipio: "", qMunis: [], qCp: "11800", qCargando: false, wPaso: 1, wNivel: "municipio", wCobertura: "nacional", wHistorico: false, wNombre: "", wEmpresa: "", wEmail: "", wWhatsapp: "", wError: "", wEnviando: false, wCorreoEnviado: false, wWaTexto: "", wWaUrl: "", wCanal: "whatsapp", qResp: "Elija sus opciones y pulse \"Enviar consulta\".", qStatus: "listo", qExplica: "Aquí traduciremos la respuesta a lenguaje de negocio." };
   // [nombre, abbr, col, fila] — geometría del mapa de mosaicos (sin datos inventados)
   estadosData = [
     ["Baja California","BC",1,1],["Sonora","SON",2,1],["Chihuahua","CHIH",3,1],["Coahuila","COAH",4,1],["Nuevo León","NL",5,1],["Tamaulipas","TAM",6,1],
@@ -696,17 +696,10 @@ class Component extends DCLogic {
       });
       const j = await r.json();
       if (!r.ok) { this.setState({ wEnviando: false, wError: j.mensaje || j.error || "No pudimos generar la llave. Intenta de nuevo." }); return; }
-      this.setState({ wEnviando: false, wPaso: 4, wApiKey: j.api_key, wWaTexto: j.whatsapp_texto || "", wWaUrl: j.whatsapp_url || "", wCanal: j.canal || "whatsapp" });
+      this.setState({ wEnviando: false, wPaso: 4, wCorreoEnviado: !!j.correo_enviado, wWaTexto: j.whatsapp_texto || "", wWaUrl: j.whatsapp_url || "", wCanal: j.canal || "whatsapp" });
     } catch (e) {
       this.setState({ wEnviando: false, wError: "Sin conexión. Intenta de nuevo en un momento." });
     }
-  }
-  wCopiar() {
-    try {
-      navigator.clipboard.writeText(this.state.wApiKey);
-      this.setState({ wCopiado: true });
-      setTimeout(() => this.setState({ wCopiado: false }), 2000);
-    } catch (e) {}
   }
   qNombreProd(p) { return p === "regular" ? "regular" : (p === "premium" ? "premium" : "diésel"); }
   tzStat(tipo) {
@@ -873,7 +866,7 @@ class Component extends DCLogic {
       tCaro: this.tzStat("caro"), tBarato: this.tzStat("barato"), tMov: this.tzStat("mov"),
       w: (() => {
         const s = this.state, est = this.wEstimado();
-        const NIV = [["estado","Estado","32 mercados + nacional"],["municipio","Municipio","2,900+ plazas"],["cp","Código postal","5,000+ zonas"],["estacion","Estación","14,194 puntos"]];
+        const NIV = [["estado","Estado","32 mercados + nacional"],["municipio","Municipio","2,900+ plazas"]];
         const COB = [["una_region","Una región","norte, centro…"],["varias","Varias","2 o 3 regiones"],["nacional","Nacional","todo el país"]];
         const sel = (activo) => activo ? { bd: "#00A94F", bg: "#E8F5EE" } : { bd: "#E7ECF0", bg: "#FFFFFF" };
         const NIV_TXT = { estado: "Nivel estado", municipio: "Nivel municipio", cp: "Nivel código postal", estacion: "Nivel estación" };
@@ -908,10 +901,10 @@ class Component extends DCLogic {
           btnTxt: s.wEnviando ? "Generando su llave…" : "Generar mi llave de evaluación",
           btnBg: s.wEnviando ? "#7B8A9A" : "#00A94F",
           nombreCorto: (s.wNombre || "").trim().split(" ")[0],
-          apiKey: s.wApiKey,
-          apiKeyCorta: s.wApiKey ? (s.wApiKey.slice(0, 16) + "…") : "",
-          copiar: () => this.wCopiar(),
-          copiarTxt: s.wCopiado ? "¡Copiada!" : "Copiar",
+          correoDestino: s.wEmail,
+          envioTxt: s.wCorreoEnviado
+            ? "Le enviamos su llave de evaluación y las instrucciones de integración a:"
+            : "Estamos preparando su llave; la recibirá en unos minutos en:",
           waHref: s.wWaUrl || "mailto:hola@gasgas.com.mx",
           waTxt: s.wCanal === "whatsapp" ? "Continuar por WhatsApp con un ejecutivo →" : "Enviar mi solicitud a un ejecutivo →"
         };

@@ -624,6 +624,59 @@ function limiteSolicitudes(req, res) {
   return true;
 }
 
+
+/** Envía la llave de evaluación por correo. Devuelve true si salió. */
+async function enviarLlavePorCorreo({ nombre, empresa, email, llave, nivel, cobertura, historico, est }) {
+  const KEY = process.env.SENDGRID_API_KEY;
+  const DE = process.env.CORREO_REMITENTE || "hola@gasgas.com.mx";
+  if (!KEY) return { ok: false, motivo: "sin_servicio_correo" };
+
+  const NIV = { estado: "nivel estado", municipio: "nivel municipio", cp: "nivel código postal", estacion: "nivel estación" };
+  const COB = { una_region: "una región", varias: "varias regiones", nacional: "cobertura nacional" };
+  const texto =
+`Hola ${nombre.split(" ")[0]},
+
+Aquí está la llave de evaluación de la API de GasGas para ${empresa}.
+
+LLAVE
+${llave}
+
+Vigencia: 7 días · 500 consultas · niveles estado y municipio.
+
+PRIMERA LLAMADA (copiar y pegar)
+curl -H "x-api-key: ${llave}" "https://api.gasgas.com.mx/api/precios?market=estado&value=Jalisco&days=1&product=regular"
+
+DOCUMENTACIÓN
+https://gasgas.com.mx/docs — incluye la especificación OpenAPI y la colección de Postman.
+
+LO QUE NOS PIDIÓ
+${NIV[nivel] || nivel}, ${COB[cobertura] || cobertura}${historico ? ", con histórico" : ""}.
+Estimado: $${est.min.toLocaleString("en-US")} – $${est.max.toLocaleString("en-US")} MXN/mes + IVA.
+
+¿Necesita nivel código postal o estación, o el histórico completo? Responda este correo y lo vemos.
+
+Equipo GasGas
+hola@gasgas.com.mx`;
+
+  try {
+    const r = await fetch("https://api.sendgrid.com/v3/mail/send", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        personalizations: [{ to: [{ email }], bcc: [{ email: DE }] }],
+        from: { email: DE, name: "GasGas Datos" },
+        reply_to: { email: DE },
+        subject: `Su llave de evaluación · API GasGas (${empresa})`,
+        content: [{ type: "text/plain", value: texto }]
+      })
+    });
+    if (r.status >= 200 && r.status < 300) return { ok: true };
+    return { ok: false, motivo: "HTTP " + r.status };
+  } catch (e) {
+    return { ok: false, motivo: String(e && e.message || e).slice(0, 120) };
+  }
+}
+
 app.post("/api/solicitar-acceso", async (req, res) => {
   res.set("Cache-Control", "no-store");
   try {
@@ -668,6 +721,11 @@ app.post("/api/solicitar-acceso", async (req, res) => {
       [llave, prospectoId, empresa, email]
     );
 
+    // Enviar la llave por correo (si hay servicio configurado)
+    const envio = await enviarLlavePorCorreo({ nombre, empresa, email, llave, nivel, cobertura, historico, est });
+    pool.query(`UPDATE prospectos SET correo_enviado = $1, correo_error = $2 WHERE id = $3`,
+      [!!envio.ok, envio.ok ? null : (envio.motivo || null), prospectoId]).catch(() => {});
+
     const NIVEL_TXT = { estado: "nivel estado", municipio: "nivel municipio", cp: "nivel código postal", estacion: "nivel estación" };
     const COB_TXT = { una_region: "una región", varias: "varias regiones", nacional: "cobertura nacional" };
     const mensaje =
@@ -685,7 +743,8 @@ app.post("/api/solicitar-acceso", async (req, res) => {
 
     res.json({
       ok: true,
-      api_key: llave,
+      correo_enviado: !!envio.ok,     // la llave viaja por correo, nunca en la respuesta
+      correo_destino: email,
       expira_dias: 7,
       limite_llamadas: 500,
       niveles_incluidos: ["estado", "municipio"],
@@ -874,8 +933,8 @@ app.get("/api/status/checks", async (req, res) => {
     try {
       const q = await pool.query(`
         SELECT p.nombre, p.empresa, p.email, p.nivel, p.cobertura, p.historico,
-               p.estimado_min, p.estimado_max, p.created_at,
-               COALESCE(k.llamadas, 0) AS llamadas, k.expira_en
+               p.estimado_min, p.estimado_max, p.created_at, p.correo_enviado,
+               COALESCE(k.llamadas, 0) AS llamadas, k.expira_en, k.api_key
         FROM prospectos p
         LEFT JOIN api_keys_prueba k ON k.prospecto_id = p.id
         ORDER BY p.created_at DESC LIMIT 8`);
