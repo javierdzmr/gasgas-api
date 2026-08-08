@@ -448,12 +448,108 @@
   </div>
 </section>
 
-<section id="contacto" data-screen-label="CTA final" style="padding: 112px 0; background: #0E2A47; text-align: center">
-  <div style="max-width: 720px; margin: 0 auto; padding: 0 32px">
-    <h2 style="font-size: 40px; font-weight: 800; color: #FFFFFF; margin: 0 0 16px; letter-spacing: -0.02em; text-wrap: pretty">Deje de limpiar archivos. Empiece a decidir.</h2>
-    <p style="font-size: 17px; color: rgba(255,255,255,0.65); margin: 0 0 36px">Acceso de evaluación con datos reales para su equipo técnico.</p>
-    <div style="display: flex; gap: 16px; justify-content: center">
-      <a href="{{ correoHref }}" style="background: #00A94F; color: #FFFFFF; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600" style-hover="background: #007A39; color: #FFFFFF">{{ correoTxt }}</a>
+<section id="contacto" data-screen-label="CTA final" style="padding: 96px 0 104px; background: #0E2A47">
+  <div style="max-width: 760px; margin: 0 auto; padding: 0 32px">
+
+    <div style="text-align: center; margin-bottom: 32px">
+      <h2 style="font-size: 40px; font-weight: 800; color: #FFFFFF; margin: 0 0 14px; letter-spacing: -0.02em; text-wrap: pretty">Su llave de evaluación, en 30 segundos</h2>
+      <p style="font-size: 17px; color: rgba(255,255,255,0.65); margin: 0">Tres preguntas y su equipo ya puede probar con datos reales. Sin llamadas previas.</p>
+    </div>
+
+    <!-- Barra de avance -->
+    <div style="display: flex; gap: 8px; margin-bottom: 26px">
+      <div style="flex: 1; height: 4px; border-radius: 999px; background: {{ w.b1 }}; transition: background .35s"></div>
+      <div style="flex: 1; height: 4px; border-radius: 999px; background: {{ w.b2 }}; transition: background .35s"></div>
+      <div style="flex: 1; height: 4px; border-radius: 999px; background: {{ w.b3 }}; transition: background .35s"></div>
+    </div>
+
+    <div style="background: #FFFFFF; border-radius: 18px; padding: 36px; box-shadow: 0 24px 60px rgba(0,0,0,0.28)">
+
+      <!-- ============ PASO 1: nivel de detalle ============ -->
+      <div style="display: {{ w.p1 }}">
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; letter-spacing: 0.1em; color: #8B99A6; margin-bottom: 6px">PASO 1 DE 3</div>
+        <div style="font-size: 24px; font-weight: 800; margin-bottom: 22px; letter-spacing: -0.01em">¿Con qué detalle necesita los precios?</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
+          <sc-for list="{{ w.niveles }}" as="o" hint-placeholder-count="4">
+            <div onClick="{{ o.pick }}" style="border: 2px solid {{ o.bd }}; background: {{ o.bg }}; border-radius: 14px; padding: 18px 20px; cursor: pointer; transition: transform .12s, border-color .2s" style-hover="transform: translateY(-2px); border-color: #00A94F">
+              <div style="font-size: 17px; font-weight: 700; color: #0E2A47">{{ o.t }}</div>
+              <div style="font-size: 13.5px; color: #4C6379; margin-top: 4px">{{ o.d }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- ============ PASO 2: cobertura + histórico ============ -->
+      <div style="display: {{ w.p2 }}">
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; letter-spacing: 0.1em; color: #8B99A6; margin-bottom: 6px">PASO 2 DE 3</div>
+        <div style="font-size: 24px; font-weight: 800; margin-bottom: 22px; letter-spacing: -0.01em">¿Qué parte del país le interesa?</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 26px">
+          <sc-for list="{{ w.coberturas }}" as="o" hint-placeholder-count="3">
+            <div onClick="{{ o.pick }}" style="border: 2px solid {{ o.bd }}; background: {{ o.bg }}; border-radius: 14px; padding: 18px 16px; cursor: pointer; text-align: center; transition: transform .12s, border-color .2s" style-hover="transform: translateY(-2px); border-color: #00A94F">
+              <div style="font-size: 16px; font-weight: 700; color: #0E2A47">{{ o.t }}</div>
+              <div style="font-size: 13px; color: #4C6379; margin-top: 3px">{{ o.d }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div onClick="{{ w.toggleHist }}" style="display: flex; align-items: center; gap: 12px; border: 2px solid {{ w.histBd }}; background: {{ w.histBg }}; border-radius: 14px; padding: 16px 20px; cursor: pointer">
+          <span style="width: 22px; height: 22px; border-radius: 6px; background: {{ w.histCheckBg }}; border: 2px solid {{ w.histBd }}; color: #FFFFFF; font-size: 14px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; flex: none">{{ w.histCheck }}</span>
+          <div>
+            <div style="font-size: 16px; font-weight: 700; color: #0E2A47">También necesito el histórico</div>
+            <div style="font-size: 13.5px; color: #4C6379">Serie diaria desde mayo 2024 — para comparar contra periodos anteriores.</div>
+          </div>
+        </div>
+        <div onClick="{{ w.atras }}" style="margin-top: 20px; font-size: 14px; color: #8B99A6; cursor: pointer; display: inline-block" style-hover="color: #0E2A47">← Volver</div>
+      </div>
+
+      <!-- ============ PASO 3: datos + estimado ============ -->
+      <div style="display: {{ w.p3 }}">
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; letter-spacing: 0.1em; color: #8B99A6; margin-bottom: 6px">PASO 3 DE 3</div>
+        <div style="font-size: 24px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.01em">¿A nombre de quién emitimos la llave?</div>
+
+        <div style="background: #E8F5EE; border: 1px solid #B9E4CC; border-radius: 12px; padding: 16px 20px; margin: 18px 0 22px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap">
+          <div>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.09em; color: #007A39">SU CONFIGURACIÓN</div>
+            <div style="font-size: 14.5px; color: #1D5C3B; margin-top: 3px">{{ w.resumen }}</div>
+          </div>
+          <div style="text-align: right">
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.09em; color: #007A39">ESTIMADO</div>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 17px; font-weight: 700; color: #0E2A47; margin-top: 3px">{{ w.estimadoTxt }}</div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
+          <input value="{{ w.nombre }}" onInput="{{ w.setNombre }}" placeholder="Nombre y apellido" style="height: 50px; border: 1.5px solid #DCE3EB; border-radius: 10px; padding: 0 14px; font-family: 'Figtree', sans-serif; font-size: 15px; color: #0E2A47">
+          <input value="{{ w.empresa }}" onInput="{{ w.setEmpresa }}" placeholder="Empresa" style="height: 50px; border: 1.5px solid #DCE3EB; border-radius: 10px; padding: 0 14px; font-family: 'Figtree', sans-serif; font-size: 15px; color: #0E2A47">
+          <input value="{{ w.email }}" onInput="{{ w.setEmail }}" placeholder="Correo de empresa" style="height: 50px; border: 1.5px solid {{ w.emailBd }}; border-radius: 10px; padding: 0 14px; font-family: 'Figtree', sans-serif; font-size: 15px; color: #0E2A47">
+          <input value="{{ w.whatsapp }}" onInput="{{ w.setWhatsapp }}" placeholder="WhatsApp (opcional)" style="height: 50px; border: 1.5px solid #DCE3EB; border-radius: 10px; padding: 0 14px; font-family: 'Figtree', sans-serif; font-size: 15px; color: #0E2A47">
+        </div>
+        <div style="display: {{ w.errDisplay }}; font-size: 13.5px; color: #B91C1C; margin-top: 10px">{{ w.error }}</div>
+
+        <div onClick="{{ w.enviar }}" style="margin-top: 20px; background: {{ w.btnBg }}; color: #FFFFFF; border-radius: 12px; padding: 16px; text-align: center; font-size: 17px; font-weight: 700; cursor: pointer" style-hover="background: #007A39">{{ w.btnTxt }}</div>
+        <div style="font-size: 12.5px; color: #8B99A6; margin-top: 12px; text-align: center">Llave válida 7 días · 500 consultas · niveles estado y municipio</div>
+        <div onClick="{{ w.atras }}" style="margin-top: 16px; font-size: 14px; color: #8B99A6; cursor: pointer; display: inline-block" style-hover="color: #0E2A47">← Volver</div>
+      </div>
+
+      <!-- ============ LISTO ============ -->
+      <div style="display: {{ w.p4 }}; text-align: center">
+        <div style="width: 62px; height: 62px; border-radius: 50%; background: #E8F5EE; color: #007A39; font-size: 30px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 18px">✓</div>
+        <div style="font-size: 26px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.01em">Listo, {{ w.nombreCorto }} — su llave está activa</div>
+        <p style="font-size: 15.5px; color: #4C6379; margin: 0 auto 22px; max-width: 460px">Cópiela y pruébela ahora mismo. Válida 7 días con 500 consultas.</p>
+
+        <div style="background: #081B30; border-radius: 12px; padding: 18px 20px; display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 14px; flex-wrap: wrap">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 13.5px; color: #7FD4A8; word-break: break-all; text-align: left">{{ w.apiKey }}</span>
+          <div onClick="{{ w.copiar }}" style="background: rgba(255,255,255,0.12); color: #FFFFFF; border-radius: 8px; padding: 9px 16px; font-size: 13.5px; font-weight: 600; cursor: pointer; flex: none" style-hover="background: rgba(255,255,255,0.22)">{{ w.copiarTxt }}</div>
+        </div>
+
+        <div style="background: #F7F9FA; border: 1px solid #E7ECF0; border-radius: 12px; padding: 16px 18px; text-align: left; margin-bottom: 26px">
+          <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.09em; color: #8B99A6; margin-bottom: 8px">PRUÉBELA AHORA</div>
+          <div style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: #0E2A47; word-break: break-all; line-height: 1.6">curl -H "x-api-key: {{ w.apiKeyCorta }}" "https://api.gasgas.com.mx/api/precios?market=estado&value=Jalisco&days=1&product=regular"</div>
+        </div>
+
+        <a href="{{ w.waHref }}" target="_blank" style="display: block; background: #00A94F; color: #FFFFFF; border-radius: 12px; padding: 16px; font-size: 17px; font-weight: 700" style-hover="background: #007A39; color: #FFFFFF">{{ w.waTxt }}</a>
+        <p style="font-size: 13px; color: #8B99A6; margin: 14px 0 0">Le llega el resumen de lo que necesita. Ahí vemos propuesta formal, alta como proveedor y facturación.</p>
+      </div>
+
     </div>
   </div>
 </section>
@@ -471,7 +567,7 @@
 <script type="text/x-dc" data-dc-script data-props="{&quot;datoEnVivoAnimado&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Hero&quot;}}">
 class Component extends DCLogic {
   /* ── 100% datos reales de la API de GasGas; placeholders mientras carga ── */
-  state = { i: 0, procesados: 0, selEstado: "CDMX", lat: 0, feed: [], corteHora: "—", ready: 0, qProd: "regular", qEstado: "Jalisco", qNivel: "estado", qMunicipio: "", qMunis: [], qCp: "11800", qCargando: false, qResp: "Elija sus opciones y pulse \"Enviar consulta\".", qStatus: "listo", qExplica: "Aquí traduciremos la respuesta a lenguaje de negocio." };
+  state = { i: 0, procesados: 0, selEstado: "CDMX", lat: 0, feed: [], corteHora: "—", ready: 0, qProd: "regular", qEstado: "Jalisco", qNivel: "estado", qMunicipio: "", qMunis: [], qCp: "11800", qCargando: false, wPaso: 1, wNivel: "municipio", wCobertura: "nacional", wHistorico: false, wNombre: "", wEmpresa: "", wEmail: "", wWhatsapp: "", wError: "", wEnviando: false, wApiKey: "", wWaTexto: "", wWaUrl: "", wCanal: "whatsapp", wCopiado: false, qResp: "Elija sus opciones y pulse \"Enviar consulta\".", qStatus: "listo", qExplica: "Aquí traduciremos la respuesta a lenguaje de negocio." };
   // [nombre, abbr, col, fila] — geometría del mapa de mosaicos (sin datos inventados)
   estadosData = [
     ["Baja California","BC",1,1],["Sonora","SON",2,1],["Chihuahua","CHIH",3,1],["Coahuila","COAH",4,1],["Nuevo León","NL",5,1],["Tamaulipas","TAM",6,1],
@@ -566,6 +662,52 @@ class Component extends DCLogic {
   componentWillUnmount() { clearInterval(this.timer); }
 
   /* ── Playground: consultas reales sin escribir código ── */
+  /* ── Asistente de acceso: 3 pasos, un clic por paso ── */
+  PERSONALES = ["gmail.com","googlemail.com","hotmail.com","hotmail.es","hotmail.com.mx","outlook.com","outlook.es","live.com","live.com.mx","msn.com","yahoo.com","yahoo.com.mx","yahoo.es","icloud.com","me.com","mac.com","aol.com","protonmail.com","proton.me","gmx.com","mail.com","yandex.com","zoho.com","hey.com","prodigy.net.mx"];
+  PRECIO_BASE = { estado: 17250, municipio: 28750, cp: 40250, estacion: 60000 };
+  FACTOR_COB = { una_region: 1, varias: 1.25, nacional: 1.5 };
+
+  wEstimado() {
+    const base = this.PRECIO_BASE[this.state.wNivel] || 17250;
+    const f = this.FACTOR_COB[this.state.wCobertura] || 1;
+    let min = Math.round((base * f) / 250) * 250;
+    let max = Math.round((min * 1.2) / 250) * 250;
+    if (this.state.wHistorico) { min = Math.round((min * 1.15) / 250) * 250; max = Math.round((max * 1.15) / 250) * 250; }
+    return { min, max };
+  }
+  wEmailOk(mail) {
+    const m = String(mail || "").trim().toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(m)) return { ok: false, motivo: "" };
+    const dom = m.split("@")[1];
+    if (this.PERSONALES.indexOf(dom) >= 0) return { ok: false, motivo: "Usa tu correo de empresa — la llave se emite a dominios corporativos." };
+    return { ok: true, motivo: "" };
+  }
+  async wEnviar() {
+    if (this.state.wEnviando) return;
+    const { wNombre, wEmpresa, wEmail, wWhatsapp, wNivel, wCobertura, wHistorico } = this.state;
+    if (!wNombre.trim() || !wEmpresa.trim()) { this.setState({ wError: "Nos falta tu nombre y el de tu empresa." }); return; }
+    const chk = this.wEmailOk(wEmail);
+    if (!chk.ok) { this.setState({ wError: chk.motivo || "Revisa el correo, parece incompleto." }); return; }
+    this.setState({ wEnviando: true, wError: "" });
+    try {
+      const r = await fetch("/api/solicitar-acceso", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nombre: wNombre, empresa: wEmpresa, email: wEmail, whatsapp: wWhatsapp, nivel: wNivel, cobertura: wCobertura, historico: wHistorico })
+      });
+      const j = await r.json();
+      if (!r.ok) { this.setState({ wEnviando: false, wError: j.mensaje || j.error || "No pudimos generar la llave. Intenta de nuevo." }); return; }
+      this.setState({ wEnviando: false, wPaso: 4, wApiKey: j.api_key, wWaTexto: j.whatsapp_texto || "", wWaUrl: j.whatsapp_url || "", wCanal: j.canal || "whatsapp" });
+    } catch (e) {
+      this.setState({ wEnviando: false, wError: "Sin conexión. Intenta de nuevo en un momento." });
+    }
+  }
+  wCopiar() {
+    try {
+      navigator.clipboard.writeText(this.state.wApiKey);
+      this.setState({ wCopiado: true });
+      setTimeout(() => this.setState({ wCopiado: false }), 2000);
+    } catch (e) {}
+  }
   qNombreProd(p) { return p === "regular" ? "regular" : (p === "premium" ? "premium" : "diésel"); }
   tzStat(tipo) {
     const con = this.estadosData.filter(e => this.R.est[e[1]] && this.R.est[e[1]].regular != null)
@@ -729,6 +871,51 @@ class Component extends DCLogic {
       correoTxt: "hola@" + "gasgas.com.mx", correoHref: "mailto:hola@" + "gasgas.com.mx",
       qRespLineas: this.qLineas(this.state.qResp), qCargandoDisplay: this.state.qCargando ? "block" : "none", qListoDisplay: this.state.qCargando ? "none" : "block", qStatus: this.state.qStatus, qExplica: this.state.qExplica,
       tCaro: this.tzStat("caro"), tBarato: this.tzStat("barato"), tMov: this.tzStat("mov"),
+      w: (() => {
+        const s = this.state, est = this.wEstimado();
+        const NIV = [["estado","Estado","32 mercados + nacional"],["municipio","Municipio","2,900+ plazas"],["cp","Código postal","5,000+ zonas"],["estacion","Estación","14,194 puntos"]];
+        const COB = [["una_region","Una región","norte, centro…"],["varias","Varias","2 o 3 regiones"],["nacional","Nacional","todo el país"]];
+        const sel = (activo) => activo ? { bd: "#00A94F", bg: "#E8F5EE" } : { bd: "#E7ECF0", bg: "#FFFFFF" };
+        const NIV_TXT = { estado: "Nivel estado", municipio: "Nivel municipio", cp: "Nivel código postal", estacion: "Nivel estación" };
+        const COB_TXT = { una_region: "una región", varias: "varias regiones", nacional: "cobertura nacional" };
+        const chkMail = s.wEmail ? this.wEmailOk(s.wEmail) : { ok: true };
+        return {
+          b1: s.wPaso >= 1 ? "#00A94F" : "rgba(255,255,255,0.18)",
+          b2: s.wPaso >= 2 ? "#00A94F" : "rgba(255,255,255,0.18)",
+          b3: s.wPaso >= 3 ? "#00A94F" : "rgba(255,255,255,0.18)",
+          p1: s.wPaso === 1 ? "block" : "none",
+          p2: s.wPaso === 2 ? "block" : "none",
+          p3: s.wPaso === 3 ? "block" : "none",
+          p4: s.wPaso === 4 ? "block" : "none",
+          niveles: NIV.map(([k, t, d]) => Object.assign({ t, d, pick: () => this.setState({ wNivel: k, wPaso: 2 }) }, sel(s.wNivel === k))),
+          coberturas: COB.map(([k, t, d]) => Object.assign({ t, d, pick: () => this.setState({ wCobertura: k, wPaso: 3 }) }, sel(s.wCobertura === k))),
+          histBd: s.wHistorico ? "#00A94F" : "#E7ECF0",
+          histBg: s.wHistorico ? "#E8F5EE" : "#FFFFFF",
+          histCheckBg: s.wHistorico ? "#00A94F" : "#FFFFFF",
+          histCheck: s.wHistorico ? "✓" : "",
+          toggleHist: () => this.setState({ wHistorico: !s.wHistorico }),
+          atras: () => this.setState({ wPaso: Math.max(1, s.wPaso - 1), wError: "" }),
+          resumen: NIV_TXT[s.wNivel] + " · " + COB_TXT[s.wCobertura] + (s.wHistorico ? " · con histórico" : ""),
+          estimadoTxt: "$" + est.min.toLocaleString("en-US") + " – $" + est.max.toLocaleString("en-US"),
+          nombre: s.wNombre, empresa: s.wEmpresa, email: s.wEmail, whatsapp: s.wWhatsapp,
+          setNombre: (e) => this.setState({ wNombre: e.target.value }),
+          setEmpresa: (e) => this.setState({ wEmpresa: e.target.value }),
+          setEmail: (e) => this.setState({ wEmail: e.target.value, wError: "" }),
+          setWhatsapp: (e) => this.setState({ wWhatsapp: e.target.value }),
+          emailBd: (s.wEmail && !chkMail.ok) ? "#E05656" : "#DCE3EB",
+          error: s.wError, errDisplay: s.wError ? "block" : "none",
+          enviar: () => this.wEnviar(),
+          btnTxt: s.wEnviando ? "Generando su llave…" : "Generar mi llave de evaluación",
+          btnBg: s.wEnviando ? "#7B8A9A" : "#00A94F",
+          nombreCorto: (s.wNombre || "").trim().split(" ")[0],
+          apiKey: s.wApiKey,
+          apiKeyCorta: s.wApiKey ? (s.wApiKey.slice(0, 16) + "…") : "",
+          copiar: () => this.wCopiar(),
+          copiarTxt: s.wCopiado ? "¡Copiada!" : "Copiar",
+          waHref: s.wWaUrl || "mailto:hola@gasgas.com.mx",
+          waTxt: s.wCanal === "whatsapp" ? "Continuar por WhatsApp con un ejecutivo →" : "Enviar mi solicitud a un ejecutivo →"
+        };
+      })(),
       fechaHoy: new Date().toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "America/Mexico_City" })
     };
   }

@@ -1,5 +1,6 @@
 const express = require('express');
 const { Pool } = require('pg');
+const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -586,13 +587,138 @@ app.get("/api/demo/cp", async (req, res) => {
 });
 
 // ==============================
+// 🎯 EMBUDO COMERCIAL — asistente de /datos
+//    Captura el prospecto, calcula su estimado, emite llave de evaluación
+//    (7 días · 500 llamadas · niveles estado y municipio) y arma el mensaje
+//    de WhatsApp con todo el contexto para que el ejecutivo solo cierre.
+// ==============================
+
+// Correos personales: la llave de evaluación es para empresas
+const DOMINIOS_PERSONALES = new Set([
+  "gmail.com","googlemail.com","hotmail.com","hotmail.es","hotmail.com.mx","outlook.com","outlook.es",
+  "live.com","live.com.mx","msn.com","yahoo.com","yahoo.com.mx","yahoo.es","icloud.com","me.com","mac.com",
+  "aol.com","protonmail.com","proton.me","gmx.com","gmx.es","mail.com","yandex.com","zoho.com","tutanota.com",
+  "hey.com","fastmail.com","inbox.com","email.com","correo.com","prodigy.net.mx"
+]);
+
+const PRECIO_BASE = { estado: 17250, municipio: 28750, cp: 40250, estacion: 60000 };
+const FACTOR_COBERTURA = { una_region: 1, varias: 1.25, nacional: 1.5 };
+
+function estimar(nivel, cobertura, historico) {
+  const base = PRECIO_BASE[nivel] || PRECIO_BASE.estado;
+  const factor = FACTOR_COBERTURA[cobertura] || 1;
+  let min = Math.round((base * factor) / 250) * 250;
+  let max = Math.round((min * 1.2) / 250) * 250;
+  if (historico) { min = Math.round((min * 1.15) / 250) * 250; max = Math.round((max * 1.15) / 250) * 250; }
+  return { min, max };
+}
+
+const solicitudesPorIp = new Map();
+function limiteSolicitudes(req, res) {
+  const ip = (req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.socket.remoteAddress || "?";
+  const ahora = Date.now();
+  let reg = solicitudesPorIp.get(ip);
+  if (!reg || ahora > reg.reset) { reg = { n: 0, reset: ahora + 3600_000 }; solicitudesPorIp.set(ip, reg); }
+  reg.n++;
+  if (reg.n > 5) { res.status(429).json({ error: "Demasiadas solicitudes. Escríbenos a hola@gasgas.com.mx" }); return false; }
+  return true;
+}
+
+app.post("/api/solicitar-acceso", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  try {
+    if (!limiteSolicitudes(req, res)) return;
+    const b = req.body || {};
+    const nombre = String(b.nombre || "").trim().slice(0, 120);
+    const empresa = String(b.empresa || "").trim().slice(0, 140);
+    const email = String(b.email || "").trim().toLowerCase().slice(0, 160);
+    const whatsapp = String(b.whatsapp || "").trim().slice(0, 40);
+    const nivel = ["estado", "municipio", "cp", "estacion"].includes(b.nivel) ? b.nivel : "estado";
+    const cobertura = ["una_region", "varias", "nacional"].includes(b.cobertura) ? b.cobertura : "nacional";
+    const historico = !!b.historico;
+    const casoUso = String(b.caso_uso || "").slice(0, 80);
+
+    if (!nombre || !empresa || !email) return res.status(400).json({ error: "Faltan datos para continuar." });
+    if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(email)) return res.status(400).json({ error: "Ese correo no parece válido." });
+
+    const dominio = email.split("@")[1];
+    if (DOMINIOS_PERSONALES.has(dominio)) {
+      return res.status(422).json({
+        error: "correo_personal",
+        mensaje: "La llave de evaluación se emite a correos de empresa. Usa el tuyo corporativo y la generamos al instante."
+      });
+    }
+
+    const est = estimar(nivel, cobertura, historico);
+
+    // Prospecto
+    const ip = (req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.socket.remoteAddress || null;
+    const ins = await pool.query(
+      `INSERT INTO prospectos (nombre, empresa, email, dominio, whatsapp, nivel, cobertura, historico, caso_uso, estimado_min, estimado_max, ip, user_agent)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING id`,
+      [nombre, empresa, email, dominio, whatsapp, nivel, cobertura, historico, casoUso, est.min, est.max, ip, String(req.headers["user-agent"] || "").slice(0, 300)]
+    );
+    const prospectoId = ins.rows[0].id;
+
+    // Llave de evaluación: 7 días · 500 llamadas
+    const llave = "gg_test_" + crypto.randomBytes(18).toString("base64url");
+    await pool.query(
+      `INSERT INTO api_keys_prueba (api_key, prospecto_id, empresa, email, limite, expira_en)
+       VALUES ($1,$2,$3,$4,500, NOW() + INTERVAL '7 days')`,
+      [llave, prospectoId, empresa, email]
+    );
+
+    const NIVEL_TXT = { estado: "nivel estado", municipio: "nivel municipio", cp: "nivel código postal", estacion: "nivel estación" };
+    const COB_TXT = { una_region: "una región", varias: "varias regiones", nacional: "cobertura nacional" };
+    const mensaje =
+      `Hola, soy ${nombre} de ${empresa}. Ya generé mi llave de evaluación en gasgas.com.mx.\n\n` +
+      `Lo que necesitamos: ${NIVEL_TXT[nivel]}, ${COB_TXT[cobertura]}${historico ? ", con histórico" : ""}` +
+      `${casoUso ? ` (uso: ${casoUso})` : ""}.\n` +
+      `Estimado que me mostró la página: $${est.min.toLocaleString("en-US")} – $${est.max.toLocaleString("en-US")} MXN/mes + IVA.\n\n` +
+      `Me gustaría revisar la propuesta formal y el alta como proveedor.`;
+
+    // El número vive en la variable WHATSAPP_NUMERO (Render → Environment), no en el código
+    const numero = String(process.env.WHATSAPP_NUMERO || "").replace(/[^0-9]/g, "");
+    const whatsappUrl = numero
+      ? "https://wa.me/" + numero + "?text=" + encodeURIComponent(mensaje)
+      : "mailto:hola@gasgas.com.mx?subject=" + encodeURIComponent("Acceso a la API de GasGas") + "&body=" + encodeURIComponent(mensaje);
+
+    res.json({
+      ok: true,
+      api_key: llave,
+      expira_dias: 7,
+      limite_llamadas: 500,
+      niveles_incluidos: ["estado", "municipio"],
+      estimado: est,
+      whatsapp_texto: mensaje,
+      whatsapp_url: whatsappUrl,
+      canal: numero ? "whatsapp" : "correo"
+    });
+  } catch (err) {
+    console.error("ERROR /solicitar-acceso:", err);
+    res.status(500).json({ error: "No pudimos procesar la solicitud. Escríbenos a hola@gasgas.com.mx" });
+  }
+});
+
+// Registro de uso de llaves de evaluación (sin bloquear: los endpoints siguen abiertos)
+app.use("/api", async (req, res, next) => {
+  const k = req.headers["x-api-key"];
+  if (k && String(k).startsWith("gg_test_")) {
+    pool.query(
+      `UPDATE api_keys_prueba SET llamadas = llamadas + 1, ultima_uso = NOW()
+       WHERE api_key = $1 AND activa = TRUE AND expira_en > NOW()`, [String(k).slice(0, 80)]
+    ).catch(() => {});
+  }
+  next();
+});
+
+// ==============================
 // 🔒 STATUS PRIVADO (status.gasgas.com.mx / /status) — solo con PIN
 //    - PIN en variable de entorno STATUS_PIN (nunca en el código)
 //    - Cookie firmada (hash del PIN) para no teclearlo a cada rato
 //    - Máx 10 intentos de PIN por IP cada 15 min
 //    - Checks corren en el SERVIDOR: las llaves de Clara/cobee jamás llegan al navegador
 // ==============================
-const crypto = require("crypto");
 const statusIntentos = new Map();
 const procesoDesde = new Date().toISOString();
 
@@ -742,7 +868,22 @@ app.get("/api/status/checks", async (req, res) => {
       .filter(x => x.n > 0).sort((a, b) => b.n - a.n).slice(0, 5);
     const uso = { total24h: usoApi.filter(t => t >= corte24).length, top, desde: procesoDesde };
     const usoClientes = usoClientes24h();
-    res.json({ generado: new Date().toISOString(), clara, cobee, seed, cortes, publica, uso, usoClientes });
+
+    // Prospectos recientes y uso real de sus llaves (señal de intención de compra)
+    let prospectos = { total7d: 0, lista: [] };
+    try {
+      const q = await pool.query(`
+        SELECT p.nombre, p.empresa, p.email, p.nivel, p.cobertura, p.historico,
+               p.estimado_min, p.estimado_max, p.created_at,
+               COALESCE(k.llamadas, 0) AS llamadas, k.expira_en
+        FROM prospectos p
+        LEFT JOIN api_keys_prueba k ON k.prospecto_id = p.id
+        ORDER BY p.created_at DESC LIMIT 8`);
+      const t7 = await pool.query(`SELECT COUNT(*)::int AS n FROM prospectos WHERE created_at > NOW() - INTERVAL '7 days'`);
+      prospectos = { total7d: t7.rows[0]?.n || 0, lista: q.rows };
+    } catch (e) { prospectos = { error: true }; }
+
+    res.json({ generado: new Date().toISOString(), clara, cobee, seed, cortes, publica, uso, usoClientes, prospectos });
   } catch (err) {
     console.error("ERROR /status/checks:", err);
     res.status(500).json({ error: "Error corriendo los checks" });

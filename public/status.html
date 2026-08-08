@@ -91,6 +91,14 @@ main{max-width:900px;margin:0 auto;padding:22px 18px 40px;display:none}
     <span class="gran" id="uso-gran"></span>
   </div>
 
+  <div class="card" id="c-prospectos" style="align-items:flex-start">
+    <span class="foco ok" style="margin-top:4px"></span>
+    <div class="info">
+      <div class="nombre">Prospectos · últimos 7 días <span class="gran" id="pros-total" style="margin-left:6px"></span></div>
+      <div class="det" id="pros-lista" style="margin-top:8px;line-height:1.9"></div>
+    </div>
+  </div>
+
   <div class="footer" id="pie">se actualiza solo cada 60 segundos</div>
   <div class="footer" style="margin-top:6px">El conteo de uso es de la API propia (pasa por nuestro servidor) y se reinicia con cada despliegue. El tráfico de Clara y cobee corre en Northflank y no queda registrado aquí.</div>
 </main>
@@ -127,6 +135,22 @@ async function cargar(){
     pinta("c-cortes", j.cortes, j.cortes && j.cortes.ultimo ? ("último corte: " + horaMX(j.cortes.ultimo) + " · hace " + j.cortes.horas + " h") : null,
       chk => { $("cortes-gran").textContent = chk && chk.ok ? "al día" : "atrasado"; $("cortes-gran").style.color = chk && chk.ok ? "#00A94F" : "#E05656"; });
     pinta("c-publica", j.publica);
+    if (j.prospectos) {
+      const P = j.prospectos;
+      $("pros-total").textContent = P.total7d != null ? P.total7d : "";
+      $("pros-total").style.color = "#00A94F";
+      if (P.error) { $("pros-lista").textContent = "no disponible"; }
+      else if (!P.lista || !P.lista.length) { $("pros-lista").textContent = "sin solicitudes todavía"; }
+      else {
+        $("pros-lista").innerHTML = P.lista.map(p => {
+          const usa = Number(p.llamadas || 0);
+          const señal = usa > 0 ? '<span style="color:#00A94F">' + usa + ' llamadas</span>' : '<span style="color:rgba(255,255,255,.35)">sin usar la llave</span>';
+          const est = p.estimado_min ? ('$' + Number(p.estimado_min).toLocaleString("en-US")) : '—';
+          return '<span style="color:#fff">' + (p.empresa || '—') + '</span> · ' + (p.nivel || '') + ' · ' + est + '/mes · ' + señal +
+                 '<br><span style="font-size:11px;color:rgba(255,255,255,.4)">' + (p.nombre || '') + ' · ' + (p.email || '') + ' · ' + horaMX(p.created_at) + '</span>';
+        }).join("<br><br>");
+      }
+    }
     if (j.usoClientes) {
       const u = j.usoClientes;
       const foco = $("c-usoclientes").querySelector(".foco");
