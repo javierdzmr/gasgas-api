@@ -179,7 +179,7 @@
 
 <section id="proceso" data-screen-label="Proceso" style="padding: 112px 0; background: #FFFFFF; border-bottom: 1px solid #E7ECF0">
   <div style="max-width: 1140px; margin: 0 auto; padding: 0 32px">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px">
       <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #007A39; letter-spacing: 0.1em">EL PROCESO</div>
       <div style="display: flex; align-items: center; gap: 10px; border: 1px solid #E7ECF0; border-radius: 999px; padding: 8px 16px; background: #F7F9FA">
         <span style="width: 7px; height: 7px; border-radius: 50%; background: #00A94F; animation: ggPulse 2s infinite"></span>
@@ -187,41 +187,33 @@
         <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; color: #0E2A47">{{ procesados }}</span>
       </div>
     </div>
-    <h2 style="font-size: 38px; font-weight: 800; margin: 0 0 12px; letter-spacing: -0.02em; max-width: 640px; text-wrap: pretty">Del archivo crudo de la CNE al dato que su equipo puede usar.</h2>
-    <p style="font-size: 17px; color: #4C6379; line-height: 1.6; margin: 0 0 56px; max-width: 620px; text-wrap: pretty">El dato público llega con duplicados, precios en cero y estaciones sin identificar. Nosotros lo procesamos todos los días para que usted no tenga que hacerlo.</p>
-    <div style="display: grid; grid-template-columns: 1fr 64px 1fr; gap: 24px; align-items: stretch">
-      <div style="border: 1px solid #E7ECF0; border-radius: 12px; overflow: hidden">
-        <div style="background: #F7F9FA; padding: 14px 20px; border-bottom: 1px solid #E7ECF0; display: flex; justify-content: space-between; align-items: center">
-          <span style="font-weight: 700; font-size: 14px">Dato crudo · CNE</span>
-          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8B99A6">XML / CSV</span>
-        </div>
-        <div style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.5">
-          <div style="padding: 12px 20px; border-bottom: 1px solid #F0F3F5; display: flex; justify-content: space-between; gap: 12px"><span style="color: #4C6379">PL/12345 · regular · $23.49</span><span style="color: #C24040; font-size: 11px; white-space: nowrap">duplicado ×3</span></div>
-          <div style="padding: 12px 20px; border-bottom: 1px solid #F0F3F5; display: flex; justify-content: space-between; gap: 12px"><span style="color: #4C6379">PL/08211 · premium · $0.00</span><span style="color: #C24040; font-size: 11px; white-space: nowrap">precio inválido</span></div>
-          <div style="padding: 12px 20px; border-bottom: 1px solid #F0F3F5; display: flex; justify-content: space-between; gap: 12px"><span style="color: #4C6379">PL/04102 · diesel · $25.87</span><span style="color: #C24040; font-size: 11px; white-space: nowrap">sin marca</span></div>
-          <div style="padding: 12px 20px; display: flex; justify-content: space-between; gap: 12px"><span style="color: #4C6379">PL/10993 · regular · $23.51</span><span style="color: #C24040; font-size: 11px; white-space: nowrap">sin ubicación</span></div>
-        </div>
+    <h2 style="font-size: 38px; font-weight: 800; margin: 0 0 12px; letter-spacing: -0.02em; max-width: 700px; text-wrap: pretty">¿Por qué pagar por un dato que es público?</h2>
+    <p style="font-size: 17px; color: #4C6379; line-height: 1.6; margin: 0 0 44px; max-width: 660px; text-wrap: pretty">La CNE publica el dato crudo: con duplicados, precios en $0.00, sin marca comercial y sin código postal. Esto es lo que agregamos nosotros.</p>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px 40px">
+      <div style="display: flex; gap: 14px; align-items: flex-start">
+        <span style="color: #00A94F; font-weight: 800; font-size: 18px; line-height: 1.4">✓</span>
+        <div><b style="font-size: 17px">Marca comercial resuelta</b><div style="font-size: 15.5px; color: #4C6379; line-height: 1.55; margin-top: 3px">OXXO Gas, Mobil, Pemex… la CNE solo publica el número de permiso; nosotros le decimos qué bandera es cada estación.</div></div>
       </div>
-      <div style="display: flex; align-items: center; justify-content: center">
-        <div style="width: 44px; height: 44px; border-radius: 50%; background: #00A94F; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700">→</div>
+      <div style="display: flex; gap: 14px; align-items: flex-start">
+        <span style="color: #00A94F; font-weight: 800; font-size: 18px; line-height: 1.4">✓</span>
+        <div><b style="font-size: 17px">Nivel código postal</b><div style="font-size: 15.5px; color: #4C6379; line-height: 1.55; margin-top: 3px">5,000+ CPs geolocalizados que no vienen en el dato crudo.</div></div>
       </div>
-      <div style="border: 1px solid #00A94F55; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,169,79,0.08)">
-        <div style="background: #0E2A47; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center">
-          <span style="font-weight: 700; font-size: 14px; color: #FFFFFF">Dato GasGas</span>
-          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #00A94F">API JSON</span>
-        </div>
-        <div style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.5">
-          <div style="padding: 12px 20px; border-bottom: 1px solid #F0F3F5; display: flex; justify-content: space-between; gap: 12px"><span style="color: #0E2A47">Pemex · regular · $23.49 · CP 06600</span><span style="color: #007A39; font-size: 11px; white-space: nowrap">✓ validado</span></div>
-          <div style="padding: 12px 20px; border-bottom: 1px solid #F0F3F5; display: flex; justify-content: space-between; gap: 12px"><span style="color: #0E2A47">OXXO Gas · premium · $25.12 · CP 64000</span><span style="color: #007A39; font-size: 11px; white-space: nowrap">✓ validado</span></div>
-          <div style="padding: 12px 20px; border-bottom: 1px solid #F0F3F5; display: flex; justify-content: space-between; gap: 12px"><span style="color: #0E2A47">Mobil · diesel · $25.87 · CP 44100</span><span style="color: #007A39; font-size: 11px; white-space: nowrap">✓ validado</span></div>
-          <div style="padding: 12px 20px; display: flex; justify-content: space-between; gap: 12px"><span style="color: #0E2A47">Pemex · regular · $23.51 · CP 03100</span><span style="color: #007A39; font-size: 11px; white-space: nowrap">✓ validado</span></div>
-        </div>
+      <div style="display: flex; gap: 14px; align-items: flex-start">
+        <span style="color: #00A94F; font-weight: 800; font-size: 18px; line-height: 1.4">✓</span>
+        <div><b style="font-size: 17px">Limpieza continua, no una vez</b><div style="font-size: 15.5px; color: #4C6379; line-height: 1.55; margin-top: 3px">Cada corte (7 al día) pasa por validación de duplicados, rangos y estaciones fantasma.</div></div>
       </div>
-    </div>
-    <div style="display: flex; gap: 40px; margin-top: 40px; font-size: 14px; color: #4C6379">
-      <span><strong style="color: #0E2A47">Deduplicación</strong> por estación y producto</span>
-      <span><strong style="color: #0E2A47">Filtrado</strong> de precios en $0.00 e inválidos</span>
-      <span><strong style="color: #0E2A47">Enriquecido</strong> con marca y código postal</span>
+      <div style="display: flex; gap: 14px; align-items: flex-start">
+        <span style="color: #00A94F; font-weight: 800; font-size: 18px; line-height: 1.4">✓</span>
+        <div><b style="font-size: 17px">Histórico que no se puede reconstruir</b><div style="font-size: 15.5px; color: #4C6379; line-height: 1.55; margin-top: 3px">La CNE solo publica el hoy; nosotros guardamos cada día desde mayo 2024.</div></div>
+      </div>
+      <div style="display: flex; gap: 14px; align-items: flex-start">
+        <span style="color: #00A94F; font-weight: 800; font-size: 18px; line-height: 1.4">✓</span>
+        <div><b style="font-size: 17px">Contexto incluido</b><div style="font-size: 15.5px; color: #4C6379; line-height: 1.55; margin-top: 3px">Promedios precalculados y semáforo de caro/barato contra su referencia.</div></div>
+      </div>
+      <div style="display: flex; gap: 14px; align-items: flex-start">
+        <span style="color: #00A94F; font-weight: 800; font-size: 18px; line-height: 1.4">✓</span>
+        <div><b style="font-size: 17px">Listo para su sistema</b><div style="font-size: 15.5px; color: #4C6379; line-height: 1.55; margin-top: 3px">Esquema estable y campos tipados: se integra en una tarde, no en un sprint.</div></div>
+      </div>
     </div>
   </div>
 </section>
