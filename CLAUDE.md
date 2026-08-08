@@ -189,7 +189,7 @@ Health check. Responde `{ status: 'ok' }`.
 | Nombre | Script | Schedule (UTC) | Hora México | Función |
 |---|---|---|---|---|
 | update-precios-historico | updateHistoricos.js | `50 11 * * *` | 5:50 AM | Stats históricos legacy — corre primero |
-| update-precios-agregados | updateAgregados.js | `30 2,12,16,18,20,22,23 * * *` | 7 cortes: 6:30, 10:30, 12:30, 14:30, 16:30, 17:30 y 20:30 (hora MX) | Crea tablas si no existen + recalcula promedios (7 Ago 2026) |
+| update-precios-agregados | updateAgregados.js | `30 2,12,16,18,20,22,23 * * *` | 7 cortes: 6:30, 10:30, 12:30, 14:30, 16:30, 17:30 y 20:30 (hora MX) | Crea tablas si no existen + recalcula promedios. **Cálculo incremental (8 Ago 2026):** `days=1` siempre; `days=7` y `days=30` solo si hay lote nuevo desde el último cálculo (los datos entran 1 vez al día). Forzar con `FORZAR_RECALCULO=1`. |
 | update-historicos-daily | updateHistoricosDaily.js | 4x al día (8,14,20,2 UTC) | — | Crea tabla + auto-rebuild si vacía + inserta día |
 
 **Lógica de orden:** `update-precios-historico` corre 10 minutos antes que `update-precios-agregados` para que aunque el legacy corrompa algo, el agregados lo limpia inmediatamente después.
@@ -469,6 +469,9 @@ Strapi borró `precios_agregados` y `precios_historicos_agregados` al hacer depl
 Los cron jobs de Render se suspendieron 23 días. Al volver a correr, `updateHistoricos.js` (legacy) corría primero e intentaba UPDATE sobre tabla inexistente. Fix: `initTables()` en `server.js` al arrancar — las tablas se recrean en cada deploy sin esperar al cron.
 
 ---
+
+#### 15. Cron de agregados recalculaba lo mismo 7 veces al día — resuelto 8 Ago 2026
+Los precios entran a `prices` en un lote diario, pero al subir a 7 cortes el cron recalculaba las ventanas de 7 y 30 días en cada corte (consultas de ~3.4 GB y ~30 s que recorren `prices` cruda). Medición con `pg_stat_statements`: 5 TB leídos acumulados, 12.5 h de CPU — el mayor consumidor de toda la base. Fix: `updateAgregados.js` compara `MAX(date)` de `prices` contra `MAX(updated_at)` de `precios_agregados` y omite las ventanas ya calculadas. Ahorro estimado: ~86% de la carga pesada (de ~143 GB/día a ~20 GB/día).
 
 ## Issues Resueltos
 

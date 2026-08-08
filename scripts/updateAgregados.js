@@ -88,7 +88,43 @@ async function updateAgregados() {
     `);
     console.log("🧹 Min/max corruptos limpiados");
 
-    const daysList = [1, 7, 30];
+    // ============================================================
+    // ⚡ CÁLCULO INCREMENTAL (8 Ago 2026)
+    // Los precios entran a la base en un lote diario. Con 7 cortes al día,
+    // recalcular las ventanas de 7 y 30 días en cada corte repite el mismo
+    // resultado 7 veces: son las consultas pesadas (~3.4 GB y 30 s cada una,
+    // porque recorren `prices` cruda).
+    //
+    // Regla: una ventana solo se recalcula si hay datos más nuevos que su
+    // último cálculo. `days=1` se recalcula siempre (es ligera y captura los
+    // precios que entran durante el día).
+    //
+    // Forzar recálculo completo:  FORZAR_RECALCULO=1 node scripts/updateAgregados.js
+    // ============================================================
+    const FORZAR = process.env.FORZAR_RECALCULO === "1";
+
+    const ultimoLote = await client.query(`SELECT MAX(date) AS t FROM prices`);
+    const tLote = ultimoLote.rows[0]?.t ? new Date(ultimoLote.rows[0].t).getTime() : 0;
+
+    const calculados = await client.query(`
+      SELECT days, MAX(updated_at) AS t
+      FROM precios_agregados
+      WHERE market_type = 'nacional'
+      GROUP BY days
+    `);
+    const tCalculo = {};
+    for (const r of calculados.rows) tCalculo[Number(r.days)] = r.t ? new Date(r.t).getTime() : 0;
+
+    const daysList = [1, 7, 30].filter(days => {
+      if (days === 1 || FORZAR) return true;
+      const yaCalculado = tCalculo[days] || 0;
+      // Si el último cálculo es posterior al último lote de datos, no hay nada nuevo que calcular.
+      if (yaCalculado > tLote) {
+        console.log(`⏭️  ${days} días: sin datos nuevos desde el último cálculo — se omite (ahorro de una consulta pesada)`);
+        return false;
+      }
+      return true;
+    });
 
     for (const days of daysList) {
 
