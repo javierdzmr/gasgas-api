@@ -71,7 +71,19 @@ main{max-width:900px;margin:0 auto;padding:22px 18px 40px;display:none}
   <div class="card" id="c-seed"><span class="foco duda"></span><div class="info"><div class="nombre">Último seed de precios</div><div class="det">—</div></div><span class="gran" id="seed-gran"></span></div>
   <div class="card" id="c-cortes"><span class="foco duda"></span><div class="info"><div class="nombre">Cortes de promedios <span class="mono" style="font-size:11px;color:rgba(255,255,255,.4)">7 al día</span></div><div class="det">—</div></div><span class="gran" id="cortes-gran"></span></div>
   <div class="card" id="c-publica"><span class="foco duda"></span><div class="info"><div class="nombre">API pública <span class="mono" style="font-size:11px;color:rgba(255,255,255,.4)">api.gasgas.com.mx</span></div><div class="det">—</div></div><span class="lat"></span></div>
+
+  <div class="card" id="c-uso" style="align-items:flex-start">
+    <span class="foco ok" style="margin-top:4px"></span>
+    <div class="info">
+      <div class="nombre">Uso de nuestra API · últimas 24 h</div>
+      <div class="det" id="uso-det">—</div>
+      <div class="det" id="uso-top" style="margin-top:8px;line-height:1.7"></div>
+    </div>
+    <span class="gran" id="uso-gran"></span>
+  </div>
+
   <div class="footer" id="pie">se actualiza solo cada 60 segundos</div>
+  <div class="footer" style="margin-top:6px">El conteo de uso es de la API propia (pasa por nuestro servidor) y se reinicia con cada despliegue. El tráfico de Clara y cobee corre en Northflank y no queda registrado aquí.</div>
 </main>
 
 <script>
@@ -106,6 +118,14 @@ async function cargar(){
     pinta("c-cortes", j.cortes, j.cortes && j.cortes.ultimo ? ("último corte: " + horaMX(j.cortes.ultimo) + " · hace " + j.cortes.horas + " h") : null,
       chk => { $("cortes-gran").textContent = chk && chk.ok ? "al día" : "atrasado"; $("cortes-gran").style.color = chk && chk.ok ? "#00A94F" : "#E05656"; });
     pinta("c-publica", j.publica);
+    if (j.uso) {
+      $("uso-gran").textContent = Number(j.uso.total24h || 0).toLocaleString("en-US");
+      $("uso-gran").style.color = "#00A94F";
+      $("uso-det").textContent = "consultas contadas desde " + horaMX(j.uso.desde) + " (se reinicia en cada despliegue)";
+      $("uso-top").innerHTML = (j.uso.top || []).length
+        ? (j.uso.top || []).map(t => '<span style="color:rgba(255,255,255,.8)">' + t.ruta + '</span> · ' + Number(t.n).toLocaleString("en-US")).join("<br>")
+        : "sin consultas registradas todavía";
+    }
     const todos = [j.clara, j.cobee, j.seed, j.cortes, j.publica];
     const malos = todos.filter(x => !(x && x.ok)).length;
     $("resumen-txt").textContent = malos === 0 ? "● todos los sistemas en verde" : ("● " + malos + " sistema(s) requieren atención");

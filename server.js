@@ -48,6 +48,25 @@ app.use((req, res, next) => {
   next();
 });
 
+// 📊 Contador de uso de la API pública (ventana móvil de 24 h, en memoria)
+//    Nota honesta: vive en el proceso — se reinicia con cada deploy o reinicio del servicio.
+const usoApi = []; // timestamps
+const usoPorRuta = new Map(); // ruta -> [timestamps]
+app.use('/api', (req, res, next) => {
+  if (req.method === 'GET' && !req.path.startsWith('/status')) {
+    const t = Date.now(), corte = t - 86400000;
+    usoApi.push(t);
+    while (usoApi.length && usoApi[0] < corte) usoApi.shift();
+    const ruta = req.path.split('/').slice(0, 2).join('/') || req.path;
+    let arr = usoPorRuta.get(ruta);
+    if (!arr) { arr = []; usoPorRuta.set(ruta, arr); }
+    arr.push(t);
+    while (arr.length && arr[0] < corte) arr.shift();
+    if (!arr.length) usoPorRuta.delete(ruta);
+  }
+  next();
+});
+
 // 📄 Servir el dashboard desde public/ (gasgas-api-dev.onrender.com)
 app.use(express.static('public', { extensions: ['html'] }));
 
@@ -575,6 +594,7 @@ app.get("/api/demo/cp", async (req, res) => {
 // ==============================
 const crypto = require("crypto");
 const statusIntentos = new Map();
+const procesoDesde = new Date().toISOString();
 
 function statusToken() {
   return crypto.createHash("sha256").update("gasgas-status-v1|" + (process.env.STATUS_PIN || "")).digest("hex");
@@ -663,7 +683,13 @@ app.get("/api/status/checks", async (req, res) => {
         return { ok: !!(j && j.status === "ok"), detalle: r.ok ? "responde ok" : "HTTP " + r.status };
       })
     ]);
-    res.json({ generado: new Date().toISOString(), clara, cobee, seed, cortes, publica });
+    // Uso de NUESTRA API pública en las últimas 24 h (contador en memoria)
+    const corte24 = Date.now() - 86400000;
+    const top = [...usoPorRuta.entries()]
+      .map(([ruta, arr]) => ({ ruta, n: arr.filter(t => t >= corte24).length }))
+      .filter(x => x.n > 0).sort((a, b) => b.n - a.n).slice(0, 5);
+    const uso = { total24h: usoApi.filter(t => t >= corte24).length, top, desde: procesoDesde };
+    res.json({ generado: new Date().toISOString(), clara, cobee, seed, cortes, publica, uso });
   } catch (err) {
     console.error("ERROR /status/checks:", err);
     res.status(500).json({ error: "Error corriendo los checks" });
