@@ -305,6 +305,13 @@ Pendientes: llaves de prueba, rate limiting por API key, login de clientes, pago
 
 ---
 
+## Política del changelog público (`/docs`)
+
+Solo se registra lo que el cliente puede notar: **campos y endpoints nuevos, frecuencia, cobertura y documentación**.
+- Se redacta como **valor entregado**, nunca como falla corregida ("el conteo ahora refleja el padrón completo", no "corregimos un bug").
+- **No se publican**: mejoras internas de infraestructura, detalles de implementación, incidencias sin impacto en el dato, ni roadmap.
+- **Excepción ética:** si un error afectó datos que un cliente ya usó, se le avisa **por correo directo** — eso no se resuelve con silencio.
+
 ## Problemas Conocidos (no repetir)
 
 1. **CORS** — resuelto 14 Abr 2026 (middleware nativo)
