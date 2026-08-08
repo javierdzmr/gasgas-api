@@ -296,7 +296,7 @@ console.log(await r.json());</pre></div>
     <li>Un cambio incompatible se publica como <b>versión nueva</b> con <b>90 días de aviso</b> a los clientes con contrato, y se anota en el changelog.</li>
   </ul>
 
-  <h2 id="changelog">Changelog</h2>
+  <h2 id="changelog">Changelog <span class="version" style="background:var(--gris-100);color:var(--gris-600)">últimos 90 días</span></h2>
   <table>
     <tr><th>Fecha</th><th>Cambio</th></tr>
     <tr><td>2026-08-08</td><td><b>Frecuencia ampliada a 7 cortes diarios</b> (antes 2), entre las 6:30 y las 20:30 h de México. Cada respuesta sigue declarando <span class="mono">updated_at</span>.</td></tr>
@@ -304,9 +304,8 @@ console.log(await r.json());</pre></div>
     <tr><td>2026-08-07</td><td>Nuevo: <b>consulta de nivel código postal</b> disponible para evaluación, y endpoint de <b>estadísticas del día</b> (volumen procesado y fecha del último corte).</td></tr>
     <tr><td>2026-08-05</td><td>Publicadas la <b>especificación OpenAPI 3.1</b> y la <b>colección de Postman</b>. Nuevas secciones: ejemplos de error, caché y seguridad.</td></tr>
     <tr><td>2026-07-19</td><td>Nuevo nivel <b>municipio</b> (~2,900 plazas) en <span class="mono">/precios</span> y <span class="mono">/historico</span> + nuevo catálogo <span class="mono">/municipios</span>.</td></tr>
-    <tr><td>2026-07</td><td>Primera documentación pública de la API (en producción desde 2017). Esquema estable declarado.</td></tr>
   </table>
-  <div class="aviso"><b>Qué se registra aquí:</b> los cambios que puede notar quien consume la API — campos y endpoints nuevos, frecuencia de actualización, cobertura y documentación. Las mejoras internas de infraestructura no aparecen porque no alteran el contrato de datos. Un cambio incompatible, si llegara a requerirse, se anuncia con <b>90 días de anticipación</b> a los clientes con contrato además de publicarse aquí.</div>
+  <div class="aviso"><b>Ventana:</b> esta tabla lista los cambios de los <b>últimos 90 días</b>. La API opera de forma ininterrumpida <b>desde 2017</b>; el historial completo de versiones se entrega a clientes con contrato a solicitud.<br><br><b>Qué se registra aquí:</b> los cambios que puede notar quien consume la API — campos y endpoints nuevos, frecuencia de actualización, cobertura y documentación. Las mejoras internas de infraestructura no aparecen porque no alteran el contrato de datos. Un cambio incompatible, si llegara a requerirse, se anuncia con <b>90 días de anticipación</b> a los clientes con contrato además de publicarse aquí.</div>
 
   <div class="footer">GasGas Datos · Fuente: Comisión Nacional de Energía · ¿Dudas de integración? <a href="mailto:hola@gasgas.com.mx">hola@gasgas.com.mx</a> — responde el equipo de ingeniería, el mismo día hábil.</div>
 
