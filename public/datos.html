@@ -518,10 +518,10 @@
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
-          <input value="{{ w.nombre }}" onInput="{{ w.setNombre }}" placeholder="Nombre y apellido" style="height: 50px; border: 1.5px solid #DCE3EB; border-radius: 10px; padding: 0 14px; font-family: 'Figtree', sans-serif; font-size: 15px; color: #0E2A47">
-          <input value="{{ w.empresa }}" onInput="{{ w.setEmpresa }}" placeholder="Empresa" style="height: 50px; border: 1.5px solid #DCE3EB; border-radius: 10px; padding: 0 14px; font-family: 'Figtree', sans-serif; font-size: 15px; color: #0E2A47">
-          <input value="{{ w.email }}" onInput="{{ w.setEmail }}" placeholder="Correo de empresa" style="height: 50px; border: 1.5px solid {{ w.emailBd }}; border-radius: 10px; padding: 0 14px; font-family: 'Figtree', sans-serif; font-size: 15px; color: #0E2A47">
-          <input value="{{ w.whatsapp }}" onInput="{{ w.setWhatsapp }}" placeholder="WhatsApp (opcional)" style="height: 50px; border: 1.5px solid #DCE3EB; border-radius: 10px; padding: 0 14px; font-family: 'Figtree', sans-serif; font-size: 15px; color: #0E2A47">
+          <input onInput="{{ w.setNombre }}" placeholder="Nombre y apellido" style="height: 50px; border: 1.5px solid #DCE3EB; border-radius: 10px; padding: 0 14px; font-family: 'Figtree', sans-serif; font-size: 15px; color: #0E2A47">
+          <input onInput="{{ w.setEmpresa }}" placeholder="Empresa" style="height: 50px; border: 1.5px solid #DCE3EB; border-radius: 10px; padding: 0 14px; font-family: 'Figtree', sans-serif; font-size: 15px; color: #0E2A47">
+          <input onInput="{{ w.setEmail }}" placeholder="Correo de empresa" style="height: 50px; border: 1.5px solid {{ w.emailBd }}; border-radius: 10px; padding: 0 14px; font-family: 'Figtree', sans-serif; font-size: 15px; color: #0E2A47">
+          <input onInput="{{ w.setWhatsapp }}" placeholder="WhatsApp (opcional)" style="height: 50px; border: 1.5px solid #DCE3EB; border-radius: 10px; padding: 0 14px; font-family: 'Figtree', sans-serif; font-size: 15px; color: #0E2A47">
         </div>
         <div style="display: {{ w.errDisplay }}; font-size: 13.5px; color: #B91C1C; margin-top: 10px">{{ w.error }}</div>
 
