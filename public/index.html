@@ -43,7 +43,7 @@
     h2 { font-size: 26px !important; }
     [style*="font-size: 54px"] { font-size: 36px !important; }
     [style*="padding: 96px"] { padding-top: 48px !important; }
-    header nav a:not([href="#contacto"]) { display: none !important; }
+    header nav a:not([href="#contacto"]):not([href="/docs"]) { display: none !important; }
     header nav { gap: 10px !important; }
     header [style*="height: 72px"] { height: 60px !important; }
     section[data-screen-label="Hero"] [style*="transition: background 0.8s"] { flex-wrap: nowrap !important; font-size: 10.5px !important; gap: 8px !important; }
@@ -73,11 +73,11 @@
     </a>
     <nav style="display: flex; align-items: center; gap: 32px">
       <a href="#monitor" style="color: rgba(255,255,255,0.75); font-size: 14px; font-weight: 500" style-hover="color: #FFFFFF">Monitor</a>
-      <a href="/docs" style="color: rgba(255,255,255,0.75); font-size: 14px; font-weight: 500" style-hover="color: #FFFFFF">Docs</a>
       <a href="#proceso" style="color: rgba(255,255,255,0.75); font-size: 14px; font-weight: 500" style-hover="color: #FFFFFF">Proceso</a>
       <a href="#niveles" style="color: rgba(255,255,255,0.75); font-size: 14px; font-weight: 500" style-hover="color: #FFFFFF">Niveles de datos</a>
       <a href="#api" style="color: rgba(255,255,255,0.75); font-size: 14px; font-weight: 500" style-hover="color: #FFFFFF">API</a>
       <a href="#precios" style="color: rgba(255,255,255,0.75); font-size: 14px; font-weight: 500" style-hover="color: #FFFFFF">Planes</a>
+      <a href="/docs" style="display: inline-flex; align-items: center; gap: 7px; border: 1px solid rgba(255,255,255,0.28); color: rgba(255,255,255,0.9); padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 600" style-hover="border: 1px solid #00A94F; color: #FFFFFF">Docs <span style="font-size: 11px; opacity: 0.65">↗</span></a>
       <a href="#contacto" style="background: #00A94F; color: #FFFFFF; padding: 9px 20px; border-radius: 8px; font-size: 14px; font-weight: 600" style-hover="background: #007A39; color: #FFFFFF">Solicitar acceso</a>
     </nav>
   </div>
