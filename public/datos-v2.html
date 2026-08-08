@@ -453,21 +453,20 @@
 
     <div style="text-align: center; margin-bottom: 32px">
       <h2 style="font-size: 40px; font-weight: 800; color: #FFFFFF; margin: 0 0 14px; letter-spacing: -0.02em; text-wrap: pretty">Su llave de evaluación, en 30 segundos</h2>
-      <p style="font-size: 17px; color: rgba(255,255,255,0.65); margin: 0">Tres preguntas y su equipo ya puede probar con datos reales. Sin llamadas previas.</p>
+      <p style="font-size: 17px; color: rgba(255,255,255,0.65); margin: 0">Dos preguntas y su equipo ya puede probar con datos reales. Sin llamadas previas.</p>
     </div>
 
     <!-- Barra de avance -->
     <div style="display: flex; gap: 8px; margin-bottom: 26px">
       <div style="flex: 1; height: 4px; border-radius: 999px; background: {{ w.b1 }}; transition: background .35s"></div>
       <div style="flex: 1; height: 4px; border-radius: 999px; background: {{ w.b2 }}; transition: background .35s"></div>
-      <div style="flex: 1; height: 4px; border-radius: 999px; background: {{ w.b3 }}; transition: background .35s"></div>
     </div>
 
     <div style="background: #FFFFFF; border-radius: 18px; padding: 36px; box-shadow: 0 24px 60px rgba(0,0,0,0.28)">
 
       <!-- ============ PASO 1: nivel de detalle ============ -->
       <div style="display: {{ w.p1 }}">
-        <div style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; letter-spacing: 0.1em; color: #8B99A6; margin-bottom: 6px">PASO 1 DE 3</div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; letter-spacing: 0.1em; color: #8B99A6; margin-bottom: 6px">PASO 1 DE 2</div>
         <div style="font-size: 24px; font-weight: 800; margin-bottom: 22px; letter-spacing: -0.01em">¿Con qué detalle necesita los precios?</div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
           <sc-for list="{{ w.niveles }}" as="o" hint-placeholder-count="4">
@@ -479,31 +478,9 @@
         </div>
       </div>
 
-      <!-- ============ PASO 2: cobertura + histórico ============ -->
+      <!-- ============ PASO 2: datos + estimado ============ -->
       <div style="display: {{ w.p2 }}">
-        <div style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; letter-spacing: 0.1em; color: #8B99A6; margin-bottom: 6px">PASO 2 DE 3</div>
-        <div style="font-size: 24px; font-weight: 800; margin-bottom: 22px; letter-spacing: -0.01em">¿Qué parte del país le interesa?</div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 26px">
-          <sc-for list="{{ w.coberturas }}" as="o" hint-placeholder-count="3">
-            <div onClick="{{ o.pick }}" style="border: 2px solid {{ o.bd }}; background: {{ o.bg }}; border-radius: 14px; padding: 18px 16px; cursor: pointer; text-align: center; transition: transform .12s, border-color .2s" style-hover="transform: translateY(-2px); border-color: #00A94F">
-              <div style="font-size: 16px; font-weight: 700; color: #0E2A47">{{ o.t }}</div>
-              <div style="font-size: 13px; color: #4C6379; margin-top: 3px">{{ o.d }}</div>
-            </div>
-          </sc-for>
-        </div>
-        <div onClick="{{ w.toggleHist }}" style="display: flex; align-items: center; gap: 12px; border: 2px solid {{ w.histBd }}; background: {{ w.histBg }}; border-radius: 14px; padding: 16px 20px; cursor: pointer">
-          <span style="width: 22px; height: 22px; border-radius: 6px; background: {{ w.histCheckBg }}; border: 2px solid {{ w.histBd }}; color: #FFFFFF; font-size: 14px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; flex: none">{{ w.histCheck }}</span>
-          <div>
-            <div style="font-size: 16px; font-weight: 700; color: #0E2A47">También necesito el histórico</div>
-            <div style="font-size: 13.5px; color: #4C6379">Serie diaria desde mayo 2024 — para comparar contra periodos anteriores.</div>
-          </div>
-        </div>
-        <div onClick="{{ w.atras }}" style="margin-top: 20px; font-size: 14px; color: #8B99A6; cursor: pointer; display: inline-block" style-hover="color: #0E2A47">← Volver</div>
-      </div>
-
-      <!-- ============ PASO 3: datos + estimado ============ -->
-      <div style="display: {{ w.p3 }}">
-        <div style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; letter-spacing: 0.1em; color: #8B99A6; margin-bottom: 6px">PASO 3 DE 3</div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; letter-spacing: 0.1em; color: #8B99A6; margin-bottom: 6px">PASO 2 DE 2</div>
         <div style="font-size: 24px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.01em">¿A nombre de quién emitimos la llave?</div>
 
         <div style="background: #E8F5EE; border: 1px solid #B9E4CC; border-radius: 12px; padding: 16px 20px; margin: 18px 0 22px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap">
@@ -531,7 +508,7 @@
       </div>
 
       <!-- ============ LISTO ============ -->
-      <div style="display: {{ w.p4 }}; text-align: center">
+      <div style="display: {{ w.p3 }}; text-align: center">
         <div style="width: 62px; height: 62px; border-radius: 50%; background: #E8F5EE; color: #007A39; font-size: 28px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 18px">✉</div>
         <div style="font-size: 26px; font-weight: 800; margin-bottom: 10px; letter-spacing: -0.01em">Listo, {{ w.nombreCorto }} — revise su correo</div>
         <p style="font-size: 15.5px; color: #4C6379; margin: 0 auto 8px; max-width: 480px">{{ w.envioTxt }}</p>
@@ -567,7 +544,7 @@
 <script type="text/x-dc" data-dc-script data-props="{&quot;datoEnVivoAnimado&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Hero&quot;}}">
 class Component extends DCLogic {
   /* ── 100% datos reales de la API de GasGas; placeholders mientras carga ── */
-  state = { i: 0, procesados: 0, selEstado: "CDMX", lat: 0, feed: [], corteHora: "—", ready: 0, qProd: "regular", qEstado: "Jalisco", qNivel: "estado", qMunicipio: "", qMunis: [], qCp: "11800", qCargando: false, wPaso: 1, wNivel: "municipio", wCobertura: "nacional", wHistorico: false, wNombre: "", wEmpresa: "", wEmail: "", wWhatsapp: "", wError: "", wEnviando: false, wCorreoEnviado: false, wWaTexto: "", wWaUrl: "", wCanal: "whatsapp", qResp: "Elija sus opciones y pulse \"Enviar consulta\".", qStatus: "listo", qExplica: "Aquí traduciremos la respuesta a lenguaje de negocio." };
+  state = { i: 0, procesados: 0, selEstado: "CDMX", lat: 0, feed: [], corteHora: "—", ready: 0, qProd: "regular", qEstado: "Jalisco", qNivel: "estado", qMunicipio: "", qMunis: [], qCp: "11800", qCargando: false, wPaso: 1, wNivel: "municipio", wNombre: "", wEmpresa: "", wEmail: "", wWhatsapp: "", wError: "", wEnviando: false, wCorreoEnviado: false, wWaTexto: "", wWaUrl: "", wCanal: "whatsapp", qResp: "Elija sus opciones y pulse \"Enviar consulta\".", qStatus: "listo", qExplica: "Aquí traduciremos la respuesta a lenguaje de negocio." };
   // [nombre, abbr, col, fila] — geometría del mapa de mosaicos (sin datos inventados)
   estadosData = [
     ["Baja California","BC",1,1],["Sonora","SON",2,1],["Chihuahua","CHIH",3,1],["Coahuila","COAH",4,1],["Nuevo León","NL",5,1],["Tamaulipas","TAM",6,1],
@@ -669,10 +646,8 @@ class Component extends DCLogic {
 
   wEstimado() {
     const base = this.PRECIO_BASE[this.state.wNivel] || 17250;
-    const f = this.FACTOR_COB[this.state.wCobertura] || 1;
-    let min = Math.round((base * f) / 250) * 250;
-    let max = Math.round((min * 1.2) / 250) * 250;
-    if (this.state.wHistorico) { min = Math.round((min * 1.15) / 250) * 250; max = Math.round((max * 1.15) / 250) * 250; }
+    const min = Math.round((base * this.FACTOR_COB.nacional) / 250) * 250;
+    const max = Math.round((min * 1.2) / 250) * 250;
     return { min, max };
   }
   wEmailOk(mail) {
@@ -684,7 +659,7 @@ class Component extends DCLogic {
   }
   async wEnviar() {
     if (this.state.wEnviando) return;
-    const { wNombre, wEmpresa, wEmail, wWhatsapp, wNivel, wCobertura, wHistorico } = this.state;
+    const { wNombre, wEmpresa, wEmail, wWhatsapp, wNivel } = this.state;
     if (!wNombre.trim() || !wEmpresa.trim()) { this.setState({ wError: "Nos falta tu nombre y el de tu empresa." }); return; }
     const chk = this.wEmailOk(wEmail);
     if (!chk.ok) { this.setState({ wError: chk.motivo || "Revisa el correo, parece incompleto." }); return; }
@@ -692,11 +667,11 @@ class Component extends DCLogic {
     try {
       const r = await fetch("/api/solicitar-acceso", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nombre: wNombre, empresa: wEmpresa, email: wEmail, whatsapp: wWhatsapp, nivel: wNivel, cobertura: wCobertura, historico: wHistorico })
+        body: JSON.stringify({ nombre: wNombre, empresa: wEmpresa, email: wEmail, whatsapp: wWhatsapp, nivel: wNivel, cobertura: "nacional", historico: false })
       });
       const j = await r.json();
       if (!r.ok) { this.setState({ wEnviando: false, wError: j.mensaje || j.error || "No pudimos generar la llave. Intenta de nuevo." }); return; }
-      this.setState({ wEnviando: false, wPaso: 4, wCorreoEnviado: !!j.correo_enviado, wWaTexto: j.whatsapp_texto || "", wWaUrl: j.whatsapp_url || "", wCanal: j.canal || "whatsapp" });
+      this.setState({ wEnviando: false, wPaso: 3, wCorreoEnviado: !!j.correo_enviado, wWaTexto: j.whatsapp_texto || "", wWaUrl: j.whatsapp_url || "", wCanal: j.canal || "whatsapp" });
     } catch (e) {
       this.setState({ wEnviando: false, wError: "Sin conexión. Intenta de nuevo en un momento." });
     }
@@ -867,28 +842,18 @@ class Component extends DCLogic {
       w: (() => {
         const s = this.state, est = this.wEstimado();
         const NIV = [["estado","Estado","32 mercados + nacional"],["municipio","Municipio","2,900+ plazas"]];
-        const COB = [["una_region","Una región","norte, centro…"],["varias","Varias","2 o 3 regiones"],["nacional","Nacional","todo el país"]];
         const sel = (activo) => activo ? { bd: "#00A94F", bg: "#E8F5EE" } : { bd: "#E7ECF0", bg: "#FFFFFF" };
         const NIV_TXT = { estado: "Nivel estado", municipio: "Nivel municipio", cp: "Nivel código postal", estacion: "Nivel estación" };
-        const COB_TXT = { una_region: "una región", varias: "varias regiones", nacional: "cobertura nacional" };
         const chkMail = s.wEmail ? this.wEmailOk(s.wEmail) : { ok: true };
         return {
           b1: s.wPaso >= 1 ? "#00A94F" : "rgba(255,255,255,0.18)",
           b2: s.wPaso >= 2 ? "#00A94F" : "rgba(255,255,255,0.18)",
-          b3: s.wPaso >= 3 ? "#00A94F" : "rgba(255,255,255,0.18)",
           p1: s.wPaso === 1 ? "block" : "none",
           p2: s.wPaso === 2 ? "block" : "none",
           p3: s.wPaso === 3 ? "block" : "none",
-          p4: s.wPaso === 4 ? "block" : "none",
           niveles: NIV.map(([k, t, d]) => Object.assign({ t, d, pick: () => this.setState({ wNivel: k, wPaso: 2 }) }, sel(s.wNivel === k))),
-          coberturas: COB.map(([k, t, d]) => Object.assign({ t, d, pick: () => this.setState({ wCobertura: k, wPaso: 3 }) }, sel(s.wCobertura === k))),
-          histBd: s.wHistorico ? "#00A94F" : "#E7ECF0",
-          histBg: s.wHistorico ? "#E8F5EE" : "#FFFFFF",
-          histCheckBg: s.wHistorico ? "#00A94F" : "#FFFFFF",
-          histCheck: s.wHistorico ? "✓" : "",
-          toggleHist: () => this.setState({ wHistorico: !s.wHistorico }),
           atras: () => this.setState({ wPaso: Math.max(1, s.wPaso - 1), wError: "" }),
-          resumen: NIV_TXT[s.wNivel] + " · " + COB_TXT[s.wCobertura] + (s.wHistorico ? " · con histórico" : ""),
+          resumen: NIV_TXT[s.wNivel] + " · cobertura nacional",
           estimadoTxt: "$" + est.min.toLocaleString("en-US") + " – $" + est.max.toLocaleString("en-US"),
           nombre: s.wNombre, empresa: s.wEmpresa, email: s.wEmail, whatsapp: s.wWhatsapp,
           setNombre: (e) => this.setState({ wNombre: e.target.value }),
