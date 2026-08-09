@@ -666,6 +666,19 @@ function limiteSolicitudes(req, res) {
 }
 
 
+// La guía en PDF es la misma para todos: se lee una vez y se reutiliza en cada envío.
+const GUIA_PDF = "public/GasGas-API-Guia-de-uso.pdf";
+let guiaB64 = null;
+function guiaEnBase64() {
+  if (guiaB64 === null) {
+    try { guiaB64 = require("fs").readFileSync(GUIA_PDF).toString("base64"); }
+    catch (e) { console.error("No se pudo leer la guía PDF:", e.message); guiaB64 = ""; }
+  }
+  return guiaB64;
+}
+
+const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
 /** Envía la llave de evaluación por correo. Devuelve true si salió. */
 async function enviarLlavePorCorreo({ nombre, empresa, email, llave, nivel, areasTxt, historico, est }) {
   const KEY = process.env.SENDGRID_API_KEY;
@@ -673,6 +686,75 @@ async function enviarLlavePorCorreo({ nombre, empresa, email, llave, nivel, area
   if (!KEY) return { ok: false, motivo: "sin_servicio_correo" };
 
   const NIV = { estado: "nivel estado", municipio: "nivel municipio", cp: "nivel código postal", estacion: "nivel estación" };
+  const pila = nombre.split(" ")[0];
+  const curl = `curl -H "x-api-key: ${llave}" "https://api.gasgas.com.mx/api/precios?market=estado&value=Jalisco&days=1&product=regular"`;
+
+  // Correo HTML: tablas y estilos en línea, que es lo único que respetan
+  // Outlook y Gmail. Sin imágenes externas para no caer en spam.
+  const html = `<!doctype html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#F1F5F8;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F1F5F8;padding:24px 12px;">
+<tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#FFFFFF;border-radius:14px;overflow:hidden;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+
+  <tr><td style="background:#0E2A47;padding:26px 30px;">
+    <span style="display:inline-block;background:#FFFFFF;color:#0E2A47;font-weight:800;font-size:13px;padding:4px 11px;border-radius:99px;">GG</span>
+    <span style="color:rgba(255,255,255,.5);font-size:14px;margin-left:8px;">gasgas / datos</span>
+    <div style="color:#FFFFFF;font-size:23px;font-weight:800;margin-top:16px;line-height:1.25;">Su llave está lista, ${esc(pila)}</div>
+    <div style="color:rgba(255,255,255,.65);font-size:15px;margin-top:6px;">7 días · 500 consultas · sin costo</div>
+  </td></tr>
+
+  <tr><td style="padding:26px 30px 6px;">
+    <div style="font-family:'SFMono-Regular',Consolas,monospace;font-size:10px;letter-spacing:1px;color:#007A39;">SU LLAVE</div>
+    <div style="background:#E8F5EE;border:1px solid #B9E4CC;border-radius:9px;padding:13px 15px;margin-top:7px;
+                font-family:'SFMono-Regular',Consolas,monospace;font-size:14px;color:#0E2A47;word-break:break-all;">${esc(llave)}</div>
+  </td></tr>
+
+  <tr><td style="padding:18px 30px 0;">
+    <div style="font-family:'SFMono-Regular',Consolas,monospace;font-size:10px;letter-spacing:1px;color:#007A39;">SU PRIMERA LLAMADA</div>
+    <div style="background:#0E2A47;border-radius:9px;padding:13px 15px;margin-top:7px;
+                font-family:'SFMono-Regular',Consolas,monospace;font-size:11.5px;line-height:1.6;color:#E8F5EE;word-break:break-all;">${esc(curl)}</div>
+    <div style="font-size:13px;color:#4C6379;margin-top:8px;">Cópiela tal cual. Responde en menos de un segundo.</div>
+  </td></tr>
+
+  <tr><td style="padding:22px 30px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+           style="background:#F7F9FA;border:1px solid #E7ECF0;border-radius:9px;">
+      <tr><td style="padding:14px 16px;">
+        <div style="font-size:15px;font-weight:700;color:#0E2A47;">📎 Guía de uso de la API</div>
+        <div style="font-size:13px;color:#4C6379;margin-top:3px;">Va adjunta a este correo: endpoints, parámetros, Áreas GasGas y manejo de errores. Tres páginas, sin relleno.</div>
+      </td></tr>
+    </table>
+  </td></tr>
+
+  <tr><td style="padding:22px 30px 0;">
+    <a href="https://gasgas.com.mx/docs" style="display:block;background:#00A94F;color:#FFFFFF;text-decoration:none;
+       border-radius:9px;padding:14px;text-align:center;font-size:16px;font-weight:700;">Ver la documentación completa</a>
+    <div style="font-size:12.5px;color:#8B99A6;margin-top:9px;text-align:center;">Incluye la especificación OpenAPI 3.1 y la colección de Postman</div>
+  </td></tr>
+
+  <tr><td style="padding:22px 30px 0;">
+    <div style="border-top:1px solid #E7ECF0;padding-top:16px;">
+      <div style="font-family:'SFMono-Regular',Consolas,monospace;font-size:10px;letter-spacing:1px;color:#8B99A6;">LO QUE NOS PIDIÓ</div>
+      <div style="font-size:14px;color:#0E2A47;margin-top:5px;">${esc(NIV[nivel] || nivel)} · ${esc(areasTxt)}${historico ? " · con histórico" : ""}</div>
+      <div style="font-size:14px;color:#4C6379;margin-top:3px;">Estimado: <b style="color:#0E2A47;">$${est.min.toLocaleString("en-US")} – $${est.max.toLocaleString("en-US")} MXN</b>/mes + IVA</div>
+    </div>
+  </td></tr>
+
+  <tr><td style="padding:20px 30px 28px;">
+    <div style="font-size:14px;color:#4C6379;line-height:1.6;">¿Necesita nivel código postal, estación, o el histórico desde mayo 2024?
+    Responda este correo y lo vemos — le contesta alguien que conoce el dato.</div>
+  </td></tr>
+
+  <tr><td style="background:#081B30;padding:16px 30px;">
+    <span style="color:rgba(255,255,255,.5);font-size:12px;">GasGas · Fuente: CNE, datos depurados por el algoritmo de calidad GasGas</span>
+  </td></tr>
+
+</table>
+</td></tr></table>
+</body></html>`;
+
   const texto =
 `Hola ${nombre.split(" ")[0]},
 
@@ -707,7 +789,25 @@ hola@gasgas.com.mx`;
         from: { email: DE, name: "GasGas Datos" },
         reply_to: { email: DE },
         subject: `Su llave de evaluación · API GasGas (${empresa})`,
-        content: [{ type: "text/plain", value: texto }]
+        // El texto plano va primero: es el orden que exige SendGrid y el que
+        // ven los clientes de correo que no muestran HTML.
+        content: [
+          { type: "text/plain", value: texto },
+          { type: "text/html",  value: html }
+        ],
+        attachments: guiaEnBase64() ? [{
+          content: guiaEnBase64(),
+          filename: "GasGas-API-Guia-de-uso.pdf",
+          type: "application/pdf",
+          disposition: "attachment"
+        }] : [],
+        // Sin esto SendGrid reescribe cada URL con un enlace de rastreo y
+        // rompe el curl que el cliente tiene que copiar y pegar.
+        tracking_settings: {
+          click_tracking: { enable: false, enable_text: false },
+          open_tracking:  { enable: false },
+          subscription_tracking: { enable: false }
+        }
       })
     });
     if (r.status >= 200 && r.status < 300) return { ok: true };
