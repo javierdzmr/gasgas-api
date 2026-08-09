@@ -726,25 +726,41 @@ async function dominioRecibeCorreo(dominio) {
   }
 }
 
-const TOPE_DOMINIO_DIA = 5;    // llaves por dominio de empresa al día
-const TOPE_GLOBAL_DIA  = 60;   // colchón bajo los 100 correos/día del plan
+// ──────────────────────────────────────────────────────────────
+// Topes de emisión. Esto es una evaluación enterprise, no un servicio
+// de autoservicio: una empresa seria necesita UNA llave, no varias.
+// Todo lo que rebase estos números va a conversación con un humano,
+// que además es donde se cierran las ventas B2B.
+// ──────────────────────────────────────────────────────────────
+const TOPE_DOMINIO_DIAS = 30;   // una llave por empresa al mes
+const TOPE_IP_DIA       = 2;    // llaves emitidas desde una misma conexión al día
+const TOPE_GLOBAL_DIA   = 30;   // 30 empresas distintas en un día ya es un día enorme
 
 /** Devuelve null si se puede emitir, o el motivo del rechazo. */
-async function topesDeEmision(email, dominio) {
+async function topesDeEmision(email, dominio, ip) {
   const q = await pool.query(`
     SELECT
-      (SELECT COUNT(*) FROM prospectos WHERE email = $1 AND created_at > NOW() - INTERVAL '7 days')  AS del_correo,
-      (SELECT COUNT(*) FROM prospectos WHERE dominio = $2 AND created_at > NOW() - INTERVAL '1 day') AS del_dominio,
+      (SELECT COUNT(*) FROM prospectos WHERE email = $1)                                             AS del_correo,
+      (SELECT COUNT(*) FROM prospectos WHERE dominio = $2
+         AND created_at > NOW() - ($3 || ' days')::INTERVAL)                                         AS del_dominio,
+      (SELECT COUNT(*) FROM prospectos WHERE ip = $4 AND created_at > NOW() - INTERVAL '1 day')      AS de_la_ip,
       (SELECT COUNT(*) FROM prospectos WHERE created_at > NOW() - INTERVAL '1 day')                  AS del_dia
-  `, [email, dominio]);
+  `, [email, dominio, String(TOPE_DOMINIO_DIAS), ip]);
   const r = q.rows[0] || {};
+
+  // Una llave por persona. No hay reemisión automática: si necesita otra o más
+  // tiempo, queremos enterarnos nosotros — es señal de que está evaluando en serio.
   if (Number(r.del_correo) > 0) {
     return { codigo: 409, error: "llave_vigente",
-             mensaje: "Ya emitimos una llave para este correo en los últimos días. Revise su bandeja, o escríbanos a hola@gasgas.com.mx si no la encuentra." };
+             mensaje: "Ya emitimos una llave para este correo. Búsquela en su bandeja, y si necesita otra o más tiempo de prueba escríbanos a hola@gasgas.com.mx — se la reponemos el mismo día." };
   }
-  if (Number(r.del_dominio) >= TOPE_DOMINIO_DIA) {
-    return { codigo: 429, error: "tope_dominio",
-             mensaje: "Ya se emitieron varias llaves para su empresa hoy. Escríbanos a hola@gasgas.com.mx y lo resolvemos de inmediato." };
+  if (Number(r.del_dominio) > 0) {
+    return { codigo: 409, error: "tope_dominio",
+             mensaje: "Su empresa ya tiene una llave de evaluación activa. Escríbanos a hola@gasgas.com.mx y le damos acceso a usted también, o extendemos la prueba del equipo." };
+  }
+  if (Number(r.de_la_ip) >= TOPE_IP_DIA) {
+    return { codigo: 429, error: "tope_ip",
+             mensaje: "Alcanzó el límite de solicitudes desde esta conexión. Escríbanos a hola@gasgas.com.mx y lo resolvemos de inmediato." };
   }
   if (Number(r.del_dia) >= TOPE_GLOBAL_DIA) {
     return { codigo: 429, error: "tope_diario",
@@ -1039,8 +1055,8 @@ app.post("/api/solicitar-acceso", async (req, res) => {
       });
     }
 
-    // 🛡️ Topes por correo, por dominio y global del día
-    const tope = await topesDeEmision(email, dominio);
+    // 🛡️ Topes por correo, por empresa, por conexión y global del día
+    const tope = await topesDeEmision(email, dominio, ipCliente);
     if (tope) {
       anotarBloqueo(tope.error, req, rastro);
       return res.status(tope.codigo).json({ error: tope.error, mensaje: tope.mensaje });
