@@ -44,8 +44,9 @@
     h2 { font-size: 26px !important; }
     [style*="font-size: 54px"] { font-size: 36px !important; }
     [style*="padding: 96px"] { padding-top: 48px !important; }
-    header nav a:not([href="#contacto"]):not([href="/docs"]) { display: none !important; }
-    header nav { gap: 10px !important; }
+    /* En móvil el encabezado solo lleva Docs: el CTA vive en el hero, justo debajo */
+    header nav a:not([href="/docs"]) { display: none !important; }
+    header nav { gap: 10px !important; flex-wrap: nowrap !important; }
     header [style*="height: 72px"] { height: 60px !important; }
     section[data-screen-label="Hero"] [style*="transition: background 0.8s"] { flex-wrap: nowrap !important; font-size: 10.5px !important; gap: 8px !important; }
     section[data-screen-label="Hero"] [style*="transition: background 0.8s"] span { min-width: 0 !important; }
