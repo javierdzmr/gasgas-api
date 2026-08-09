@@ -79,7 +79,7 @@ h1 {{ font-size: 27pt; font-weight: 900; margin: 14pt 0 6pt; line-height: 1.12; 
           color: rgba(255,255,255,.85); letter-spacing: .6pt; }}
 .pills span {{ border: 1px solid rgba(255,255,255,.3); border-radius: 20pt; padding: 3pt 9pt; margin-right: 5pt; }}
 
-h2 {{ font-size: 13pt; font-weight: 900; margin: 16pt 0 7pt; padding-left: 9pt;
+h2 {{ font-size: 13pt; font-weight: 900; margin: 12pt 0 6pt; padding-left: 9pt;
       border-left: 3.5pt solid {VERDE}; letter-spacing: -.2pt; }}
 h2:first-of-type {{ margin-top: 0; }}
 h3 {{ font-size: 10.5pt; font-weight: 900; margin: 12pt 0 4pt; color: {AZUL}; }}
@@ -106,7 +106,8 @@ td.ep {{ font-family: "DejaVu Sans Mono", monospace; color: {AZUL}; font-weight:
 td.pa {{ font-family: "DejaVu Sans Mono", monospace; width: 26%; font-size: 7.6pt; }}
 
 .aviso {{ background: #E8F5EE; border: .8pt solid #B9E4CC; border-radius: 5pt;
-          padding: 9pt 12pt; margin: 9pt 0; font-size: 9pt; color: #1D5C3B; }}
+          padding: 7.5pt 11pt; margin: 7pt 0; font-size: 8.8pt; color: #1D5C3B;
+          page-break-inside: avoid; }}
 .aviso b {{ color: #1D5C3B; }}
 .cierre {{ background: {AZUL}; color: #fff; border-radius: 6pt; padding: 12pt 16pt;
            margin-top: 12pt; page-break-inside: avoid; }}
@@ -118,8 +119,8 @@ table.contacto td {{ border: 0; padding: 0 14pt 0 0; vertical-align: top; }}
 table.contacto .ct {{ font-family: "DejaVu Sans Mono", monospace; font-size: 6.5pt;
                       letter-spacing: .9pt; color: rgba(255,255,255,.45); }}
 table.contacto .cv {{ font-size: 9.5pt; margin-top: 2pt; }}
-.doscol {{ display: flex; gap: 10pt; }}
-.doscol > div {{ flex: 1; border: .8pt solid {LINEA}; border-radius: 5pt; padding: 9pt 11pt; }}
+.doscol {{ display: flex; gap: 10pt; margin-top: 4pt; }}
+.doscol > div {{ flex: 1; border: .8pt solid {LINEA}; border-radius: 5pt; padding: 8pt 11pt; }}
 .doscol .t {{ font-family: "DejaVu Sans Mono", monospace; font-size: 7pt; letter-spacing: .8pt;
               color: {VERDE_OSC}; text-transform: uppercase; }}
 .doscol .v {{ font-size: 15pt; font-weight: 900; color: {TINTA}; margin-top: 2pt; }}
