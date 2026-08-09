@@ -772,6 +772,25 @@ async function turnstileValido(token, ip) {
   }
 }
 
+/**
+ * Deja rastro de cada intento rechazado. Sin esto, un ataque de mil correos se
+ * ve exactamente igual que un día sin visitas: nadie se entera.
+ * Nunca lanza — registrar no puede tumbar la respuesta al usuario.
+ */
+function anotarBloqueo(motivo, req, datos = {}) {
+  const ip = (req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.socket.remoteAddress || null;
+  pool.query(
+    `INSERT INTO solicitudes_bloqueadas (motivo, email, dominio, empresa, ip, user_agent)
+     VALUES ($1,$2,$3,$4,$5,$6)`,
+    [motivo,
+     (datos.email || "").slice(0, 160) || null,
+     (datos.dominio || "").slice(0, 120) || null,
+     (datos.empresa || "").slice(0, 140) || null,
+     ip,
+     String(req.headers["user-agent"] || "").slice(0, 300)]
+  ).catch(() => {});
+}
+
 const solicitudesPorIp = new Map();
 function limiteSolicitudes(req, res) {
   const ip = (req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.socket.remoteAddress || "?";
@@ -779,7 +798,13 @@ function limiteSolicitudes(req, res) {
   let reg = solicitudesPorIp.get(ip);
   if (!reg || ahora > reg.reset) { reg = { n: 0, reset: ahora + 3600_000 }; solicitudesPorIp.set(ip, reg); }
   reg.n++;
-  if (reg.n > 5) { res.status(429).json({ error: "Demasiadas solicitudes. Escríbenos a hola@gasgas.com.mx" }); return false; }
+  if (reg.n > 5) {
+    // Solo se anota el primer rechazo de cada tanda, para que un bot insistente
+    // no nos llene la tabla con miles de filas idénticas.
+    if (!reg.anotado) { reg.anotado = true; anotarBloqueo("rate_limit_ip", req); }
+    res.status(429).json({ error: "Demasiadas solicitudes. Escríbenos a hola@gasgas.com.mx" });
+    return false;
+  }
   return true;
 }
 
@@ -983,7 +1008,10 @@ app.post("/api/solicitar-acceso", async (req, res) => {
     if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(email)) return res.status(400).json({ error: "Ese correo no parece válido." });
 
     const dominio = email.split("@")[1];
+    const rastro = { email, dominio, empresa };
+
     if (DOMINIOS_PERSONALES.has(dominio)) {
+      anotarBloqueo("correo_personal", req, rastro);
       return res.status(422).json({
         error: "correo_personal",
         mensaje: "La llave de evaluación se emite a correos de empresa. Usa el tuyo corporativo y la generamos al instante."
@@ -994,6 +1022,7 @@ app.post("/api/solicitar-acceso", async (req, res) => {
 
     // 🛡️ Turnstile: filtra bots antes de gastar cuota de correo
     if (!await turnstileValido(b.turnstile_token, ipCliente)) {
+      anotarBloqueo("verificacion_fallida", req, rastro);
       return res.status(403).json({
         error: "verificacion_fallida",
         mensaje: "No pudimos verificar que la solicitud venga de una persona. Recargue la página e intente de nuevo."
@@ -1003,6 +1032,7 @@ app.post("/api/solicitar-acceso", async (req, res) => {
     // 🛡️ El dominio tiene que poder recibir correo: evita rebotes que queman
     //    la reputación de envío, y atrapa erratas como "@gmial.com"
     if (!await dominioRecibeCorreo(dominio)) {
+      anotarBloqueo("dominio_sin_correo", req, rastro);
       return res.status(422).json({
         error: "dominio_sin_correo",
         mensaje: `No encontramos servidores de correo en ${dominio}. Revise que esté bien escrito.`
@@ -1011,7 +1041,10 @@ app.post("/api/solicitar-acceso", async (req, res) => {
 
     // 🛡️ Topes por correo, por dominio y global del día
     const tope = await topesDeEmision(email, dominio);
-    if (tope) return res.status(tope.codigo).json({ error: tope.error, mensaje: tope.mensaje });
+    if (tope) {
+      anotarBloqueo(tope.error, req, rastro);
+      return res.status(tope.codigo).json({ error: tope.error, mensaje: tope.mensaje });
+    }
 
     const est = estimar(nivel, areas.length, historico);
 
@@ -1249,7 +1282,31 @@ app.get("/api/status/checks", async (req, res) => {
       prospectos = { total7d: t7.rows[0]?.n || 0, lista: q.rows };
     } catch (e) { prospectos = { error: true }; }
 
-    res.json({ generado: new Date().toISOString(), clara, cobee, seed, cortes, publica, uso, usoClientes, prospectos });
+    // Intentos bloqueados: sin esto un ataque se ve igual que un día tranquilo
+    let bloqueos = { total24h: 0, porMotivo: [], ipsTop: [] };
+    try {
+      const b24 = await pool.query(`
+        SELECT motivo, COUNT(*)::int AS n
+        FROM solicitudes_bloqueadas
+        WHERE created_at > NOW() - INTERVAL '24 hours'
+        GROUP BY motivo ORDER BY n DESC`);
+      const ips = await pool.query(`
+        SELECT ip, COUNT(*)::int AS n
+        FROM solicitudes_bloqueadas
+        WHERE created_at > NOW() - INTERVAL '24 hours' AND ip IS NOT NULL
+        GROUP BY ip HAVING COUNT(*) >= 5 ORDER BY n DESC LIMIT 3`);
+      const total = b24.rows.reduce((a, r) => a + r.n, 0);
+      bloqueos = {
+        total24h: total,
+        porMotivo: b24.rows,
+        ipsTop: ips.rows,
+        // Un puñado de rechazos al día es normal (erratas, correos personales).
+        // Arriba de 40, o una sola IP insistiendo, ya huele a automatizado.
+        alerta: total >= 40 || ips.rows.length > 0
+      };
+    } catch (e) { bloqueos = { error: true }; }
+
+    res.json({ generado: new Date().toISOString(), clara, cobee, seed, cortes, publica, uso, usoClientes, prospectos, bloqueos });
   } catch (err) {
     console.error("ERROR /status/checks:", err);
     res.status(500).json({ error: "Error corriendo los checks" });
