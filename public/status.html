@@ -144,7 +144,15 @@ async function cargar(){
       else {
         $("pros-lista").innerHTML = P.lista.map(p => {
           const usa = Number(p.llamadas || 0);
-          const señal = usa > 0 ? '<span style="color:#00A94F">' + usa + ' llamadas</span>' : '<span style="color:rgba(255,255,255,.35)">sin usar la llave</span>';
+          let señal;
+          if (usa > 0) {
+            const quedan = p.expira_en ? Math.ceil((new Date(p.expira_en) - Date.now()) / 86400000) : null;
+            señal = '<span style="color:#00A94F">' + usa + ' llamadas</span>'
+                  + (quedan > 0 ? '<span style="color:rgba(255,255,255,.4)"> · le quedan ' + quedan + ' d</span>'
+                                : '<span style="color:#E8C36A"> · llave vencida</span>');
+          } else {
+            señal = '<span style="color:rgba(255,255,255,.35)">llave sin estrenar</span>';
+          }
           const correo = p.correo_enviado
             ? ''
             : '<br><span style="color:#E8C36A">⚠ correo no enviado — mandar llave a mano: <span style="color:#fff">' + (p.api_key || '') + '</span></span>';

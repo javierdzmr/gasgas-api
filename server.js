@@ -138,6 +138,38 @@ async function initTables() {
 initTables();
 
 // ==============================
+// 🔑 LLAVES DE EVALUACIÓN — registro de uso
+//
+// Tiene que ir ANTES de las rutas: Express solo ejecuta el middleware que se
+// declaró antes de la ruta que atiende la petición. Declarado después nunca
+// corre y el contador se queda en cero.
+//
+// No bloquea nada: los endpoints públicos siguen abiertos. Su único trabajo es
+// medir quién está integrando de verdad, que es la señal de intención de compra.
+//
+// La vigencia arranca en la PRIMERA consulta, no cuando se emite la llave: si
+// el prospecto pide la llave un viernes y su equipo la toca hasta el miércoles,
+// no queremos que se le hayan ido 5 de los 7 días esperando.
+// ==============================
+app.use("/api", (req, res, next) => {
+  const k = req.headers["x-api-key"];
+  if (k && String(k).startsWith("gg_test_")) {
+    pool.query(
+      `UPDATE api_keys_prueba
+          SET llamadas    = llamadas + 1,
+              ultima_uso  = NOW(),
+              activada_en = COALESCE(activada_en, NOW()),
+              expira_en   = CASE WHEN activada_en IS NULL
+                                 THEN NOW() + INTERVAL '7 days'
+                                 ELSE expira_en END
+        WHERE api_key = $1 AND activa = TRUE AND expira_en > NOW()`,
+      [String(k).slice(0, 80)]
+    ).catch(() => {});
+  }
+  next();
+});
+
+// ==============================
 // 🔹 PRECIOS
 // ==============================
 app.get("/api/precios", async (req, res) => {
@@ -709,7 +741,7 @@ async function enviarLlavePorCorreo({ nombre, empresa, email, llave, nivel, area
     <span style="display:inline-block;background:#FFFFFF;color:#0E2A47;font-weight:800;font-size:13px;padding:4px 11px;border-radius:99px;">GG</span>
     <span style="color:rgba(255,255,255,.5);font-size:14px;margin-left:8px;">gasgas / datos</span>
     <div style="color:#FFFFFF;font-size:23px;font-weight:800;margin-top:16px;line-height:1.25;">Su llave está lista, ${esc(pila)}</div>
-    <div style="color:rgba(255,255,255,.65);font-size:15px;margin-top:6px;">7 días · 500 consultas · sin costo</div>
+    <div style="color:rgba(255,255,255,.65);font-size:15px;margin-top:6px;">500 consultas · sin costo · 7 días a partir de su primera llamada</div>
   </td></tr>
 
   <tr><td style="padding:26px 30px 6px;">
@@ -722,7 +754,7 @@ async function enviarLlavePorCorreo({ nombre, empresa, email, llave, nivel, area
     <div style="font-family:'SFMono-Regular',Consolas,monospace;font-size:10px;letter-spacing:1px;color:#007A39;">SU PRIMERA LLAMADA</div>
     <div style="background:#0E2A47;border-radius:9px;padding:13px 15px;margin-top:7px;
                 font-family:'SFMono-Regular',Consolas,monospace;font-size:11.5px;line-height:1.6;color:#E8F5EE;word-break:break-all;">${esc(curl)}</div>
-    <div style="font-size:13px;color:#4C6379;margin-top:8px;">Cópiela tal cual. Responde en menos de un segundo.</div>
+    <div style="font-size:13px;color:#4C6379;margin-top:8px;">Cópiela tal cual. Responde en menos de un segundo — y ahí arrancan sus 7 días, no antes.</div>
   </td></tr>
 
   <tr><td style="padding:22px 30px 0;">
@@ -783,7 +815,8 @@ Aquí está la llave de evaluación de la API de GasGas para ${empresa}.
 LLAVE
 ${llave}
 
-Vigencia: 7 días · 500 consultas · niveles estado y municipio.
+Vigencia: 500 consultas y 7 días contados desde su primera llamada — el reloj
+no corre mientras no la use. Niveles estado, municipio y área.
 
 PRIMERA LLAMADA (copiar y pegar)
 curl -H "x-api-key: ${llave}" "https://api.gasgas.com.mx/api/precios?market=estado&value=Jalisco&days=1&product=regular"
@@ -885,8 +918,9 @@ app.post("/api/solicitar-acceso", async (req, res) => {
     // Llave de evaluación: 7 días · 500 llamadas
     const llave = "gg_test_" + crypto.randomBytes(18).toString("base64url");
     await pool.query(
+      // 30 días para activarla; en la primera consulta el reloj se reinicia a 7 días
       `INSERT INTO api_keys_prueba (api_key, prospecto_id, empresa, email, limite, expira_en)
-       VALUES ($1,$2,$3,$4,500, NOW() + INTERVAL '7 days')`,
+       VALUES ($1,$2,$3,$4,500, NOW() + INTERVAL '30 days')`,
       [llave, prospectoId, empresa, email]
     );
 
@@ -933,18 +967,6 @@ app.post("/api/solicitar-acceso", async (req, res) => {
     console.error("ERROR /solicitar-acceso:", err);
     res.status(500).json({ error: "No pudimos procesar la solicitud. Escríbenos a hola@gasgas.com.mx" });
   }
-});
-
-// Registro de uso de llaves de evaluación (sin bloquear: los endpoints siguen abiertos)
-app.use("/api", async (req, res, next) => {
-  const k = req.headers["x-api-key"];
-  if (k && String(k).startsWith("gg_test_")) {
-    pool.query(
-      `UPDATE api_keys_prueba SET llamadas = llamadas + 1, ultima_uso = NOW()
-       WHERE api_key = $1 AND activa = TRUE AND expira_en > NOW()`, [String(k).slice(0, 80)]
-    ).catch(() => {});
-  }
-  next();
 });
 
 // ==============================
@@ -1110,7 +1132,7 @@ app.get("/api/status/checks", async (req, res) => {
       const q = await pool.query(`
         SELECT p.nombre, p.empresa, p.email, p.nivel, p.cobertura, p.areas, p.historico,
                p.estimado_min, p.estimado_max, p.created_at, p.correo_enviado,
-               COALESCE(k.llamadas, 0) AS llamadas, k.expira_en, k.api_key
+               COALESCE(k.llamadas, 0) AS llamadas, k.expira_en, k.api_key, k.activada_en
         FROM prospectos p
         LEFT JOIN api_keys_prueba k ON k.prospecto_id = p.id
         ORDER BY p.created_at DESC LIMIT 8`);

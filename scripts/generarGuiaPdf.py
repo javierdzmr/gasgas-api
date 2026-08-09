@@ -206,10 +206,13 @@ consumo masivo: por zona de distribución, no por frontera estatal. Consúltelas
 </div>
 
 <h2>Su llave de evaluación</h2>
-<p>La llave que recibió es de demostración: <b>7 días de vigencia, 500 consultas y acceso a
-nivel estado, municipio y área</b>. No tiene costo ni compromiso, y no hace falta tarjeta.
+<p>La llave que recibió es de demostración: <b>500 consultas y 7 días de vigencia, con acceso
+a nivel estado, municipio y área</b>. No tiene costo ni compromiso, y no hace falta tarjeta.
 Los niveles de código postal y estación, y el histórico completo desde mayo 2024, se
 habilitan con contrato.</p>
+<div class="aviso"><b>El reloj arranca en su primera consulta, no ahora.</b> La llave se
+queda esperando hasta que su equipo tenga tiempo de sentarse con ella; los 7 días empiezan
+a contar con la primera llamada que reciba. Tiene 30 días para estrenarla.</div>
 <div class="aviso"><b>Un consejo para su prueba:</b> lo que más dice sobre la calidad del
 dato no es el promedio, es <code>std</code> y <code>stations_count</code>. Compare una plaza
 grande contra una chica y verá de inmediato qué tanta dispersión real hay — eso es lo que no
