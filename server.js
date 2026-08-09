@@ -689,6 +689,13 @@ async function enviarLlavePorCorreo({ nombre, empresa, email, llave, nivel, area
   const pila = nombre.split(" ")[0];
   const curl = `curl -H "x-api-key: ${llave}" "https://api.gasgas.com.mx/api/precios?market=estado&value=Jalisco&days=1&product=regular"`;
 
+  // WhatsApp de soporte: sale de la misma variable que usa el asistente
+  const waNum = String(process.env.WHATSAPP_NUMERO || "").replace(/[^0-9]/g, "");
+  const waVisible = waNum.length === 12
+    ? `+${waNum.slice(0, 2)} ${waNum.slice(2, 4)} ${waNum.slice(4, 8)} ${waNum.slice(8)}`
+    : waNum ? "+" + waNum : "";
+  const waHref = waNum ? "https://wa.me/" + waNum : "mailto:hola@gasgas.com.mx";
+
   // Correo HTML: tablas y estilos en línea, que es lo único que respetan
   // Outlook y Gmail. Sin imágenes externas para no caer en spam.
   const html = `<!doctype html><html lang="es"><head><meta charset="utf-8">
@@ -742,13 +749,26 @@ async function enviarLlavePorCorreo({ nombre, empresa, email, llave, nivel, area
     </div>
   </td></tr>
 
-  <tr><td style="padding:20px 30px 28px;">
+  <tr><td style="padding:20px 30px 4px;">
     <div style="font-size:14px;color:#4C6379;line-height:1.6;">¿Necesita nivel código postal, estación, o el histórico desde mayo 2024?
     Responda este correo y lo vemos — le contesta alguien que conoce el dato.</div>
   </td></tr>
 
+  <tr><td style="padding:16px 30px 28px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+           style="background:#F7F9FA;border:1px solid #E7ECF0;border-radius:9px;">
+      <tr><td style="padding:14px 16px;">
+        <div style="font-family:'SFMono-Regular',Consolas,monospace;font-size:10px;letter-spacing:1px;color:#8B99A6;">¿DUDAS DURANTE SU PRUEBA?</div>
+        <div style="font-size:15px;color:#0E2A47;margin-top:6px;">
+          WhatsApp <a href="${waHref}" style="color:#007A39;text-decoration:none;font-weight:700;">${esc(waVisible)}</a>
+          &nbsp;·&nbsp; <a href="mailto:hola@gasgas.com.mx" style="color:#007A39;text-decoration:none;font-weight:700;">hola@gasgas.com.mx</a>
+        </div>
+      </td></tr>
+    </table>
+  </td></tr>
+
   <tr><td style="background:#081B30;padding:16px 30px;">
-    <span style="color:rgba(255,255,255,.5);font-size:12px;">GasGas · Fuente: CNE, datos depurados por el algoritmo de calidad GasGas</span>
+    <span style="color:rgba(255,255,255,.5);font-size:12px;">GasGas · datos depurados por el algoritmo de calidad GasGas</span>
   </td></tr>
 
 </table>
@@ -777,8 +797,10 @@ Estimado: $${est.min.toLocaleString("en-US")} – $${est.max.toLocaleString("en-
 
 ¿Necesita nivel código postal o estación, o el histórico completo? Responda este correo y lo vemos.
 
-Equipo GasGas
-hola@gasgas.com.mx`;
+¿DUDAS DURANTE SU PRUEBA?
+WhatsApp ${waVisible || "—"} · hola@gasgas.com.mx
+
+Equipo GasGas`;
 
   try {
     const r = await fetch("https://api.sendgrid.com/v3/mail/send", {

@@ -21,6 +21,9 @@ MESES = ["enero","febrero","marzo","abril","mayo","junio",
 hoy = datetime.date.today()
 FECHA = f"{hoy.day} de {MESES[hoy.month-1]} de {hoy.year}"
 
+WA_NUMERO = "523342700911"          # formato para wa.me: 52 + 10 dígitos
+WA_VISIBLE = "+52 33 4270 0911"
+
 AREAS = [
     ("I",   "Pacífico",        "Baja California · Baja California Sur · Sonora · Sinaloa · Nayarit", "2,113"),
     ("II",  "Norte",           "Chihuahua · Coahuila · Durango · Nuevo León · Tamaulipas · San Luis Potosí · Zacatecas", "3,283"),
@@ -58,8 +61,8 @@ HTML_DOC = f"""<!doctype html><html lang="es"><head><meta charset="utf-8">
 <style>
 @page {{
   size: Letter; margin: 20mm 17mm 18mm;
-  @bottom-left  {{ content: "GasGas · Guía de uso de la API · Fuente: CNE, datos depurados por el algoritmo de calidad GasGas · {FECHA}";
-                   font-family: Lato; font-size: 7.5pt; color: #8B99A6; }}
+  @bottom-left  {{ content: "GasGas · Guía de uso de la API · {FECHA}";
+                   font-family: Lato; font-size: 8pt; color: #8B99A6; }}
   @bottom-right {{ content: counter(page) " / " counter(pages);  font-family: Lato; font-size: 8pt; color: #8B99A6; }}
 }}
 @page :first {{ margin-top: 0; }}
@@ -109,6 +112,11 @@ td.pa {{ font-family: "DejaVu Sans Mono", monospace; width: 26%; font-size: 7.6p
 .cierre h3 {{ color: #fff; margin: 0 0 4pt; font-size: 12pt; }}
 .cierre p {{ color: rgba(255,255,255,.72); margin: 0; font-size: 9.5pt; }}
 .cierre a {{ color: #7FD6A4; text-decoration: none; font-weight: bold; }}
+table.contacto {{ margin: 11pt 0 0; }}
+table.contacto td {{ border: 0; padding: 0 14pt 0 0; vertical-align: top; }}
+table.contacto .ct {{ font-family: "DejaVu Sans Mono", monospace; font-size: 6.5pt;
+                      letter-spacing: .9pt; color: rgba(255,255,255,.45); }}
+table.contacto .cv {{ font-size: 9.5pt; margin-top: 2pt; }}
 .doscol {{ display: flex; gap: 10pt; }}
 .doscol > div {{ flex: 1; border: .8pt solid {LINEA}; border-radius: 5pt; padding: 9pt 11pt; }}
 .doscol .t {{ font-family: "DejaVu Sans Mono", monospace; font-size: 7pt; letter-spacing: .8pt;
@@ -121,8 +129,8 @@ td.pa {{ font-family: "DejaVu Sans Mono", monospace; width: 26%; font-size: 7.6p
 <div class="portada">
   <span class="marca">GG</span><span class="marca-t">gasgas / datos</span>
   <h1>Guía de uso de la API</h1>
-  <p class="sub">Precios de combustible de México. Dato oficial de la CNE, validado y
-  enriquecido con marca comercial, entregado por API.</p>
+  <p class="sub">Precios de combustible de México: validados, deduplicados y enriquecidos
+  con marca comercial. Entregados por API, listos para su sistema.</p>
   <div class="pills"><span>14,194 ESTACIONES</span><span>7 CORTES AL DÍA</span><span>DESDE MAYO 2024</span></div>
 </div>
 
@@ -208,10 +216,16 @@ grande contra una chica y verá de inmediato qué tanta dispersión real hay —
 se puede reconstruir con un archivo descargado.</p></div>
 
 <div class="cierre">
-  <h3>¿Dudas técnicas?</h3>
-  <p>Escríbanos a <a href="mailto:hola@gasgas.com.mx">hola@gasgas.com.mx</a> y le contesta
-  alguien que conoce el dato, no un formulario. La especificación OpenAPI 3.1 y la colección
-  de Postman están en <a href="https://gasgas.com.mx/docs">gasgas.com.mx/docs</a>.</p>
+  <h3>¿Dudas durante su prueba?</h3>
+  <p>Escríbanos y le contesta alguien que conoce el dato, no un formulario.</p>
+  <table class="contacto"><tr>
+    <td><div class="ct">WHATSAPP</div>
+        <div class="cv"><a href="https://wa.me/{WA_NUMERO}">{WA_VISIBLE}</a></div></td>
+    <td><div class="ct">CORREO</div>
+        <div class="cv"><a href="mailto:hola@gasgas.com.mx">hola@gasgas.com.mx</a></div></td>
+    <td><div class="ct">DOCUMENTACIÓN</div>
+        <div class="cv"><a href="https://gasgas.com.mx/docs">gasgas.com.mx/docs</a></div></td>
+  </tr></table>
 </div>
 
 </body></html>"""
