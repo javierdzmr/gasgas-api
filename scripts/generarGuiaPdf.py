@@ -108,8 +108,9 @@ td.pa {{ font-family: "DejaVu Sans Mono", monospace; width: 26%; font-size: 7.6p
 .aviso {{ background: #E8F5EE; border: .8pt solid #B9E4CC; border-radius: 5pt;
           padding: 9pt 12pt; margin: 9pt 0; font-size: 9pt; color: #1D5C3B; }}
 .aviso b {{ color: #1D5C3B; }}
-.cierre {{ background: {AZUL}; color: #fff; border-radius: 6pt; padding: 13pt 16pt; margin-top: 16pt; }}
-.cierre h3 {{ color: #fff; margin: 0 0 4pt; font-size: 12pt; }}
+.cierre {{ background: {AZUL}; color: #fff; border-radius: 6pt; padding: 12pt 16pt;
+           margin-top: 12pt; page-break-inside: avoid; }}
+.cierre h3 {{ color: #fff; margin: 0 0 3pt; font-size: 12pt; }}
 .cierre p {{ color: rgba(255,255,255,.72); margin: 0; font-size: 9.5pt; }}
 .cierre a {{ color: #7FD6A4; text-decoration: none; font-weight: bold; }}
 table.contacto {{ margin: 11pt 0 0; }}
@@ -213,10 +214,9 @@ habilitan con contrato.</p>
 <div class="aviso"><b>El reloj arranca en su primera consulta, no ahora.</b> La llave se
 queda esperando hasta que su equipo tenga tiempo de sentarse con ella; los 7 días empiezan
 a contar con la primera llamada que reciba. Tiene 30 días para estrenarla.</div>
-<div class="aviso"><b>Un consejo para su prueba:</b> lo que más dice sobre la calidad del
-dato no es el promedio, es <code>std</code> y <code>stations_count</code>. Compare una plaza
-grande contra una chica y verá de inmediato qué tanta dispersión real hay — eso es lo que no
-se puede reconstruir con un archivo descargado.</p></div>
+<div class="aviso"><b>Un consejo para su prueba:</b> lo que más dice sobre la calidad del dato
+no es el promedio, es <code>std</code> y <code>stations_count</code>. Compare una plaza grande
+contra una chica y verá de inmediato qué tanta dispersión real hay.</div>
 
 <div class="cierre">
   <h3>¿Dudas durante su prueba?</h3>
