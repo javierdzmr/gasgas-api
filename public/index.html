@@ -6,6 +6,24 @@
 <title>GasGas · Datos y API de precios de gasolina en México</title>
 <meta name="description" content="La API de precios de gasolina de México: 14,194 estaciones, datos oficiales CNE depurados, por estado, municipio y código postal. Monitor nacional en vivo.">
 <script src="./support.js"></script>
+<!-- Turnstile: verificación invisible de Cloudflare para el asistente de acceso.
+     Si la llave pública no está puesta, el widget no se monta y el backend deja pasar. -->
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+<script>
+  window.GG_TURNSTILE_SITE_KEY = "";   // ← pegar aquí la Site Key de Cloudflare
+  window.ggTurnstileToken = "";
+  window.ggMontarTurnstile = function () {
+    var k = window.GG_TURNSTILE_SITE_KEY;
+    var caja = document.getElementById("gg-turnstile");
+    if (!k || !caja || !window.turnstile || caja.dataset.montado) return;
+    caja.dataset.montado = "1";
+    window.turnstile.render(caja, {
+      sitekey: k, size: "flexible", theme: "light",
+      callback: function (t) { window.ggTurnstileToken = t; },
+      "expired-callback": function () { window.ggTurnstileToken = ""; window.turnstile.reset(caja); }
+    });
+  };
+</script>
 </head>
 <body>
 <x-dc>
@@ -540,6 +558,7 @@
           <input onInput="{{ w.setEmail }}" placeholder="Correo de empresa" style="height: 50px; border: 1.5px solid {{ w.emailBd }}; border-radius: 10px; padding: 0 14px; font-family: 'Figtree', sans-serif; font-size: 15px; color: #0E2A47">
           <input onInput="{{ w.setWhatsapp }}" placeholder="WhatsApp (opcional)" style="height: 50px; border: 1.5px solid #DCE3EB; border-radius: 10px; padding: 0 14px; font-family: 'Figtree', sans-serif; font-size: 15px; color: #0E2A47">
         </div>
+        <div id="gg-turnstile" style="margin-top: 14px"></div>
         <div style="display: {{ w.errDisplay }}; font-size: 13.5px; color: #B91C1C; margin-top: 10px">{{ w.error }}</div>
 
         <div onClick="{{ w.enviar }}" style="margin-top: 20px; background: {{ w.btnBg }}; color: #FFFFFF; border-radius: 12px; padding: 16px; text-align: center; font-size: 17px; font-weight: 700; cursor: pointer" style-hover="background: #007A39">{{ w.btnTxt }}</div>
@@ -726,7 +745,8 @@ class Component extends DCLogic {
           nombre: wNombre, empresa: wEmpresa, email: wEmail, whatsapp: wWhatsapp,
           nivel: wNivel, historico: false,
           areas: wNacional ? ["I","II","III","IV","V","VI"] : wAreas,
-          nacional: !!wNacional
+          nacional: !!wNacional,
+          turnstile_token: window.ggTurnstileToken || ""
         })
       });
       const j = await r.json();
@@ -945,7 +965,12 @@ class Component extends DCLogic {
           contTxt: listo ? "Continuar →" : "Elija al menos un área",
           contBg: listo ? "#00A94F" : "#C3CCD5",
           contCursor: listo ? "pointer" : "not-allowed",
-          paso3: () => { if (listo) this.setState({ wPaso: 3, wError: "" }); },
+          paso3: () => {
+            if (!listo) return;
+            this.setState({ wPaso: 3, wError: "" });
+            // El widget solo se monta cuando el paso 3 ya está en pantalla
+            setTimeout(() => { try { window.ggMontarTurnstile && window.ggMontarTurnstile(); } catch (e) {} }, 60);
+          },
 
           atras: () => this.setState({ wPaso: Math.max(1, s.wPaso - 1), wError: "" }),
           resumen: NIV_TXT[s.wNivel] + " · " + (s.wNacional ? "cobertura nacional" : nAreas === 1 ? "área " + nombresSel[0] : nAreas + " áreas"),

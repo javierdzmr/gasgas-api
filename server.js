@@ -1,6 +1,7 @@
 const express = require('express');
 const { Pool } = require('pg');
 const crypto = require('crypto');
+const dns = require('dns').promises;
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -686,6 +687,91 @@ function estimar(nivel, nAreas, historico) {
   return { min, max };
 }
 
+// ==============================
+// 🛡️ ANTI-ABUSO DEL FORMULARIO
+//
+// El formulario envía correo a una dirección que escribe un desconocido. Sin
+// candados nos pueden usar de trampolín para molestar a terceros, y los rebotes
+// de dominios inventados queman la reputación de envío del dominio — que es lo
+// caro de recuperar. Ninguna de estas medidas le agrega pasos al prospecto real.
+// ==============================
+
+/**
+ * ¿El dominio tiene servidores de correo? Descarta dominios inventados y erratas.
+ *
+ * Falla ABIERTO a propósito: solo rechaza cuando el DNS responde con certeza que
+ * el dominio no existe o no tiene correo. Ante un timeout o un SERVFAIL deja pasar,
+ * porque perder un prospecto real por un hipo de red es más caro que dejar entrar
+ * un correo falso — de esos ya se encargan los otros topes.
+ */
+const DNS_DEFINITIVO = new Set(["ENOTFOUND", "ENODATA", "NXDOMAIN"]);
+
+async function dominioRecibeCorreo(dominio) {
+  let mxDefinitivo = false;
+  try {
+    const mx = await dns.resolveMx(dominio);
+    if (mx && mx.length) return true;
+    mxDefinitivo = true;                       // respondió, pero sin registros MX
+  } catch (e) {
+    if (!DNS_DEFINITIVO.has(e.code)) return true;   // problema de red: no castigamos
+    mxDefinitivo = true;
+  }
+  // Sin MX, un dominio todavía puede recibir correo por su registro A
+  try {
+    const a = await dns.resolve4(dominio);
+    return !!(a && a.length);
+  } catch (e) {
+    if (!DNS_DEFINITIVO.has(e.code)) return true;
+    return !mxDefinitivo ? true : false;
+  }
+}
+
+const TOPE_DOMINIO_DIA = 5;    // llaves por dominio de empresa al día
+const TOPE_GLOBAL_DIA  = 60;   // colchón bajo los 100 correos/día del plan
+
+/** Devuelve null si se puede emitir, o el motivo del rechazo. */
+async function topesDeEmision(email, dominio) {
+  const q = await pool.query(`
+    SELECT
+      (SELECT COUNT(*) FROM prospectos WHERE email = $1 AND created_at > NOW() - INTERVAL '7 days')  AS del_correo,
+      (SELECT COUNT(*) FROM prospectos WHERE dominio = $2 AND created_at > NOW() - INTERVAL '1 day') AS del_dominio,
+      (SELECT COUNT(*) FROM prospectos WHERE created_at > NOW() - INTERVAL '1 day')                  AS del_dia
+  `, [email, dominio]);
+  const r = q.rows[0] || {};
+  if (Number(r.del_correo) > 0) {
+    return { codigo: 409, error: "llave_vigente",
+             mensaje: "Ya emitimos una llave para este correo en los últimos días. Revise su bandeja, o escríbanos a hola@gasgas.com.mx si no la encuentra." };
+  }
+  if (Number(r.del_dominio) >= TOPE_DOMINIO_DIA) {
+    return { codigo: 429, error: "tope_dominio",
+             mensaje: "Ya se emitieron varias llaves para su empresa hoy. Escríbanos a hola@gasgas.com.mx y lo resolvemos de inmediato." };
+  }
+  if (Number(r.del_dia) >= TOPE_GLOBAL_DIA) {
+    return { codigo: 429, error: "tope_diario",
+             mensaje: "Alcanzamos el cupo de llaves de hoy. Escríbanos a hola@gasgas.com.mx y se la emitimos a mano." };
+  }
+  return null;
+}
+
+/** Verifica el token de Cloudflare Turnstile. Sin llave configurada, no bloquea. */
+async function turnstileValido(token, ip) {
+  const secreto = process.env.TURNSTILE_SECRET_KEY;
+  if (!secreto) return true;               // aún no configurado: no rompe el flujo
+  if (!token) return false;
+  try {
+    const r = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ secret: secreto, response: String(token).slice(0, 3000), remoteip: ip || "" })
+    });
+    const j = await r.json();
+    return !!j.success;
+  } catch (e) {
+    console.error("turnstile:", e.message);
+    return true;                            // si Cloudflare no responde, no castigamos al prospecto
+  }
+}
+
 const solicitudesPorIp = new Map();
 function limiteSolicitudes(req, res) {
   const ip = (req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.socket.remoteAddress || "?";
@@ -904,10 +990,33 @@ app.post("/api/solicitar-acceso", async (req, res) => {
       });
     }
 
+    const ipCliente = (req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.socket.remoteAddress || null;
+
+    // 🛡️ Turnstile: filtra bots antes de gastar cuota de correo
+    if (!await turnstileValido(b.turnstile_token, ipCliente)) {
+      return res.status(403).json({
+        error: "verificacion_fallida",
+        mensaje: "No pudimos verificar que la solicitud venga de una persona. Recargue la página e intente de nuevo."
+      });
+    }
+
+    // 🛡️ El dominio tiene que poder recibir correo: evita rebotes que queman
+    //    la reputación de envío, y atrapa erratas como "@gmial.com"
+    if (!await dominioRecibeCorreo(dominio)) {
+      return res.status(422).json({
+        error: "dominio_sin_correo",
+        mensaje: `No encontramos servidores de correo en ${dominio}. Revise que esté bien escrito.`
+      });
+    }
+
+    // 🛡️ Topes por correo, por dominio y global del día
+    const tope = await topesDeEmision(email, dominio);
+    if (tope) return res.status(tope.codigo).json({ error: tope.error, mensaje: tope.mensaje });
+
     const est = estimar(nivel, areas.length, historico);
 
     // Prospecto
-    const ip = (req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.socket.remoteAddress || null;
+    const ip = ipCliente;
     const ins = await pool.query(
       `INSERT INTO prospectos (nombre, empresa, email, dominio, whatsapp, nivel, cobertura, areas, historico, caso_uso, estimado_min, estimado_max, ip, user_agent)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING id`,
