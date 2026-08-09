@@ -302,12 +302,20 @@ async function updateAgregados() {
       console.log(`✅ ${estados.rows.length} estados actualizados para ${days} días`);
 
       // =========================
-      // 🏙️ MUNICIPIOS (set-based: ~3,000 mercados por periodo)
-      // market_value = 'Estado|Municipio' — los nombres de municipio se
-      // repiten entre estados (ej. Juárez), la llave compuesta los distingue.
+      // 🏙️🧭 MUNICIPIOS + ÁREAS GASGAS (una sola pasada)
+      //
+      // Son dos cortes distintos del mismo universo, así que se calculan con
+      // GROUPING SETS en una sola lectura de `prices` en vez de dos. Con la
+      // ventana de 30 días cada escaneo cuesta ~3.4 GB de egress: separarlos
+      // duplicaría ese costo sin ganar nada.
+      //
+      //   market_value municipio = 'Estado|Municipio' (los nombres se repiten
+      //   entre estados, ej. Juárez; la llave compuesta los distingue)
+      //   market_value área      = clave 'I'..'VI' (ver tabla gasgas_areas)
+      //
       // Los CASE de rango ya filtran outliers, no se requiere sanear().
       // =========================
-      const municipios = await client.query(`
+      const mercados = await client.query(`
         INSERT INTO precios_agregados (
           market_type, market_value, days,
           regular, premium, diesel, updated_at,
@@ -317,8 +325,9 @@ async function updateAgregados() {
           stations_count
         )
         SELECT
-          'municipio',
-          gs.estado || '|' || gs.municipio,
+          CASE WHEN GROUPING(gs.municipio) = 1 THEN 'area' ELSE 'municipio' END,
+          CASE WHEN GROUPING(gs.municipio) = 1 THEN gs.gasgas_area
+               ELSE gs.estado || '|' || gs.municipio END,
           ${days},
           AVG(CASE WHEN p.regular BETWEEN ${RANGE.regular.min} AND ${RANGE.regular.max} THEN p.regular END),
           AVG(CASE WHEN p.premium BETWEEN ${RANGE.premium.min} AND ${RANGE.premium.max} THEN p.premium END),
@@ -343,8 +352,13 @@ async function updateAgregados() {
         JOIN prices_gas_station_links l ON l.price_id = p.id
         JOIN gas_stations gs ON gs.id = l.gas_station_id
         WHERE ${dateFilter}
-          AND gs.municipio IS NOT NULL AND gs.municipio <> ''
-        GROUP BY gs.estado, gs.municipio
+        GROUP BY GROUPING SETS ( (gs.estado, gs.municipio), (gs.gasgas_area) )
+        HAVING
+          -- municipios: descartar los que no traen plaza en el padrón
+          ( GROUPING(gs.municipio) = 0
+            AND gs.municipio IS NOT NULL AND gs.municipio <> '' )
+          -- áreas: descartar estaciones aún sin área asignada
+          OR ( GROUPING(gs.municipio) = 1 AND gs.gasgas_area IS NOT NULL )
         ON CONFLICT (market_type, market_value, days)
         DO UPDATE SET
           regular        = EXCLUDED.regular,
@@ -363,7 +377,7 @@ async function updateAgregados() {
           stations_count = EXCLUDED.stations_count;
       `);
 
-      console.log(`✅ ${municipios.rowCount} municipios actualizados para ${days} días`);
+      console.log(`✅ ${mercados.rowCount} mercados actualizados para ${days} días (municipios + 6 Áreas GasGas)`);
     }
 
     console.log("🚀 Precios agregados completados sin NULLs");

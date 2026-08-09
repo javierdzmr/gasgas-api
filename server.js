@@ -165,7 +165,9 @@ app.get("/api/precios", async (req, res) => {
             ? `(SELECT COUNT(*) FROM gas_stations) AS total_estaciones`
             : market === "municipio"
               ? `(SELECT COUNT(*) FROM gas_stations WHERE LOWER(estado)=LOWER(split_part($2,'|',1)) AND LOWER(municipio)=LOWER(split_part($2,'|',2))) AS total_estaciones`
-              : `(SELECT COUNT(*) FROM gas_stations WHERE LOWER(estado)=LOWER($2)) AS total_estaciones`
+              : market === "area"
+                ? `(SELECT COUNT(*) FROM gas_stations WHERE UPPER(gasgas_area)=UPPER($2)) AS total_estaciones`
+                : `(SELECT COUNT(*) FROM gas_stations WHERE LOWER(estado)=LOWER($2)) AS total_estaciones`
         }
       FROM precios_agregados pa
       WHERE pa.market_type = $1
@@ -192,6 +194,7 @@ app.get("/api/precios", async (req, res) => {
       try {
         let refType = null, refValue = null;
         if (market === "estado") { refType = "nacional"; refValue = "all"; }
+        else if (market === "area") { refType = "nacional"; refValue = "all"; }
         else if (market === "municipio") { refType = "estado"; refValue = String(value || "").split("|")[0]; }
 
         if (refType && refValue) {
@@ -278,6 +281,37 @@ app.get("/api/estados", async (req, res) => {
   } catch (err) {
     console.error("ERROR /estados:", err);
     res.status(500).json({ error: "Error obteniendo estados" });
+  }
+});
+
+// ==============================
+// 🔹 ÁREAS GASGAS
+// Catálogo de las 6 macro-regiones comerciales, con las entidades que
+// integra cada una y el número de estaciones que la respaldan.
+// ==============================
+app.get("/api/areas", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        a.clave,
+        a.nombre,
+        a.alias,
+        a.descripcion,
+        COUNT(g.id)::int AS estaciones,
+        COALESCE(
+          ARRAY_AGG(DISTINCT g.estado ORDER BY g.estado) FILTER (WHERE g.estado IS NOT NULL),
+          '{}'
+        ) AS entidades
+      FROM gasgas_areas a
+      LEFT JOIN gas_stations g ON g.gasgas_area = a.clave
+      GROUP BY a.orden, a.clave, a.nombre, a.alias, a.descripcion
+      ORDER BY a.orden
+    `);
+    res.json(result.rows);
+
+  } catch (err) {
+    console.error("ERROR /areas:", err);
+    res.status(500).json({ error: "Error obteniendo áreas" });
   }
 });
 
