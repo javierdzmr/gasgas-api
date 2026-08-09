@@ -636,11 +636,18 @@ const DOMINIOS_PERSONALES = new Set([
 ]);
 
 const PRECIO_BASE = { estado: 17250, municipio: 28750, cp: 40250, estacion: 60000 };
-const FACTOR_COBERTURA = { una_region: 1, varias: 1.25, nacional: 1.5 };
+const AREAS_VALIDAS = ["I", "II", "III", "IV", "V", "VI"];
+const AREA_NOMBRE = { I: "Pacífico", II: "Norte", III: "Bajío", IV: "Centro", V: "Valle de México", VI: "Sureste" };
 
-function estimar(nivel, cobertura, historico) {
+/**
+ * Estimado mensual. Una Área GasGas cuesta el precio base del nivel; cada área
+ * adicional suma 10%, así que las 6 (cobertura nacional) quedan en ×1.5 — el
+ * mismo factor que teníamos antes. La página muestra este mismo cálculo.
+ */
+function estimar(nivel, nAreas, historico) {
   const base = PRECIO_BASE[nivel] || PRECIO_BASE.estado;
-  const factor = FACTOR_COBERTURA[cobertura] || 1;
+  const n = Math.min(6, Math.max(1, Number(nAreas) || 1));
+  const factor = 1 + 0.1 * (n - 1);
   let min = Math.round((base * factor) / 250) * 250;
   let max = Math.round((min * 1.2) / 250) * 250;
   if (historico) { min = Math.round((min * 1.15) / 250) * 250; max = Math.round((max * 1.15) / 250) * 250; }
@@ -660,13 +667,12 @@ function limiteSolicitudes(req, res) {
 
 
 /** Envía la llave de evaluación por correo. Devuelve true si salió. */
-async function enviarLlavePorCorreo({ nombre, empresa, email, llave, nivel, cobertura, historico, est }) {
+async function enviarLlavePorCorreo({ nombre, empresa, email, llave, nivel, areasTxt, historico, est }) {
   const KEY = process.env.SENDGRID_API_KEY;
   const DE = process.env.CORREO_REMITENTE || "hola@gasgas.com.mx";
   if (!KEY) return { ok: false, motivo: "sin_servicio_correo" };
 
   const NIV = { estado: "nivel estado", municipio: "nivel municipio", cp: "nivel código postal", estacion: "nivel estación" };
-  const COB = { una_region: "una región", varias: "varias regiones", nacional: "cobertura nacional" };
   const texto =
 `Hola ${nombre.split(" ")[0]},
 
@@ -684,7 +690,7 @@ DOCUMENTACIÓN
 https://gasgas.com.mx/docs — incluye la especificación OpenAPI y la colección de Postman.
 
 LO QUE NOS PIDIÓ
-${NIV[nivel] || nivel}, ${COB[cobertura] || cobertura}${historico ? ", con histórico" : ""}.
+${NIV[nivel] || nivel}, ${areasTxt}${historico ? ", con histórico" : ""}.
 Estimado: $${est.min.toLocaleString("en-US")} – $${est.max.toLocaleString("en-US")} MXN/mes + IVA.
 
 ¿Necesita nivel código postal o estación, o el histórico completo? Responda este correo y lo vemos.
@@ -721,8 +727,15 @@ app.post("/api/solicitar-acceso", async (req, res) => {
     const email = String(b.email || "").trim().toLowerCase().slice(0, 160);
     const whatsapp = String(b.whatsapp || "").trim().slice(0, 40);
     const nivel = ["estado", "municipio", "cp", "estacion"].includes(b.nivel) ? b.nivel : "estado";
-    const cobertura = ["una_region", "varias", "nacional"].includes(b.cobertura) ? b.cobertura : "nacional";
     const historico = !!b.historico;
+
+    // Áreas GasGas seleccionadas. Sin selección válida se asume cobertura nacional.
+    let areas = Array.isArray(b.areas)
+      ? [...new Set(b.areas.map(a => String(a).toUpperCase()).filter(a => AREAS_VALIDAS.includes(a)))]
+      : [];
+    if (b.nacional === true || areas.length === 0 || areas.length === 6) areas = [...AREAS_VALIDAS];
+    const esNacional = areas.length === 6;
+    const cobertura = esNacional ? "nacional" : areas.length === 1 ? "una_region" : "varias";
     const casoUso = String(b.caso_uso || "").slice(0, 80);
 
     if (!nombre || !empresa || !email) return res.status(400).json({ error: "Faltan datos para continuar." });
@@ -736,14 +749,14 @@ app.post("/api/solicitar-acceso", async (req, res) => {
       });
     }
 
-    const est = estimar(nivel, cobertura, historico);
+    const est = estimar(nivel, areas.length, historico);
 
     // Prospecto
     const ip = (req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.socket.remoteAddress || null;
     const ins = await pool.query(
-      `INSERT INTO prospectos (nombre, empresa, email, dominio, whatsapp, nivel, cobertura, historico, caso_uso, estimado_min, estimado_max, ip, user_agent)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING id`,
-      [nombre, empresa, email, dominio, whatsapp, nivel, cobertura, historico, casoUso, est.min, est.max, ip, String(req.headers["user-agent"] || "").slice(0, 300)]
+      `INSERT INTO prospectos (nombre, empresa, email, dominio, whatsapp, nivel, cobertura, areas, historico, caso_uso, estimado_min, estimado_max, ip, user_agent)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING id`,
+      [nombre, empresa, email, dominio, whatsapp, nivel, cobertura, areas, historico, casoUso, est.min, est.max, ip, String(req.headers["user-agent"] || "").slice(0, 300)]
     );
     const prospectoId = ins.rows[0].id;
 
@@ -755,16 +768,21 @@ app.post("/api/solicitar-acceso", async (req, res) => {
       [llave, prospectoId, empresa, email]
     );
 
+    const NIVEL_TXT = { estado: "nivel estado", municipio: "nivel municipio", cp: "nivel código postal", estacion: "nivel estación" };
+    const areasTxt = esNacional
+      ? "cobertura nacional (las 6 Áreas GasGas)"
+      : areas.length === 1
+        ? `Área GasGas ${areas[0]} — ${AREA_NOMBRE[areas[0]]}`
+        : `${areas.length} Áreas GasGas: ${areas.map(a => `${a} (${AREA_NOMBRE[a]})`).join(", ")}`;
+
     // Enviar la llave por correo (si hay servicio configurado)
-    const envio = await enviarLlavePorCorreo({ nombre, empresa, email, llave, nivel, cobertura, historico, est });
+    const envio = await enviarLlavePorCorreo({ nombre, empresa, email, llave, nivel, areasTxt, historico, est });
     pool.query(`UPDATE prospectos SET correo_enviado = $1, correo_error = $2 WHERE id = $3`,
       [!!envio.ok, envio.ok ? null : (envio.motivo || null), prospectoId]).catch(() => {});
 
-    const NIVEL_TXT = { estado: "nivel estado", municipio: "nivel municipio", cp: "nivel código postal", estacion: "nivel estación" };
-    const COB_TXT = { una_region: "una región", varias: "varias regiones", nacional: "cobertura nacional" };
     const mensaje =
       `Hola, soy ${nombre} de ${empresa}. Ya generé mi llave de evaluación en gasgas.com.mx.\n\n` +
-      `Lo que necesitamos: ${NIVEL_TXT[nivel]}, ${COB_TXT[cobertura]}${historico ? ", con histórico" : ""}` +
+      `Lo que necesitamos: ${NIVEL_TXT[nivel]}, ${areasTxt}${historico ? ", con histórico" : ""}` +
       `${casoUso ? ` (uso: ${casoUso})` : ""}.\n` +
       `Estimado que me mostró la página: $${est.min.toLocaleString("en-US")} – $${est.max.toLocaleString("en-US")} MXN/mes + IVA.\n\n` +
       `Me gustaría revisar la propuesta formal y el alta como proveedor.`;
@@ -782,6 +800,8 @@ app.post("/api/solicitar-acceso", async (req, res) => {
       expira_dias: 7,
       limite_llamadas: 500,
       niveles_incluidos: ["estado", "municipio"],
+      areas,
+      cobertura,
       estimado: est,
       whatsapp_texto: mensaje,
       whatsapp_url: whatsappUrl,
@@ -966,7 +986,7 @@ app.get("/api/status/checks", async (req, res) => {
     let prospectos = { total7d: 0, lista: [] };
     try {
       const q = await pool.query(`
-        SELECT p.nombre, p.empresa, p.email, p.nivel, p.cobertura, p.historico,
+        SELECT p.nombre, p.empresa, p.email, p.nivel, p.cobertura, p.areas, p.historico,
                p.estimado_min, p.estimado_max, p.created_at, p.correo_enviado,
                COALESCE(k.llamadas, 0) AS llamadas, k.expira_en, k.api_key
         FROM prospectos p
