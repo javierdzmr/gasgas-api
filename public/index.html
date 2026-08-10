@@ -154,9 +154,13 @@
       <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.08em; color: rgba(255,255,255,0.7)">EN VIVO · PROMEDIO REGULAR POR ESTADO</span>
     </div>
     <div style="overflow: hidden; width: 100%">
-    <div style="display: flex; gap: 48px; width: max-content; animation: ggMarquee 36s linear infinite; font-family: 'JetBrains Mono', monospace; font-size: 13px; padding: 14px 0 14px 48px">
+    <!-- El ciclo cierra exacto porque la separación va como margen de cada
+         elemento, no como gap del contenedor: así el -50% cae justo en el
+         inicio de la copia. Con gap o padding izquierdo quedaba desfasado
+         y la tira daba un brinco en cada vuelta. -->
+    <div style="display: flex; width: max-content; animation: ggMarquee 36s linear infinite; font-family: 'JetBrains Mono', monospace; font-size: 13px; padding: 14px 0">
       <sc-for list="{{ tickerItems }}" as="t" hint-placeholder-count="10">
-        <span style="display: flex; gap: 10px; white-space: nowrap"><span style="color: rgba(255,255,255,0.45)">{{ t.e }}</span><span style="color: #FFFFFF">{{ t.p }}</span><span style="color: {{ t.dc }}; font-size: 11px">{{ t.d }}</span></span>
+        <span style="display: flex; gap: 10px; white-space: nowrap; margin-right: 48px"><span style="color: rgba(255,255,255,0.45)">{{ t.e }}</span><span style="color: #FFFFFF">{{ t.p }}</span><span style="color: {{ t.dc }}; font-size: 11px">{{ t.d }}</span></span>
       </sc-for>
     </div>
     </div>
@@ -710,6 +714,10 @@ class Component extends DCLogic {
   /* ── Playground: consultas reales sin escribir código ── */
   /* ── Asistente de acceso: 3 pasos, un clic por paso ── */
   PERSONALES = ["gmail.com","googlemail.com","hotmail.com","hotmail.es","hotmail.com.mx","outlook.com","outlook.es","live.com","live.com.mx","msn.com","yahoo.com","yahoo.com.mx","yahoo.es","icloud.com","me.com","mac.com","aol.com","protonmail.com","proton.me","gmx.com","mail.com","yandex.com","zoho.com","hey.com","prodigy.net.mx"];
+  /* Referencia estable para la cintilla mientras cargan los datos: si se
+     creara un arreglo nuevo en cada render, el <sc-for> se reconstruiría. */
+  TICK_VACIO = [{ e: "…", p: "", d: "", dc: "#00A94F" }];
+
   PRECIO_BASE = { estado: 17250, municipio: 28750, cp: 40250, estacion: 60000 };
 
   /* Las 6 Áreas GasGas. Definición completa en la tabla gasgas_areas. */
@@ -842,12 +850,20 @@ class Component extends DCLogic {
       horaColor: k === 0 ? "#00A94F" : "rgba(255,255,255,0.4)"
     }));
     const actual = feed[0];
-    /* Ticker real: 12 estados con Magna más cara hoy */
-    const ticker = this.estadosData.filter(e => this.R.est[e[1]] && this.R.est[e[1]].regular != null)
-      .sort((a, b) => this.R.est[b[1]].regular - this.R.est[a[1]].regular).slice(0, 12)
-      .map(e => { const d = this.R.est[e[1]];
-        return { e: e[1], p: this.f2(d.regular), d: (d.d7 == null || Math.abs(d.d7) < 0.005) ? "" : (d.d7 >= 0 ? "▲" : "▼"), dc: d.d7 != null && d.d7 >= 0 ? "#E88A8A" : "#00A94F" }; });
-    const tick = ticker.length ? ticker : [{ e: "…", p: "", d: "", dc: "#00A94F" }];
+    /* Ticker real: 12 estados con Magna más cara hoy.
+       Se calcula UNA sola vez y se congela. Antes se recalculaba en cada
+       render —y el feed dispara uno cada 2.6 s—, así que la lista se
+       reconstruía, la animación CSS volvía a empezar y la cintilla saltaba
+       al inicio: se veía como si unos estados desaparecieran y llegaran otros. */
+    if (!this._tick) {
+      const ticker = this.estadosData.filter(e => this.R.est[e[1]] && this.R.est[e[1]].regular != null)
+        .sort((a, b) => this.R.est[b[1]].regular - this.R.est[a[1]].regular).slice(0, 12)
+        .map(e => { const d = this.R.est[e[1]];
+          return { e: e[1], p: this.f2(d.regular), d: (d.d7 == null || Math.abs(d.d7) < 0.005) ? "" : (d.d7 >= 0 ? "▲" : "▼"), dc: d.d7 != null && d.d7 >= 0 ? "#E88A8A" : "#00A94F" }; });
+      // Solo se congela cuando ya hay datos; mientras carga se deja el marcador
+      if (ticker.length) this._tick = ticker.concat(ticker);
+    }
+    const tickItems = this._tick || this.TICK_VACIO;
     /* Mosaico con colores por precio real */
     const vals = Object.values(this.R.est).map(o => o.regular).filter(v => v != null);
     const min = vals.length ? Math.min.apply(null, vals) : 0, max = vals.length ? Math.max.apply(null, vals) : 1;
@@ -896,7 +912,7 @@ class Component extends DCLogic {
     const ph = [{ nombre: "consultando…", precioTxt: "", cambioTxt: "" }];
     return {
       feed, actual,
-      tickerItems: tick.concat(tick),
+      tickerItems: tickItems,
       procesados: this.state.procesados ? this.state.procesados.toLocaleString("en-US") : "…",
       lat: this.state.lat ? this.state.lat + " ms" : "—",
       corteHora: this.state.corteHora,
