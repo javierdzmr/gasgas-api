@@ -163,6 +163,129 @@
   </div>
 </section>
 
+<!-- El asistente vive arriba, pegado al hero: es lo primero que puede hacer el visitante -->
+<section id="contacto" data-screen-label="Demo" style="padding: 56px 0 96px; background: #0E2A47">
+  <div style="max-width: 760px; margin: 0 auto; padding: 0 32px">
+
+    <div style="text-align: center; margin-bottom: 32px">
+      <h2 style="font-size: 40px; font-weight: 800; color: #FFFFFF; margin: 0 0 14px; letter-spacing: -0.02em; text-wrap: pretty">Su llave de evaluación, en 30 segundos</h2>
+      <p style="font-size: 17px; color: rgba(255,255,255,0.65); margin: 0">Tres preguntas y su equipo probará por 7 días un demo gratuito con datos 100% reales.</p>
+    </div>
+
+    <!-- Barra de avance -->
+    <div style="display: flex; gap: 8px; margin-bottom: 26px">
+      <div style="flex: 1; height: 4px; border-radius: 999px; background: {{ w.b1 }}; transition: background .35s"></div>
+      <div style="flex: 1; height: 4px; border-radius: 999px; background: {{ w.b2 }}; transition: background .35s"></div>
+      <div style="flex: 1; height: 4px; border-radius: 999px; background: {{ w.b3 }}; transition: background .35s"></div>
+    </div>
+
+    <div style="background: #FFFFFF; border-radius: 18px; padding: 36px; box-shadow: 0 24px 60px rgba(0,0,0,0.28)">
+
+      <!-- ============ PASO 1: nivel de detalle ============ -->
+      <div style="display: {{ w.p1 }}">
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; letter-spacing: 0.1em; color: #8B99A6; margin-bottom: 6px">PASO 1 DE 3</div>
+        <div style="font-size: 24px; font-weight: 800; margin-bottom: 22px; letter-spacing: -0.01em">¿Con qué detalle necesita los precios?</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
+          <sc-for list="{{ w.niveles }}" as="o" hint-placeholder-count="4">
+            <div onClick="{{ o.pick }}" style="border: 2px solid {{ o.bd }}; background: {{ o.bg }}; border-radius: 14px; padding: 18px 20px; cursor: pointer; transition: transform .12s, border-color .2s" style-hover="transform: translateY(-2px); border-color: #00A94F">
+              <div style="font-size: 17px; font-weight: 700; color: #0E2A47">{{ o.t }}</div>
+              <div style="font-size: 13.5px; color: #4C6379; margin-top: 4px">{{ o.d }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- ============ PASO 2: Áreas GasGas ============ -->
+      <div style="display: {{ w.p2 }}">
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; letter-spacing: 0.1em; color: #8B99A6; margin-bottom: 6px">PASO 2 DE 3</div>
+        <div style="font-size: 24px; font-weight: 800; margin-bottom: 4px; letter-spacing: -0.01em">¿Qué Áreas GasGas necesita?</div>
+        <div style="font-size: 14px; color: #4C6379; margin-bottom: 18px">Toque las que le interesen. Puede elegir varias.</div>
+
+        <div class="w-areas" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 12px">
+          <sc-for list="{{ w.areas }}" as="o" hint-placeholder-count="6">
+            <div onClick="{{ o.pick }}" style="position: relative; border: 2px solid {{ o.bd }}; background: {{ o.bg }}; border-radius: 14px; padding: 14px 14px 13px; cursor: pointer; transition: transform .12s, border-color .2s, background .2s" style-hover="transform: translateY(-2px); border-color: #00A94F">
+              <div style="position: absolute; top: 10px; right: 11px; width: 19px; height: 19px; border-radius: 999px; background: {{ o.chkBg }}; border: 2px solid {{ o.bd }}; color: #FFFFFF; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center">{{ o.chk }}</div>
+              <div style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.09em; color: #8B99A6">ÁREA {{ o.k }}</div>
+              <div style="font-size: 15.5px; font-weight: 700; color: #0E2A47; margin-top: 2px; padding-right: 18px">{{ o.t }}</div>
+              <div style="font-size: 11.5px; color: #4C6379; margin-top: 3px; line-height: 1.35">{{ o.d }}</div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div onClick="{{ w.pickNacional }}" style="border: 2px solid {{ w.nacBd }}; background: {{ w.nacBg }}; border-radius: 14px; padding: 14px 18px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 14px" style-hover="border-color: #00A94F">
+          <div>
+            <div style="font-size: 15.5px; font-weight: 700; color: #0E2A47">Todo el país</div>
+            <div style="font-size: 12.5px; color: #4C6379">Las 6 áreas · 14,194 estaciones · cobertura nacional</div>
+          </div>
+          <div style="width: 22px; height: 22px; border-radius: 999px; background: {{ w.nacChkBg }}; border: 2px solid {{ w.nacBd }}; color: #FFFFFF; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex: none">{{ w.nacChk }}</div>
+        </div>
+
+        <div style="background: #E8F5EE; border: 1px solid #B9E4CC; border-radius: 12px; padding: 14px 18px; margin-top: 16px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap">
+          <div style="font-size: 14px; color: #1D5C3B">{{ w.coberturaTxt }}</div>
+          <div style="text-align: right">
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.09em; color: #007A39">ESTIMADO MENSUAL</div>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 17px; font-weight: 700; color: #0E2A47; margin-top: 2px">{{ w.estimadoTxt }}</div>
+          </div>
+        </div>
+
+        <div onClick="{{ w.paso3 }}" style="margin-top: 18px; background: {{ w.contBg }}; color: #FFFFFF; border-radius: 12px; padding: 15px; text-align: center; font-size: 16.5px; font-weight: 700; cursor: {{ w.contCursor }}" style-hover="background: #007A39">{{ w.contTxt }}</div>
+        <div onClick="{{ w.atras }}" style="margin-top: 14px; font-size: 14px; color: #8B99A6; cursor: pointer; display: inline-block" style-hover="color: #0E2A47">← Volver</div>
+      </div>
+
+      <!-- ============ PASO 3: datos + estimado ============ -->
+      <div style="display: {{ w.p3 }}">
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; letter-spacing: 0.1em; color: #8B99A6; margin-bottom: 6px">PASO 3 DE 3</div>
+        <div style="font-size: 24px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.01em">¿A nombre de quién emitimos la llave?</div>
+
+        <div style="background: #E8F5EE; border: 1px solid #B9E4CC; border-radius: 12px; padding: 16px 20px; margin: 18px 0 22px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap">
+          <div>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.09em; color: #007A39">SU CONFIGURACIÓN</div>
+            <div style="font-size: 14.5px; color: #1D5C3B; margin-top: 3px">{{ w.resumen }}</div>
+          </div>
+          <div style="text-align: right">
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.09em; color: #007A39">ESTIMADO</div>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 17px; font-weight: 700; color: #0E2A47; margin-top: 3px">{{ w.estimadoTxt }}</div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
+          <input onInput="{{ w.setNombre }}" placeholder="Nombre y apellido" style="height: 50px; border: 1.5px solid #DCE3EB; border-radius: 10px; padding: 0 14px; font-family: 'Figtree', sans-serif; font-size: 15px; color: #0E2A47">
+          <input onInput="{{ w.setEmpresa }}" placeholder="Empresa" style="height: 50px; border: 1.5px solid #DCE3EB; border-radius: 10px; padding: 0 14px; font-family: 'Figtree', sans-serif; font-size: 15px; color: #0E2A47">
+          <input onInput="{{ w.setEmail }}" placeholder="Correo de empresa" style="height: 50px; border: 1.5px solid {{ w.emailBd }}; border-radius: 10px; padding: 0 14px; font-family: 'Figtree', sans-serif; font-size: 15px; color: #0E2A47">
+          <input onInput="{{ w.setWhatsapp }}" placeholder="WhatsApp (opcional)" style="height: 50px; border: 1.5px solid #DCE3EB; border-radius: 10px; padding: 0 14px; font-family: 'Figtree', sans-serif; font-size: 15px; color: #0E2A47">
+        </div>
+        <div id="gg-turnstile" style="margin-top: 14px"></div>
+        <div style="display: {{ w.errDisplay }}; font-size: 13.5px; color: #B91C1C; margin-top: 10px">{{ w.error }}</div>
+
+        <div onClick="{{ w.enviar }}" style="margin-top: 20px; background: {{ w.btnBg }}; color: #FFFFFF; border-radius: 12px; padding: 16px; text-align: center; font-size: 17px; font-weight: 700; cursor: pointer" style-hover="background: #007A39">{{ w.btnTxt }}</div>
+        <div style="font-size: 12.5px; color: #8B99A6; margin-top: 12px; text-align: center">La llave llega a su correo · 500 consultas · 7 días desde su primera llamada</div>
+        <div onClick="{{ w.atras }}" style="margin-top: 16px; font-size: 14px; color: #8B99A6; cursor: pointer; display: inline-block" style-hover="color: #0E2A47">← Volver</div>
+      </div>
+
+      <!-- ============ LISTO ============ -->
+      <div style="display: {{ w.p4 }}; text-align: center">
+        <div style="width: 62px; height: 62px; border-radius: 50%; background: #E8F5EE; color: #007A39; font-size: 28px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 18px">✉</div>
+        <div style="font-size: 26px; font-weight: 800; margin-bottom: 10px; letter-spacing: -0.01em">Listo, {{ w.nombreCorto }} — revise su correo</div>
+        <p style="font-size: 15.5px; color: #4C6379; margin: 0 auto 8px; max-width: 480px">{{ w.envioTxt }}</p>
+        <p style="font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #0E2A47; margin: 0 auto 24px">{{ w.correoDestino }}</p>
+
+        <div style="background: #F7F9FA; border: 1px solid #E7ECF0; border-radius: 12px; padding: 18px 20px; text-align: left; margin-bottom: 24px">
+          <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.09em; color: #8B99A6; margin-bottom: 10px">EN ESE CORREO ENCONTRARÁ</div>
+          <div style="font-size: 14.5px; color: #4C6379; line-height: 1.9">
+            <b style="color:#0E2A47">Su llave</b> — 500 consultas y 7 días desde su primera llamada<br>
+            <b style="color:#0E2A47">La primera llamada</b> lista para copiar y pegar<br>
+            <b style="color:#0E2A47">La documentación</b> con la especificación y la colección de Postman
+          </div>
+        </div>
+
+        <a href="{{ w.waHref }}" target="_blank" style="display: block; background: #00A94F; color: #FFFFFF; border-radius: 12px; padding: 16px; font-size: 17px; font-weight: 700" style-hover="background: #007A39; color: #FFFFFF">{{ w.waTxt }}</a>
+        <p style="font-size: 13px; color: #8B99A6; margin: 14px 0 0">Lleva el resumen de lo que necesita. Ahí vemos propuesta formal, niveles de código postal o estación, alta como proveedor y facturación.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
 <section id="monitor" data-screen-label="Monitor" style="padding: 96px 0; background: #F7F9FA; border-bottom: 1px solid #E7ECF0">
   <div style="max-width: 1140px; margin: 0 auto; padding: 0 32px">
     <div style="background: #0E2A47; border-radius: 18px; padding: 48px; display: grid; grid-template-columns: 1.25fr 1fr; gap: 48px; align-items: center; box-shadow: 0 20px 60px rgba(14,42,71,0.25)">
@@ -468,125 +591,12 @@
   </div>
 </section>
 
-<section id="contacto" data-screen-label="CTA final" style="padding: 96px 0 104px; background: #0E2A47">
-  <div style="max-width: 760px; margin: 0 auto; padding: 0 32px">
-
-    <div style="text-align: center; margin-bottom: 32px">
-      <h2 style="font-size: 40px; font-weight: 800; color: #FFFFFF; margin: 0 0 14px; letter-spacing: -0.02em; text-wrap: pretty">Su llave de evaluación, en 30 segundos</h2>
-      <p style="font-size: 17px; color: rgba(255,255,255,0.65); margin: 0">Tres preguntas y su equipo probará por 7 días un demo gratuito con datos 100% reales.</p>
-    </div>
-
-    <!-- Barra de avance -->
-    <div style="display: flex; gap: 8px; margin-bottom: 26px">
-      <div style="flex: 1; height: 4px; border-radius: 999px; background: {{ w.b1 }}; transition: background .35s"></div>
-      <div style="flex: 1; height: 4px; border-radius: 999px; background: {{ w.b2 }}; transition: background .35s"></div>
-      <div style="flex: 1; height: 4px; border-radius: 999px; background: {{ w.b3 }}; transition: background .35s"></div>
-    </div>
-
-    <div style="background: #FFFFFF; border-radius: 18px; padding: 36px; box-shadow: 0 24px 60px rgba(0,0,0,0.28)">
-
-      <!-- ============ PASO 1: nivel de detalle ============ -->
-      <div style="display: {{ w.p1 }}">
-        <div style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; letter-spacing: 0.1em; color: #8B99A6; margin-bottom: 6px">PASO 1 DE 3</div>
-        <div style="font-size: 24px; font-weight: 800; margin-bottom: 22px; letter-spacing: -0.01em">¿Con qué detalle necesita los precios?</div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
-          <sc-for list="{{ w.niveles }}" as="o" hint-placeholder-count="4">
-            <div onClick="{{ o.pick }}" style="border: 2px solid {{ o.bd }}; background: {{ o.bg }}; border-radius: 14px; padding: 18px 20px; cursor: pointer; transition: transform .12s, border-color .2s" style-hover="transform: translateY(-2px); border-color: #00A94F">
-              <div style="font-size: 17px; font-weight: 700; color: #0E2A47">{{ o.t }}</div>
-              <div style="font-size: 13.5px; color: #4C6379; margin-top: 4px">{{ o.d }}</div>
-            </div>
-          </sc-for>
-        </div>
-      </div>
-
-      <!-- ============ PASO 2: Áreas GasGas ============ -->
-      <div style="display: {{ w.p2 }}">
-        <div style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; letter-spacing: 0.1em; color: #8B99A6; margin-bottom: 6px">PASO 2 DE 3</div>
-        <div style="font-size: 24px; font-weight: 800; margin-bottom: 4px; letter-spacing: -0.01em">¿Qué Áreas GasGas necesita?</div>
-        <div style="font-size: 14px; color: #4C6379; margin-bottom: 18px">Toque las que le interesen. Puede elegir varias.</div>
-
-        <div class="w-areas" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 12px">
-          <sc-for list="{{ w.areas }}" as="o" hint-placeholder-count="6">
-            <div onClick="{{ o.pick }}" style="position: relative; border: 2px solid {{ o.bd }}; background: {{ o.bg }}; border-radius: 14px; padding: 14px 14px 13px; cursor: pointer; transition: transform .12s, border-color .2s, background .2s" style-hover="transform: translateY(-2px); border-color: #00A94F">
-              <div style="position: absolute; top: 10px; right: 11px; width: 19px; height: 19px; border-radius: 999px; background: {{ o.chkBg }}; border: 2px solid {{ o.bd }}; color: #FFFFFF; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center">{{ o.chk }}</div>
-              <div style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.09em; color: #8B99A6">ÁREA {{ o.k }}</div>
-              <div style="font-size: 15.5px; font-weight: 700; color: #0E2A47; margin-top: 2px; padding-right: 18px">{{ o.t }}</div>
-              <div style="font-size: 11.5px; color: #4C6379; margin-top: 3px; line-height: 1.35">{{ o.d }}</div>
-            </div>
-          </sc-for>
-        </div>
-
-        <div onClick="{{ w.pickNacional }}" style="border: 2px solid {{ w.nacBd }}; background: {{ w.nacBg }}; border-radius: 14px; padding: 14px 18px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 14px" style-hover="border-color: #00A94F">
-          <div>
-            <div style="font-size: 15.5px; font-weight: 700; color: #0E2A47">Todo el país</div>
-            <div style="font-size: 12.5px; color: #4C6379">Las 6 áreas · 14,194 estaciones · cobertura nacional</div>
-          </div>
-          <div style="width: 22px; height: 22px; border-radius: 999px; background: {{ w.nacChkBg }}; border: 2px solid {{ w.nacBd }}; color: #FFFFFF; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex: none">{{ w.nacChk }}</div>
-        </div>
-
-        <div style="background: #E8F5EE; border: 1px solid #B9E4CC; border-radius: 12px; padding: 14px 18px; margin-top: 16px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap">
-          <div style="font-size: 14px; color: #1D5C3B">{{ w.coberturaTxt }}</div>
-          <div style="text-align: right">
-            <div style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.09em; color: #007A39">ESTIMADO MENSUAL</div>
-            <div style="font-family: 'JetBrains Mono', monospace; font-size: 17px; font-weight: 700; color: #0E2A47; margin-top: 2px">{{ w.estimadoTxt }}</div>
-          </div>
-        </div>
-
-        <div onClick="{{ w.paso3 }}" style="margin-top: 18px; background: {{ w.contBg }}; color: #FFFFFF; border-radius: 12px; padding: 15px; text-align: center; font-size: 16.5px; font-weight: 700; cursor: {{ w.contCursor }}" style-hover="background: #007A39">{{ w.contTxt }}</div>
-        <div onClick="{{ w.atras }}" style="margin-top: 14px; font-size: 14px; color: #8B99A6; cursor: pointer; display: inline-block" style-hover="color: #0E2A47">← Volver</div>
-      </div>
-
-      <!-- ============ PASO 3: datos + estimado ============ -->
-      <div style="display: {{ w.p3 }}">
-        <div style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; letter-spacing: 0.1em; color: #8B99A6; margin-bottom: 6px">PASO 3 DE 3</div>
-        <div style="font-size: 24px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.01em">¿A nombre de quién emitimos la llave?</div>
-
-        <div style="background: #E8F5EE; border: 1px solid #B9E4CC; border-radius: 12px; padding: 16px 20px; margin: 18px 0 22px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap">
-          <div>
-            <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.09em; color: #007A39">SU CONFIGURACIÓN</div>
-            <div style="font-size: 14.5px; color: #1D5C3B; margin-top: 3px">{{ w.resumen }}</div>
-          </div>
-          <div style="text-align: right">
-            <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.09em; color: #007A39">ESTIMADO</div>
-            <div style="font-family: 'JetBrains Mono', monospace; font-size: 17px; font-weight: 700; color: #0E2A47; margin-top: 3px">{{ w.estimadoTxt }}</div>
-          </div>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
-          <input onInput="{{ w.setNombre }}" placeholder="Nombre y apellido" style="height: 50px; border: 1.5px solid #DCE3EB; border-radius: 10px; padding: 0 14px; font-family: 'Figtree', sans-serif; font-size: 15px; color: #0E2A47">
-          <input onInput="{{ w.setEmpresa }}" placeholder="Empresa" style="height: 50px; border: 1.5px solid #DCE3EB; border-radius: 10px; padding: 0 14px; font-family: 'Figtree', sans-serif; font-size: 15px; color: #0E2A47">
-          <input onInput="{{ w.setEmail }}" placeholder="Correo de empresa" style="height: 50px; border: 1.5px solid {{ w.emailBd }}; border-radius: 10px; padding: 0 14px; font-family: 'Figtree', sans-serif; font-size: 15px; color: #0E2A47">
-          <input onInput="{{ w.setWhatsapp }}" placeholder="WhatsApp (opcional)" style="height: 50px; border: 1.5px solid #DCE3EB; border-radius: 10px; padding: 0 14px; font-family: 'Figtree', sans-serif; font-size: 15px; color: #0E2A47">
-        </div>
-        <div id="gg-turnstile" style="margin-top: 14px"></div>
-        <div style="display: {{ w.errDisplay }}; font-size: 13.5px; color: #B91C1C; margin-top: 10px">{{ w.error }}</div>
-
-        <div onClick="{{ w.enviar }}" style="margin-top: 20px; background: {{ w.btnBg }}; color: #FFFFFF; border-radius: 12px; padding: 16px; text-align: center; font-size: 17px; font-weight: 700; cursor: pointer" style-hover="background: #007A39">{{ w.btnTxt }}</div>
-        <div style="font-size: 12.5px; color: #8B99A6; margin-top: 12px; text-align: center">La llave llega a su correo · 500 consultas · 7 días desde su primera llamada</div>
-        <div onClick="{{ w.atras }}" style="margin-top: 16px; font-size: 14px; color: #8B99A6; cursor: pointer; display: inline-block" style-hover="color: #0E2A47">← Volver</div>
-      </div>
-
-      <!-- ============ LISTO ============ -->
-      <div style="display: {{ w.p4 }}; text-align: center">
-        <div style="width: 62px; height: 62px; border-radius: 50%; background: #E8F5EE; color: #007A39; font-size: 28px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 18px">✉</div>
-        <div style="font-size: 26px; font-weight: 800; margin-bottom: 10px; letter-spacing: -0.01em">Listo, {{ w.nombreCorto }} — revise su correo</div>
-        <p style="font-size: 15.5px; color: #4C6379; margin: 0 auto 8px; max-width: 480px">{{ w.envioTxt }}</p>
-        <p style="font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #0E2A47; margin: 0 auto 24px">{{ w.correoDestino }}</p>
-
-        <div style="background: #F7F9FA; border: 1px solid #E7ECF0; border-radius: 12px; padding: 18px 20px; text-align: left; margin-bottom: 24px">
-          <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.09em; color: #8B99A6; margin-bottom: 10px">EN ESE CORREO ENCONTRARÁ</div>
-          <div style="font-size: 14.5px; color: #4C6379; line-height: 1.9">
-            <b style="color:#0E2A47">Su llave</b> — 500 consultas y 7 días desde su primera llamada<br>
-            <b style="color:#0E2A47">La primera llamada</b> lista para copiar y pegar<br>
-            <b style="color:#0E2A47">La documentación</b> con la especificación y la colección de Postman
-          </div>
-        </div>
-
-        <a href="{{ w.waHref }}" target="_blank" style="display: block; background: #00A94F; color: #FFFFFF; border-radius: 12px; padding: 16px; font-size: 17px; font-weight: 700" style-hover="background: #007A39; color: #FFFFFF">{{ w.waTxt }}</a>
-        <p style="font-size: 13px; color: #8B99A6; margin: 14px 0 0">Lleva el resumen de lo que necesita. Ahí vemos propuesta formal, niveles de código postal o estación, alta como proveedor y facturación.</p>
-      </div>
-
-    </div>
+<!-- Cierre: el asistente está arriba, así que aquí solo se regresa a él -->
+<section data-screen-label="Cierre" style="padding: 72px 0 80px; background: #0E2A47">
+  <div style="max-width: 720px; margin: 0 auto; padding: 0 32px; text-align: center">
+    <h2 style="font-size: 32px; font-weight: 800; color: #FFFFFF; margin: 0 0 12px; letter-spacing: -0.02em; text-wrap: pretty">Deje de limpiar archivos. Empiece a decidir.</h2>
+    <p style="font-size: 16.5px; color: rgba(255,255,255,0.65); margin: 0 0 26px">Su demo gratuito de 7 días está arriba, a tres preguntas de distancia.</p>
+    <a href="#contacto" style="display: inline-block; background: #00A94F; color: #FFFFFF; padding: 15px 34px; border-radius: 9px; font-size: 16.5px; font-weight: 700" style-hover="background: #007A39; color: #FFFFFF">Solicitar demo ↑</a>
   </div>
 </section>
 
