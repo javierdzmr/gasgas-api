@@ -1,5 +1,5 @@
 # CLAUDE.md — GasGas Analytics
-Checkpoint: **8 Agosto 2026**
+Checkpoint: **9 Agosto 2026**
 
 Este archivo provee contexto a Claude cuando trabaja en este repositorio.
 
@@ -59,10 +59,13 @@ gasgas-api/
     support.js                       ← runtime de Claude Design (necesario para index/datos)
     openapi.json                     ← especificación OpenAPI 3.1
     gasgas-api.postman_collection.json
+    GasGas-API-Guia-de-uso.pdf       ← guía de 3 págs: se adjunta al correo del demo y se descarga del sitio
+    datos-anterior.html              ← respaldo de la landing vieja. ⚠️ sigue hablando de la fuente pública
   scripts/
     updateAgregados.js               ← cron: promedios + min/max/std (cálculo incremental)
     updateHistoricos.js              ← cron legacy: stats históricos
     updateHistoricosDaily.js         ← cron: serie diaria + auto-rebuild
+    generarGuiaPdf.py                ← genera la guía PDF (weasyprint). No corre en Render: se ejecuta a mano y el PDF se commitea
   docs/
 ```
 
@@ -80,6 +83,12 @@ gasgas-api/
 | `CLARA_API_KEY` | Para /status | Llave para verificar la API de Clara |
 | `COBEE_API_KEY` | Opcional | Solo si cobee exige llave |
 | `FORZAR_RECALCULO` | No | `=1` fuerza recálculo completo en updateAgregados |
+| `SENDGRID_API_KEY` | Para el demo | Envío de la llave de evaluación. **Sin ella el correo no sale**, el asistente degrada a "la recibirá en unos minutos" y /status avisa |
+| `CORREO_REMITENTE` | No | Default `hola@gasgas.com.mx` |
+| `WHATSAPP_NUMERO` | Para el demo | `52` + 10 dígitos, sin símbolos. Sin ella el botón final cae a `mailto:` |
+| `TURNSTILE_SECRET_KEY` | Para el demo | Verificación anti-bot. **Sin ella no bloquea nada** (falla abierta a propósito) |
+
+⚠️ Las cuatro nuevas están en **dev y producción** desde el 9 Ago. Al crear un servicio nuevo hay que copiarlas.
 
 ---
 
@@ -119,10 +128,52 @@ Periodos: `days = 1, 7, 30`. Mercados: 1 nacional + 32 estados + **2,919 municip
 ### precios_historicos_agregados
 Serie diaria para gráficas (**146,083 filas**). Columnas: `market_type`, `market_value`, `date`, `regular`, `premium`, `diesel`, `estado_slug`, `updated_at`.
 
+### Tablas del demo (9 Ago 2026)
+| Tabla | Qué guarda |
+|---|---|
+| `prospectos` | Quién pidió el demo: nombre, empresa, correo, dominio, nivel, `areas TEXT[]`, estimado, IP, si el correo salió |
+| `api_keys_prueba` | Llave `gg_test_…`, límite 500, `expira_en`, **`activada_en`** (NULL = sin estrenar), `llamadas` |
+| `solicitudes_bloqueadas` | Cada intento rechazado con su motivo, dominio e IP |
+
+Índices para los topes: `prospectos(email)`, `(dominio, created_at)`, `(ip, created_at)`, `(created_at)`.
+
 ### Strapi y la DB
 Strapi comparte esta base (tablas `admin_*`, `up_*`, `strapi_*`, `sessions`, `brands`) y en el pasado borró tablas al hacer deploy. La protección `CREATE TABLE IF NOT EXISTS` + `initTables()` lo resuelve.
 
 ⚠️ **Pendiente de seguridad:** las 40 tablas tienen **RLS desactivado** y la Data API de Supabase expone el esquema `public`. Nada del sistema la usa (todo entra por conexión directa). Recomendación: quitar `public` de *Exposed schemas* (Supabase → Data API → Settings) y apagar "Automatically expose new tables".
+
+---
+
+## Áreas GasGas (9 Ago 2026)
+
+Seis macro-regiones comerciales **definidas por GasGas**. Parten de la agrupación que usa la industria
+de consumo, pero la definición es propia: movimos Veracruz y Querétaro y redefinimos el Área V.
+**Nunca se nombra la marca de la que partieron**, ni aquí ni de cara al cliente.
+
+| Clave | Nombre | Entidades | Estaciones |
+|---|---|---|---|
+| I | Pacífico | BC · BCS · Son · Sin · Nay | 2,113 |
+| II | Norte | Chih · Coah · Dgo · NL · Tamps · SLP · Zac | 3,283 |
+| III | Bajío | Jal · Gto · **Qro** · Mich · Ags · Col | 3,056 |
+| IV | Centro | Pue · Hgo · Mor · Tlax · Gro · Edoméx (sin conurbación) | 2,005 |
+| V | Valle de México | CDMX + 59 municipios conurbados + Tizayuca, Hgo | 1,252 |
+| VI | Sureste | **Ver** · Oax · Chis · Tab · Camp · Yuc · QR | 2,485 |
+
+### Objetos en la base
+- `gasgas_areas` — catálogo (RLS activa, política de lectura para `gasgas_ro` y `service_role`)
+- `gasgas_areas_reglas` — 38 reglas: una por estado (prioridad 0) + 6 excepciones por rango de CP (prioridad 10)
+- `gasgas_area_de(estado, cp)` — resuelve la clave
+- `gas_stations.gasgas_area` (indexada) y `gas_stations.gasgas_area_metodo`
+- `v_gasgas_areas_cobertura` — vista de resumen
+
+### Cómo se asignó (importante si se rehace)
+⚠️ **`gas_stations.municipio` NO trae municipios, trae localidades** — "Ciudad López Mateos" en vez de
+Atizapán. Por eso el Edomex tiene 267 valores distintos cuando existen 125 municipios. El VDM **no se
+puede armar con ese campo**; se armó por **rangos de CP**, que sí mapean limpio.
+
+Resultado: 13,822 estaciones por CP (97.4%), 360 por vecino más cercano, 12 corregidas a mano
+(el padrón traía el CP mal: cuatro gasolineras de Ecatepec vienen con CP de Toluca).
+`gasgas_area_metodo` guarda cuál se usó: `cp` · `vecino` · `geo`.
 
 ---
 
@@ -135,6 +186,10 @@ Objeto `RANGE` presente en `updateAgregados.js` y `updateHistoricosDaily.js`:
 | Regular | 21 | 27 |
 | Premium | 23 | 32 |
 | Diesel | 25 | 33 |
+
+⚠️ **Los rangos viven en tres lugares:** `updateAgregados.js`, `updateHistoricosDaily.js` y ahora
+también `server.js` (endpoint `/api/stats-hoy`). Si se ajustan por percentiles hay que cambiar los tres,
+si no la página publica un número y los promedios se calculan con otro. **Pendiente: centralizarlos.**
 
 ```sql
 -- Diagnóstico para reajustar rangos
@@ -151,16 +206,18 @@ FROM prices WHERE regular > 0 AND date >= NOW() - INTERVAL '30 days';
 
 | Endpoint | Parámetros | Notas |
 |---|---|---|
-| `GET /api/precios` | `market` (nacional/estado/municipio), `value`, `days` (1/7/30), `product` | Incluye `semaforo` (barato/medio/caro, umbral ±3%). **`min` y `max` ya vienen mapeados al producto pedido** — en el frontend usar `precios.min`, nunca `min_regular` |
+| `GET /api/precios` | `market` (nacional/estado/municipio/**area**), `value`, `days` (1/7/30), `product` | Incluye `semaforo` (barato/medio/caro, umbral ±3%). **`min` y `max` ya vienen mapeados al producto pedido** — en el frontend usar `precios.min`, nunca `min_regular` |
 | `GET /api/historico` | `market`, `value`, `days` (7/30) | Serie diaria |
 | `GET /api/estados` | — | 32 estados |
 | `GET /api/municipios` | `estado` | `[{municipio, estaciones}]` |
+| `GET /api/areas` | — | **Nuevo 9 Ago 2026.** Catálogo de las 6 Áreas GasGas con sus entidades y conteo de estaciones |
 | `GET /api/ranking-estados` | `product` | **Ampliado 7 Ago 2026:** ahora incluye `stations_count` y `delta7_regular/premium/diesel` |
 | `GET /api/vecinos` | `estado`, `product` | Comparativo regional |
 | `GET /api/marcas` | — | Promedios por marca comercial |
-| `GET /api/stats-hoy` | — | `{precios_hoy, registros_hoy, fecha}` — conteo real del último lote |
+| `GET /api/stats-hoy` | — | `{precios_hoy, precios_validados, precios_descartados, registros_hoy, fecha}`. **`precios_hoy` es la suma de valores individuales** (regular+premium+diesel), no de estaciones. `precios_validados` aplica los rangos; el descarte (~2%) es la evidencia del filtro |
 | `GET /api/demo/cp` | `cp`, `product` | **Demo de nivel CP.** Whitelist de 8 CPs + rate limit 30/h por IP |
-| `POST /api/lead` | — | Captura de prospectos |
+| `POST /api/lead` | — | Captura de prospectos (legado) |
+| `POST /api/solicitar-acceso` | — | **Motor del demo.** Ver sección "Demo self-service" |
 | `GET /api/test` | — | Health check |
 
 ### Privados (tablero interno)
@@ -171,6 +228,59 @@ FROM prices WHERE regular > 0 AND date >= NOW() - INTERVAL '30 days';
 | `GET /api/status/checks` | Requiere cookie. Verifica Clara, cobee, último seed, cortes, API pública + uso 24 h |
 
 **Caché:** los GET de `/api` responden `Cache-Control: public, max-age=300, s-maxage=300`.
+
+---
+
+## Demo self-service (9 Ago 2026)
+
+Sustituye al `mailto:` que **no hacía nada** para quien usa Gmail en el navegador: durante días
+se perdió todo el que llegaba al final de la página.
+
+### Recorrido
+1. **Paso 1** nivel: Estado o Municipio
+2. **Paso 2** Áreas GasGas: multiselección de las 6 + "Todo el país", con el estimado en vivo
+3. **Paso 3** datos: nombre, empresa, correo **de empresa**, WhatsApp opcional
+4. Correo con la llave + `GasGas-API-Guia-de-uso.pdf` adjunto → botón de WhatsApp con el mensaje redactado
+
+El asistente vive **arriba, pegado al hero** (`<section id="contacto">` es la 2ª sección).
+Al final de la página hay un cierre que regresa a él.
+
+### Precio del estimado
+1 área = precio base del nivel; **cada área adicional +10%**; las 6 = ×1.5 (el mismo factor que tenía
+"nacional", así que nadie que pida país completo ve un cambio). Nivel municipio: 1 área $28,750 → 6 áreas $43,250.
+El cálculo está duplicado en `server.js` (`estimar`) y en la landing (`wEstimado`): **deben coincidir**.
+
+### Llaves de evaluación
+- 500 consultas · **7 días desde la PRIMERA consulta**, no desde la emisión
+- Al emitirse hay 30 días para estrenarla (`api_keys_prueba.expira_en`); la primera llamada fija
+  `activada_en` y recalcula `expira_en` a 7 días
+- El middleware que cuenta el uso **debe ir antes de las rutas** en `server.js` (ver Problemas Conocidos #20)
+
+### Anti-abuso (4 capas)
+| Capa | Regla |
+|---|---|
+| Turnstile (Cloudflare) | Verificación invisible. Site key pública en el HTML, secreta en Render |
+| Dominio | Debe tener MX o A. **Falla abierta**: solo rechaza si el DNS confirma que no existe |
+| Por correo | 1 llave, **sin reemisión automática** |
+| Por empresa | 1 llave al mes por dominio |
+| Por conexión | 2 llaves al día por IP · 5 intentos/hora |
+| Global | 30 llaves al día |
+
+Todo rechazo se registra en `solicitudes_bloqueadas` y se ve en `/status`, con foco ámbar
+si pasa de 40 en 24 h o si una IP insiste 5+ veces. **Sin ese registro un ataque se ve igual
+que un día tranquilo.**
+
+Los mensajes de rechazo **nunca cierran la puerta**: todos empujan a `hola@gasgas.com.mx`.
+Que una segunda persona de la misma empresa pida el demo es la mejor señal de compra que hay,
+y queremos enterarnos.
+
+### Correo (SendGrid)
+- Dominio autenticado con DKIM (3 CNAME + DMARC en Cloudflare, todos **DNS only**)
+- ⚠️ **Trial hasta el 9 de octubre de 2026.** Después, plan de pago desde $19.95 USD/mes —
+  el plan gratuito permanente ya no existe. Alternativas si el volumen no lo justifica: Resend, Amazon SES
+- ⚠️ **El rastreo de clics va apagado.** Con él encendido SendGrid reescribe las URLs y **rompe el
+  `curl` de copiar y pegar** que le prometemos al cliente
+- HTML en tablas con estilos en línea (lo único que respetan Gmail y Outlook), sin imágenes externas
 
 ---
 
@@ -189,6 +299,11 @@ FROM prices WHERE regular > 0 AND date >= NOW() - INTERVAL '30 days';
 
 Ahorro medido: **~86%** (de ~143 GB/día a ~20 GB/día). Forzar con `FORZAR_RECALCULO=1`.
 
+### Municipios y Áreas en una sola pasada (9 Ago 2026)
+Son dos cortes del mismo universo, así que se calculan con `GROUPING SETS` en **una sola lectura**
+de `prices`. Separarlos habría costado ~3.4 GB extra por periodo, unos **200 GB/mes** de egress.
+**Las Áreas GasGas costaron cero GB adicionales.**
+
 ---
 
 ## Frontend
@@ -197,7 +312,7 @@ Ahorro medido: **~86%** (de ~143 GB/día a ~20 GB/día). Forzar con `FORZAR_RECA
 
 | Ruta | Archivo | Qué es |
 |---|---|---|
-| `/` | index.html | **Landing B2B** (diseño Claude Design): hero con promedios en vivo, ticker, teaser al mapa, proceso de limpieza, niveles, API, playground, planes |
+| `/` | index.html | **Landing B2B** (diseño Claude Design): hero, **asistente de demo (2ª sección)**, ticker, mapa, proceso, niveles, API, playground, planes, cierre |
 | `/dashboard` | dashboard.html | Dashboard de precios al consumidor (chips nacional/estado, gráfica SVG, chips Pro bloqueados) |
 | `/datos` | datos.html | Mismo contenido que `/` (compatibilidad con links viejos) |
 | `/mapa` | mapa.html | Monitor Nacional: choropleth D3, KPIs, movimientos 7 días, ficha estatal, feed |
@@ -211,10 +326,16 @@ Niveles **Estado/Municipio/CP** activos; **Estación** bloqueado (gancho comerci
 ### Reglas del diseño
 - Colores: azul `#0E2A47` · verde `#00A94F`/`#007A39` · Magna verde, Premium `#DC2626`, Diésel `#334155`
 - Tipografías: Figtree (UI) + JetBrains Mono (números)
-- Fuente declarada en el sitio: *"Fuente: CNE · datos depurados por el algoritmo de calidad GasGas"*
+- **No se menciona la fuente ni "el archivo que limpiar"** en nada que vea el cliente (ver Mensajes)
+- Pie del sitio: *"datos procesados por el algoritmo de calidad GasGas"*
 - Cobertura publicada: 14,194 estaciones · 32 estados · 2,900+ municipios · **5,000+ CPs** · histórico desde mayo 2024 · **7 cortes al día**
 - La landing es un export de **Claude Design** (`<x-dc>` + `support.js`): la lógica vive en la clase `Component extends DCLogic` al final del archivo, y el HTML usa `{{ }}` y `<sc-for>`. **No romper esa estructura.**
 - Capa responsive añadida post-export en el `<style>`: no borrarla al reimportar diseños
+- ⚠️ La capa responsive usa selectores por **substring del atributo `style`** (`[style*="display: flex"]`).
+  **Se rompen al editar el estilo en línea.** Para cosas críticas usar clases reales (ej. `.gg-tira`)
+- **Cintilla de estados:** dos copias explícitas (`.gg-copia`) dentro de `.gg-tira`. El ancho total es
+  el doble exacto de una copia, así el `-50%` de la animación cae siempre en el inicio de la segunda.
+  La separación va como `padding` de cada elemento, **nunca como `gap` del contenedor**
 
 ---
 
@@ -258,8 +379,14 @@ git checkout main && git merge dev && git push origin main && git checkout dev
 - `/api/precios?market=estado&value=Chiapas&days=1&product=regular` → min/max reales
 - `/api/ranking-estados?product=regular` → 32 estados con `delta7_*` y `stations_count`
 - Abrir `/`, `/dashboard`, `/mapa`, `/docs` — sin errores en consola
+- `/api/areas` → 6 áreas · `/api/precios?market=area&value=V&days=1` → responde
+- `/api/stats-hoy` → `precios_hoy − precios_validados = precios_descartados`
+- Abrir `/` y confirmar que el asistente es la 2ª sección y carga los 3 pasos
+- Sonda del demo **sin crear nada**: POST a `/api/solicitar-acceso` con dominio inexistente y sin token.
+  Con Turnstile activo debe dar **403 `verificacion_fallida`**; si da 422 es que falta la variable
 - Verificar en móvil (la landing tiene capa responsive propia)
 - **Purge de Cloudflare**
+- Al verificar por URL, agregar `?v=<timestamp>`: los GET de `/api` traen caché de 5 min
 
 ---
 
@@ -298,10 +425,32 @@ Precios publicados en `/datos` (MXN/mes + IVA, "desde", ajustables por cobertura
 | Código Postal | desde **$40,250** | + 5,000 zonas (el más contratado) |
 | Estación | a la medida | 14,194 estaciones con marca y ubicación |
 
+**Por Área GasGas (9 Ago 2026):** el precio del nivel es por **1 área**; cada área adicional suma 10%;
+las 6 = ×1.5. Bajó el piso de entrada a la mitad: quien solo opera en el Valle de México entra con
+$28,750 en vez de tener que contratar el país completo. Y sabemos **qué área pidió**, que es
+inteligencia de dónde está la demanda.
+
 Setup inicial = una mensualidad. Histórico (desde mayo 2024) se cotiza aparte. CFDI desde el día uno.
 Contacto comercial: **hola@gasgas.com.mx**
 
-Pendientes: llaves de prueba, rate limiting por API key, login de clientes, pagos.
+Pendientes: rate limiting por API key, login de clientes, pagos.
+
+---
+
+## Mensajes: qué NO decimos
+
+**No se menciona de dónde sale el dato ni se plantea "el archivo" como alternativa.** Muchos clientes
+no saben que existe un archivo público; decírselo es sembrarles una objeción que no traían.
+Retirado el 9 Ago de la landing, `/mapa`, `/dashboard`, `/docs`, el OpenAPI, la colección de Postman
+y la guía PDF.
+
+- El titular pasó de *"no un archivo que limpiar"* a **"listo para su sistema"**
+- *"Limpieza continua"* → *"Validación en cada corte"*: decir que limpiamos implica que el origen viene sucio
+- El argumento es lo que **recibe** (cobertura, marca comercial resuelta, 7 cortes, histórico), no lo que evita
+- Si un comprador pregunta por la fuente, se contesta **en la conversación**, no en la página
+- ⚠️ `datos-anterior.html` todavía habla de la fuente. No está enlazado pero es alcanzable por URL
+
+Tampoco se nombra la marca ajena de la que partieron las áreas: son **Áreas GasGas** y la definición es propia.
 
 ---
 
@@ -333,10 +482,28 @@ Solo se registra lo que el cliente puede notar: **campos y endpoints nuevos, fre
 17. **"▲ +0.00" contradictorio** — resuelto: si el cambio de 7 días redondea a cero, mostrar "· s/c" neutro
 18. **Frescura del seed mal medida** — no contar horas desde `MAX(date)` (es fecha del dato, no de carga); comparar la fecha del lote contra hoy en México
 19. **Credenciales en el código del seeder de Clara** — resuelto 8 Ago 2026: SendGrid y Redis pasaron a variables de entorno. **La llave vieja de SendGrid sigue expuesta en el historial de git: hay que revocarla.**
+20. **Middleware declarado después de las rutas** — el contador de uso de las llaves de prueba
+    **nunca corrió**: Express solo ejecuta lo que se declara antes de la ruta que atiende la petición.
+    `/status` decía "sin usar la llave" aunque el cliente hiciera mil consultas. Resuelto 9 Ago:
+    el `app.use("/api", …)` va **antes** de `app.get("/api/precios", …)`
+21. **SendGrid reescribía las URLs** — el rastreo de clics convertía el `curl` del correo en un enlace
+    `ct.sendgrid.net` y **el comando no funcionaba**. Resuelto 9 Ago apagando `tracking_settings`
+22. **La cintilla brincaba** — dos causas: (a) se recalculaba en cada render y el feed dispara uno
+    cada 2.6 s; (b) con `gap` + `padding-left`, el `-50%` caía 48 px antes del inicio de la copia.
+    Resuelto 9 Ago: lista congelada + dos copias explícitas
+23. **`gas_stations.municipio` son localidades, no municipios** — no sirve para agrupar por municipio real.
+    Usar CP o lat/lng (ver Áreas GasGas)
+24. **Al medir animaciones con el navegador: verificar `document.visibilityState`** — Chrome congela
+    animaciones y temporizadores en pestañas de fondo. El 9 Ago diagnostiqué un "hilo saturado" que
+    en realidad era el ahorro de energía de Chrome. Perdí media hora
+25. **RLS sin política = cero filas** — al activar RLS en `gasgas_areas` el endpoint devolvió `[]`
+    aunque `gasgas_ro` tenía GRANT. Hace falta `CREATE POLICY … FOR SELECT TO gasgas_ro`
+26. **Caché de 5 min en los GET de `/api`** — al verificar un despliegue, agregar `?v=<timestamp>`
+    o parecerá que el cambio no subió
 
 ---
 
-## Historial reciente (5–8 Agosto 2026)
+## Historial reciente (5–9 Agosto 2026)
 
 - ✅ Push directo desde Cowork con token fine-grained (5 Ago)
 - ✅ Layout desktop 2 columnas + navegación entre páginas (5 Ago)
@@ -347,4 +514,28 @@ Solo se registra lo que el cliente puede notar: **campos y endpoints nuevos, fre
 - ✅ Tablero interno `/status` con PIN (7–8 Ago)
 - ✅ Seeder de Clara: 1 consulta en vez de 3 + pipeline Redis + credenciales fuera del código (8 Ago)
 - ✅ Cálculo incremental en updateAgregados: **–86%** (8 Ago)
-- ⏳ Pendientes: optimizar cobee (1 consulta agrupada), backfill de 3,528 CPs, cerrar Data API de Supabase, revocar llave de SendGrid, `www.gasgas.com.mx` (CNAME), subdominio `status.gasgas.com.mx`, llaves de prueba para clientes
+
+### 9 Agosto 2026 — todo esto salió a producción el mismo día
+- ✅ **Áreas GasGas**: definición propia, 14,194 estaciones clasificadas, `market_type='area'` en la API
+- ✅ **Demo self-service**: asistente de 3 pasos, llave por correo, guía PDF adjunta, entrega a WhatsApp
+- ✅ El asistente subió al inicio de la página; el `mailto:` muerto quedó fuera
+- ✅ **Anti-abuso**: Turnstile + validación de dominio + topes + registro de bloqueados en `/status`
+- ✅ SendGrid con dominio autenticado (DKIM) y rastreo de clics apagado
+- ✅ Se retiró toda mención a la fuente pública del sitio, docs, OpenAPI, Postman y la guía
+- ✅ `stats-hoy` separa recibidos / validados / descartados
+- ✅ Marca homologada a **GasGas** (reporte de César)
+- ✅ Corregidos: contador de uso que nunca corrió, cintilla que brincaba, vigencia desde el primer uso
+
+### Pendientes al 9 Ago (en orden de urgencia)
+1. **Rotar la llave de SendGrid y el PIN de `/status`** — ambos quedaron a la vista en capturas
+2. **Revocar la llave vieja de SendGrid** del historial de git del seeder de Clara
+3. **Probar el demo completo en producción** con un correo de empresa, y **pegar el `curl`** para
+   confirmar que el contador de uso ya funciona
+4. Optimizar cobee (1 consulta agrupada: 87 ms vs ~1,850 ms medidos) — el mayor consumo pendiente
+5. Documentar las Áreas GasGas en `/docs`, el OpenAPI y la colección de Postman
+6. Agregar "Área" como nivel en el playground de la landing
+7. Centralizar los rangos de precios (hoy en 3 archivos)
+8. Cerrar la Data API de Supabase (quitar `public` de *Exposed schemas*)
+9. Decidir antes del **9 de octubre** si se sigue en SendGrid de pago o se migra
+10. Borrar o limpiar `datos-anterior.html`
+11. Backfill de 3,528 estaciones sin CP · `www.gasgas.com.mx` (CNAME) · `status.gasgas.com.mx`
