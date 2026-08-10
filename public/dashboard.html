@@ -232,7 +232,7 @@ svg.grafica{display:block;width:100%;height:150px}
     <nav class="nav-links">
       <a class="cta" href="/datos">Datos para empresas</a>
       <a href="/docs">Docs API</a>
-      <span class="fuente-badge"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.5-4.8 2.5.9-5.4L4.2 7.7l5.4-.8z" fill="currentColor" stroke="none" opacity="0"/><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>Datos oficiales CNE</span>
+      <span class="fuente-badge"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.5-4.8 2.5.9-5.4L4.2 7.7l5.4-.8z" fill="currentColor" stroke="none" opacity="0"/><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>Datos verificados</span>
     </nav>
   </div>
 </header>
@@ -244,7 +244,7 @@ svg.grafica{display:block;width:100%;height:150px}
       <span class="simbolo">$</span><span class="num tabular" id="hero-precio">--.--</span><span class="litro">/L</span>
     </div>
     <div class="delta"><span class="pildora" id="hero-delta"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/></svg><span id="hero-delta-txt">Cargando…</span></span></div>
-    <p class="fuente" id="hero-fuente">Fuente: CNE · datos depurados por el algoritmo de calidad GasGas</p>
+    <p class="fuente" id="hero-fuente">Procesado por el algoritmo de calidad GasGas</p>
     <div class="antiguedad antiguedad--inv" id="hero-antiguedad"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span id="hero-antiguedad-txt">Consultando…</span></div>
   </div>
 </section>
@@ -297,8 +297,8 @@ svg.grafica{display:block;width:100%;height:150px}
     <div class="card card-api">
       <div>
         <div class="overline">API y datos para empresas</div>
-        <h3>Precios listos para decidir, no un archivo que limpiar.</h3>
-        <p>Cada precio pasa por un proceso continuo de limpieza y validación antes de entregarse: <b>calidad enterprise</b>, listo para usar por estado, municipio, CP o estación.</p>
+        <h3>El precio de la gasolina de México, listo para su sistema.</h3>
+        <p>Cada precio pasa por un proceso continuo de validación antes de entregarse: <b>calidad enterprise</b>, listo para usar por estado, municipio, CP o estación.</p>
         <div class="ctas">
           <a class="btn btn--primario" href="/datos">Conocer los datos</a>
           <a class="btn btn--secundario" href="/docs">Ver documentación</a>
@@ -307,7 +307,7 @@ svg.grafica{display:block;width:100%;height:150px}
       <ul class="api-bullets">
         <li><b>Marca comercial resuelta:</b>&nbsp;OXXO Gas, Mobil, Pemex… identificamos la bandera de cada una de las 14,194 estaciones del país</li>
         <li><b>Nivel código postal:</b>&nbsp;5,000+ códigos postales geolocalizados, listos para consultar</li>
-        <li><b>Limpieza continua, no una vez:</b>&nbsp;cada corte (7 al día) pasa por validación de duplicados, rangos y estaciones fantasma</li>
+        <li><b>Validación en cada corte:</b>&nbsp;cada corte (7 al día) pasa por validación de duplicados, rangos y estaciones fantasma</li>
         <li><b>Histórico que no se puede reconstruir:</b>&nbsp;guardamos cada día desde mayo 2024: una serie que no se puede rearmar hacia atrás</li>
         <li><b>Contexto incluido:</b>&nbsp;promedios precalculados y semáforo de caro/barato</li>
       </ul>
@@ -319,7 +319,7 @@ svg.grafica{display:block;width:100%;height:150px}
 <footer class="footer">
   <div class="wrap">
     <b>GasGas</b> · El precio de la gasolina en México
-    <div class="linea">Fuente: CNE · datos depurados por el algoritmo de calidad GasGas · gasgas.com.mx · © 2026</div>
+    <div class="linea">Datos procesados por el algoritmo de calidad GasGas · gasgas.com.mx · © 2026</div>
     <div class="linea"><a href="/datos" style="text-decoration:underline">Datos y API para empresas</a></div>
   </div>
 </footer>
@@ -382,7 +382,7 @@ function render(){
   const pill=$("hero-delta");
   pill.className="pildora pildora--"+(d?d.clase:"sin-dato");
   pill.innerHTML=`<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="${d?d.icon:"M5 12h14"}"/></svg><span>${d?d.txt:"Sin dato"}</span>`;
-  $("hero-fuente").textContent=`Fuente: CNE · algoritmo de calidad GasGas · ${fmtMiles(DATA.meta.stations)} estaciones`;
+  $("hero-fuente").textContent=`Algoritmo de calidad GasGas · ${fmtMiles(DATA.meta.stations)} estaciones`;
   $("hero-antiguedad-txt").textContent=DATA.antiguedad;
 
   /* Título + estado del dato */
@@ -490,7 +490,7 @@ function grafica(){
 
 function metabar(){
   const m=DATA.meta;
-  const filas=[["Estaciones",fmtMiles(m.stations)],["Mín","$"+f2(m.min)],["Máx","$"+f2(m.max)],["Desv. est.",f2(m.std)],["Fuente","CNE"]];
+  const filas=[["Estaciones",fmtMiles(m.stations)],["Mín","$"+f2(m.min)],["Máx","$"+f2(m.max)],["Desv. est.",f2(m.std)],["Cobertura","Nacional"]];
   $("metabar").innerHTML=filas.map(([k,v])=>`<span class="m">${k}: <b>${v}</b></span>`).join("");
 }
 

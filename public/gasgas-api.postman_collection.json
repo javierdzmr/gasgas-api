@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "GasGas API — Precios de combustible de México",
-    "description": "API de precios de gasolina de México. Datos oficiales CNE con limpieza y validación de GasGas.\n\nEndpoints de consulta abierta con fines de evaluación. Los contratos comerciales operan con API key por cliente en el encabezado `x-api-key`.\n\nDocumentación: https://gasgas.com.mx/docs\nContacto: hola@gasgas.com.mx",
+    "description": "API de precios de gasolina de México. Precios validados y con marca comercial resuelta por GasGas.\n\nEndpoints de consulta abierta con fines de evaluación. Los contratos comerciales operan con API key por cliente en el encabezado `x-api-key`.\n\nDocumentación: https://gasgas.com.mx/docs\nContacto: hola@gasgas.com.mx",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [

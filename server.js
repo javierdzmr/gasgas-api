@@ -377,7 +377,7 @@ app.get("/api/municipios", async (req, res) => {
 });
 
 // ==============================
-// 🔹 PRECIO POR MARCA COMERCIAL (value-add: la CNE no da la bandera)
+// 🔹 PRECIO POR MARCA COMERCIAL (valor agregado: la bandera la resolvemos nosotros)
 // ==============================
 app.get("/api/marcas", async (req, res) => {
   try {

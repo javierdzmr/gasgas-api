@@ -3,7 +3,7 @@
   "info": {
     "title": "GasGas API — Precios de combustible de México",
     "version": "1.0.0",
-    "description": "API de precios de gasolina de México. Datos oficiales de la Comisión Nacional de Energía (CNE) con limpieza, validación de rangos y marca comercial resueltos por GasGas.\n\nLa base se actualiza con 7 cortes al día (entre 6:30 y 20:30 h, hora de México). Cada respuesta declara `updated_at`.\n\nLos endpoints de esta especificación son de consulta abierta con fines de evaluación. Los contratos comerciales operan con API key por cliente (encabezado `x-api-key`), niveles adicionales (código postal y estación) e histórico profundo desde mayo 2024.",
+    "description": "API de precios de gasolina de México. Precios validados, deduplicados y con marca comercial resuelta por GasGas.\n\nLa base se actualiza con 7 cortes al día (entre 6:30 y 20:30 h, hora de México). Cada respuesta declara `updated_at`.\n\nLos endpoints de esta especificación son de consulta abierta con fines de evaluación. Los contratos comerciales operan con API key por cliente (encabezado `x-api-key`), niveles adicionales (código postal y estación) e histórico profundo desde mayo 2024.",
     "contact": { "name": "Equipo de ingeniería GasGas", "email": "hola@gasgas.com.mx", "url": "https://gasgas.com.mx/datos" },
     "termsOfService": "https://gasgas.com.mx/datos"
   },
