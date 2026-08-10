@@ -129,7 +129,7 @@ table.contacto .cv {{ font-size: 9.5pt; margin-top: 2pt; }}
 </style></head><body>
 
 <div class="portada">
-  <span class="marca">GG</span><span class="marca-t">gasgas / datos</span>
+  <span class="marca">GG</span><span class="marca-t">GasGas / datos</span>
   <h1>Guía de uso de la API</h1>
   <p class="sub">Precios de combustible de México: validados, deduplicados y enriquecidos
   con marca comercial. Entregados por API, listos para su sistema.</p>

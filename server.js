@@ -866,7 +866,7 @@ async function enviarLlavePorCorreo({ nombre, empresa, email, llave, nivel, area
 
   <tr><td style="background:#0E2A47;padding:26px 30px;">
     <span style="display:inline-block;background:#FFFFFF;color:#0E2A47;font-weight:800;font-size:13px;padding:4px 11px;border-radius:99px;">GG</span>
-    <span style="color:rgba(255,255,255,.5);font-size:14px;margin-left:8px;">gasgas / datos</span>
+    <span style="color:rgba(255,255,255,.5);font-size:14px;margin-left:8px;">GasGas / datos</span>
     <div style="color:#FFFFFF;font-size:23px;font-weight:800;margin-top:16px;line-height:1.25;">Su llave está lista, ${esc(pila)}</div>
     <div style="color:rgba(255,255,255,.65);font-size:15px;margin-top:6px;">500 consultas · sin costo · 7 días a partir de su primera llamada</div>
   </td></tr>
