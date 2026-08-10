@@ -145,7 +145,7 @@
         <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1)">
           <div style="display: flex; justify-content: space-between; margin-bottom: 10px">
             <span style="font-size: 11px; color: rgba(255,255,255,0.45); letter-spacing: 0.08em">PROMEDIOS DEL ÚLTIMO CORTE</span>
-            <span style="font-size: 11px; color: rgba(255,255,255,0.45)">hoy: <span style="color: #FFFFFF">{{ procesados }}</span></span>
+            <span style="font-size: 11px; color: rgba(255,255,255,0.45)">hoy: <span style="color: #FFFFFF">{{ validados }}</span> validados</span>
           </div>
           <div style="display: grid; gap: 4px; font-size: 12px">
             <sc-for list="{{ feed }}" as="f" hint-placeholder-count="5">
@@ -347,8 +347,9 @@
       <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #007A39; letter-spacing: 0.1em">EL PROCESO</div>
       <div style="display: flex; align-items: center; gap: 10px; border: 1px solid #E7ECF0; border-radius: 999px; padding: 8px 16px; background: #F7F9FA">
         <span style="width: 7px; height: 7px; border-radius: 50%; background: #00A94F; animation: ggPulse 2s infinite"></span>
-        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #4C6379">precios procesados hoy</span>
-        <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; color: #0E2A47">{{ procesados }}</span>
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #4C6379">hoy: {{ procesados }} recibidos</span>
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; color: #007A39">{{ validados }} validados</span>
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #8B99A6">· {{ descartados }} descartados</span>
       </div>
     </div>
     <h2 style="font-size: 38px; font-weight: 800; margin: 0 0 12px; letter-spacing: -0.02em; max-width: 700px; text-wrap: pretty">Lo que recibe su equipo, ya resuelto</h2>
@@ -460,7 +461,7 @@
       <div style="display: flex; gap: 40px; font-family: 'JetBrains Mono', monospace; flex-wrap: wrap">
         <div><div style="font-size: 10px; letter-spacing: 0.08em; color: rgba(255,255,255,0.45)">CORTES AL DÍA</div><div style="font-size: 16px; font-weight: 600; color: #00A94F; margin-top: 4px">7 <span style="font-size:11px;color:rgba(255,255,255,0.5)">6:30 – 20:30 h</span></div></div>
         <div><div style="font-size: 10px; letter-spacing: 0.08em; color: rgba(255,255,255,0.45)">LATENCIA P50</div><div style="font-size: 16px; font-weight: 600; color: #FFFFFF; margin-top: 4px">{{ lat }}</div></div>
-        <div><div style="font-size: 10px; letter-spacing: 0.08em; color: rgba(255,255,255,0.45)">PRECIOS PROCESADOS HOY</div><div style="font-size: 16px; font-weight: 600; color: #FFFFFF; margin-top: 4px">{{ procesados }}</div></div>
+        <div><div style="font-size: 10px; letter-spacing: 0.08em; color: rgba(255,255,255,0.45)">PRECIOS VALIDADOS HOY</div><div style="font-size: 16px; font-weight: 600; color: #FFFFFF; margin-top: 4px">{{ validados }}</div></div>
         <div><div style="font-size: 10px; letter-spacing: 0.08em; color: rgba(255,255,255,0.45)">ÚLTIMO CORTE</div><div style="font-size: 16px; font-weight: 600; color: #FFFFFF; margin-top: 4px">{{ corteHora }} ✓</div></div>
       </div>
     </div>
@@ -635,7 +636,7 @@
 <script type="text/x-dc" data-dc-script data-props="{&quot;datoEnVivoAnimado&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Hero&quot;}}">
 class Component extends DCLogic {
   /* ── 100% datos reales de la API de GasGas; placeholders mientras carga ── */
-  state = { i: 0, procesados: 0, selEstado: "CDMX", lat: 0, feed: [], corteHora: "—", ready: 0, qProd: "regular", qEstado: "Jalisco", qNivel: "estado", qMunicipio: "", qMunis: [], qCp: "11800", qCargando: false, wPaso: 1, wNivel: "municipio", wAreas: [], wNacional: true, wNombre: "", wEmpresa: "", wEmail: "", wWhatsapp: "", wError: "", wEnviando: false, wCorreoEnviado: false, wWaTexto: "", wWaUrl: "", wCanal: "whatsapp", qResp: "Elija sus opciones y pulse \"Enviar consulta\".", qStatus: "listo", qExplica: "Aquí traduciremos la respuesta a lenguaje de negocio." };
+  state = { i: 0, procesados: 0, validados: 0, descartados: 0, selEstado: "CDMX", lat: 0, feed: [], corteHora: "—", ready: 0, qProd: "regular", qEstado: "Jalisco", qNivel: "estado", qMunicipio: "", qMunis: [], qCp: "11800", qCargando: false, wPaso: 1, wNivel: "municipio", wAreas: [], wNacional: true, wNombre: "", wEmpresa: "", wEmail: "", wWhatsapp: "", wError: "", wEnviando: false, wCorreoEnviado: false, wWaTexto: "", wWaUrl: "", wCanal: "whatsapp", qResp: "Elija sus opciones y pulse \"Enviar consulta\".", qStatus: "listo", qExplica: "Aquí traduciremos la respuesta a lenguaje de negocio." };
   // [nombre, abbr, col, fila] — geometría del mapa de mosaicos (sin datos inventados)
   estadosData = [
     ["Baja California","BC",1,1],["Sonora","SON",2,1],["Chihuahua","CHIH",3,1],["Coahuila","COAH",4,1],["Nuevo León","NL",5,1],["Tamaulipas","TAM",6,1],
@@ -712,7 +713,9 @@ class Component extends DCLogic {
           apiName: r.estado
         };
       });
-      upd.procesados = Number(st && st.precios_hoy) || 0;
+      upd.procesados  = Number(st && st.precios_hoy) || 0;
+      upd.validados   = Number(st && st.precios_validados) || 0;
+      upd.descartados = Number(st && st.precios_descartados) || 0;
       const l = this.R.lats.slice().sort((a, b) => a - b);
       upd.lat = l.length ? Math.round(l[Math.floor(l.length / 2)]) : 0;
       const feed = []; for (let k = 0; k < 5; k++) { const f = this.filaFeed(); if (f) feed.push(f); }
@@ -933,6 +936,8 @@ class Component extends DCLogic {
       feed, actual,
       tickerItems: tickItems,
       procesados: this.state.procesados ? this.state.procesados.toLocaleString("en-US") : "…",
+      validados: this.state.validados ? this.state.validados.toLocaleString("en-US") : "…",
+      descartados: this.state.descartados ? this.state.descartados.toLocaleString("en-US") : "0",
       lat: this.state.lat ? this.state.lat + " ms" : "—",
       corteHora: this.state.corteHora,
       estados, sel,

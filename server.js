@@ -1332,15 +1332,23 @@ app.get("/api/status/checks", async (req, res) => {
 // 🔹 Stats del día (para la landing /datos): precios y estaciones procesados hoy
 app.get("/api/stats-hoy", async (req, res) => {
   try {
+    // Los rangos deben coincidir con los de scripts/updateAgregados.js:
+    // regular 21–27 · premium 23–32 · diesel 25–33
     const result = await pool.query(`
       SELECT
         (COUNT(regular) + COUNT(premium) + COUNT(diesel))::int AS precios_hoy,
+        ( COUNT(regular) FILTER (WHERE regular BETWEEN 21 AND 27)
+        + COUNT(premium) FILTER (WHERE premium BETWEEN 23 AND 32)
+        + COUNT(diesel)  FILTER (WHERE diesel  BETWEEN 25 AND 33))::int AS precios_validados,
         COUNT(*)::int AS registros_hoy,
         MAX(date::date)::text AS fecha
       FROM prices
       WHERE date::date = (SELECT MAX(date::date) FROM prices)
     `);
-    res.json(result.rows[0]);
+    const r = result.rows[0] || {};
+    // Cuántos descartó el filtro de calidad: es la evidencia de que trabaja
+    r.precios_descartados = (r.precios_hoy || 0) - (r.precios_validados || 0);
+    res.json(r);
   } catch (err) {
     console.error("ERROR /stats-hoy:", err);
     res.status(500).json({ error: "Error obteniendo stats" });
