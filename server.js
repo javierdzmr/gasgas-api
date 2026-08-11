@@ -1444,6 +1444,10 @@ const REPETIR_AVISO_MS = 6 * 3600000;   // no insistir con lo mismo antes de 6 h
 // llegue el correo en el siguiente chequeo, y al regresarlo a 70 llega el de
 // "ya se resolvió". Así se comprueba el circuito completo sin esperar una falla.
 const UMBRAL_CONEXIONES = Number(process.env.ALERTA_CONEXIONES_PCT) || 70;
+// Un umbral absurdamente bajo solo puede ser una prueba. El correo lo dice
+// claramente en vez de disfrazarse de emergencia: una alarma de práctica que
+// se ve igual que una real es la mejor forma de que dejen de hacerle caso.
+const MODO_PRUEBA = UMBRAL_CONEXIONES < 20;
 const avisosActivos = new Map();        // clave → { desde, ultimoEnvio }
 
 /** Correo de aviso. Dos formatos: alerta (rojo, con qué hacer) y todo-en-orden (verde). */
@@ -1452,8 +1456,10 @@ async function enviarAviso({ alerta, titulo, quePaso, queSignifica, pedirAClaude
   const DE = process.env.CORREO_REMITENTE || "hola@gasgas.com.mx";
   if (!KEY || !ALERTAS_A.length) return false;
 
-  const franja = alerta ? "#B91C1C" : "#007A39";
-  const etiqueta = alerta ? "REQUIERE ATENCIÓN" : "TODO EN ORDEN";
+  const prueba = alerta && MODO_PRUEBA;
+  const franja = prueba ? "#B45309" : alerta ? "#B91C1C" : "#007A39";
+  const etiqueta = prueba ? "PRUEBA DEL SISTEMA — NO ES UNA FALLA"
+                 : alerta ? "REQUIERE ATENCIÓN" : "TODO EN ORDEN";
 
   const bloqueClaude = pedirAClaude ? `
   <tr><td style="padding:4px 30px 0;">
@@ -1517,7 +1523,7 @@ async function enviarAviso({ alerta, titulo, quePaso, queSignifica, pedirAClaude
       body: JSON.stringify({
         personalizations: [{ to: ALERTAS_A.map(email => ({ email })) }],
         from: { email: DE, name: "GasGas · Avisos" },
-        subject: (alerta ? "⚠️ " : "✅ ") + titulo,
+        subject: (prueba ? "🔧 Prueba de avisos · " : alerta ? "⚠️ " : "✅ ") + titulo,
         content: [{ type: "text/plain", value: texto }, { type: "text/html", value: html }],
         tracking_settings: { click_tracking: { enable: false, enable_text: false }, open_tracking: { enable: false } }
       })
@@ -1568,9 +1574,12 @@ async function revisarSalud() {
     await marcarAviso("conexiones", pct >= UMBRAL_CONEXIONES, {
       titulo: "La base de datos se está saturando",
       quePaso: `Hay ${r.en_uso} conexiones abiertas de las ${r.tope} que aguanta la base. Va en ${pct}%.`,
-      queSignifica: "Si llega al 85%, la página deja de mostrar precios y las APIs de Clara y cobee empiezan a fallar. Todavía no pasa nada, pero va en esa dirección.",
-      pedirAClaude: `Las conexiones de la base están al ${pct}%. Revisa qué las está ocupando y bájalas antes de que lleguen al 85%.`,
-      nota: "Mientras tanto: no publiques cambios, cada despliegue ocupa conexiones de más."
+      queSignifica: MODO_PRUEBA
+        ? `Esto es un simulacro: el umbral está puesto en ${UMBRAL_CONEXIONES}% a propósito para probar el envío. El sistema está sano — un valor normal es menos de 40%. Regresa ALERTA_CONEXIONES_PCT a 70 en Render.`
+        : "Si llega al 85%, la página deja de mostrar precios y las APIs de Clara y cobee empiezan a fallar. Todavía no pasa nada, pero va en esa dirección.",
+      pedirAClaude: MODO_PRUEBA ? "" :
+        `Las conexiones de la base están al ${pct}%. Revisa qué las está ocupando y bájalas antes de que lleguen al 85%.`,
+      nota: MODO_PRUEBA ? "" : "Mientras tanto: no publiques cambios, cada despliegue ocupa conexiones de más."
     });
 
     // El lote del día debe entrar antes del mediodía en México
