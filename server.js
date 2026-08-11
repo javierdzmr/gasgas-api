@@ -1452,11 +1452,14 @@ const avisosActivos = new Map();        // clave → { desde, ultimoEnvio }
 
 /** Correo de aviso. Dos formatos: alerta (rojo, con qué hacer) y todo-en-orden (verde). */
 async function enviarAviso({ alerta, titulo, quePaso, queSignifica, pedirAClaude, nota }) {
+  titulo = String(titulo || "");
   const KEY = process.env.SENDGRID_API_KEY;
   const DE = process.env.CORREO_REMITENTE || "hola@gasgas.com.mx";
   if (!KEY || !ALERTAS_A.length) return false;
 
   const prueba = alerta && MODO_PRUEBA;
+  // En prueba, el titular no puede anunciar una falla que no existe
+  if (prueba) titulo = "Prueba del sistema de avisos";
   const franja = prueba ? "#B45309" : alerta ? "#B91C1C" : "#007A39";
   const etiqueta = prueba ? "PRUEBA DEL SISTEMA — NO ES UNA FALLA"
                  : alerta ? "REQUIERE ATENCIÓN" : "TODO EN ORDEN";
@@ -1573,7 +1576,9 @@ async function revisarSalud() {
 
     await marcarAviso("conexiones", pct >= UMBRAL_CONEXIONES, {
       titulo: "La base de datos se está saturando",
-      quePaso: `Hay ${r.en_uso} conexiones abiertas de las ${r.tope} que aguanta la base. Va en ${pct}%.`,
+      quePaso: MODO_PRUEBA
+        ? `Todo bien: hay ${r.en_uso} conexiones abiertas de las ${r.tope} que aguanta la base, apenas ${pct}%.`
+        : `Hay ${r.en_uso} conexiones abiertas de las ${r.tope} que aguanta la base. Va en ${pct}%.`,
       queSignifica: MODO_PRUEBA
         ? `Esto es un simulacro: el umbral está puesto en ${UMBRAL_CONEXIONES}% a propósito para probar el envío. El sistema está sano — un valor normal es menos de 40%. Regresa ALERTA_CONEXIONES_PCT a 70 en Render.`
         : "Si llega al 85%, la página deja de mostrar precios y las APIs de Clara y cobee empiezan a fallar. Todavía no pasa nada, pero va en esa dirección.",
