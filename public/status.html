@@ -99,6 +99,15 @@ main{max-width:900px;margin:0 auto;padding:22px 18px 40px;display:none}
     </div>
   </div>
 
+  <div class="card" id="c-conexiones">
+    <span class="foco ok"></span>
+    <div class="info">
+      <div class="nombre">Conexiones de la base</div>
+      <div class="det" id="con-det">—</div>
+    </div>
+    <span class="gran" id="con-pct"></span>
+  </div>
+
   <div class="card" id="c-bloqueos" style="align-items:flex-start">
     <span class="foco ok" style="margin-top:4px"></span>
     <div class="info">
@@ -170,6 +179,18 @@ async function cargar(){
           return '<span style="color:#fff">' + (p.empresa || '—') + '</span> · ' + (p.nivel || '') + ' · ' + areasTxt + ' · ' + est + '/mes · ' + señal +
                  '<br><span style="font-size:11px;color:rgba(255,255,255,.4)">' + (p.nombre || '') + ' · ' + (p.email || '') + ' · ' + horaMX(p.created_at) + '</span>' + correo;
         }).join("<br><br>");
+      }
+    }
+    if (j.conexiones) {
+      const C = j.conexiones, foco = $("c-conexiones").querySelector(".foco");
+      if (C.error) { $("con-det").textContent = "no disponible"; foco.className = "foco duda"; }
+      else {
+        $("con-pct").textContent = C.pct + "%";
+        $("con-pct").style.color = C.alerta ? "#E8C36A" : "#00A94F";
+        foco.className = "foco " + (C.alerta ? "duda" : "ok");
+        $("con-det").innerHTML = C.en_uso + " de " + C.tope + " en uso · " + C.inactivas + " inactivas"
+          + (C.atoradas > 0 ? '<br><span style="color:#E8C36A">⚠ ' + C.atoradas + ' atoradas en transacción</span>' : "")
+          + (C.pct >= 70 ? '<br><span style="color:#E8C36A">⚠ arriba del 70%: revisar antes de desplegar</span>' : "");
       }
     }
     if (j.bloqueos) {

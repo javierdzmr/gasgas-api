@@ -73,10 +73,29 @@ app.use('/api', (req, res, next) => {
 app.use(express.static('public', { extensions: ['html'] }));
 
 // 🗄️ conexión a la base de datos
+// ============================================================
+// 🔌 Pool de conexiones
+//
+// La base tiene un tope de 60 conexiones (3 reservadas para el superusuario).
+// El 10 de agosto de 2026 se agotaron y la API entera respondió 500 durante
+// horas: cada servicio abría hasta 10 conexiones (el default de `pg`) y nunca
+// las soltaba, y durante un despliegue Render corre la instancia vieja y la
+// nueva al mismo tiempo — o sea, el doble.
+//
+// Este servicio no necesita 10: las consultas son rápidas y las respuestas se
+// cachean 5 minutos. Con 4 sobra, y en un despliegue el pico es 8, no 20.
+// ============================================================
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
+  ssl: { rejectUnauthorized: false },
+  max: Number(process.env.DB_POOL_MAX) || 4,
+  idleTimeoutMillis: 20000,        // suelta las inactivas pronto
+  connectionTimeoutMillis: 8000,   // no se queda esperando para siempre
+  allowExitOnIdle: false
 });
+
+// Un error del pool no debe tumbar el proceso
+pool.on("error", (err) => console.error("Pool de PostgreSQL:", err.message));
 
 // ==============================
 // 🛡️ INIT: Crear tablas si no existen al arrancar
@@ -1298,6 +1317,25 @@ app.get("/api/status/checks", async (req, res) => {
       prospectos = { total7d: t7.rows[0]?.n || 0, lista: q.rows };
     } catch (e) { prospectos = { error: true }; }
 
+    // Conexiones de la base. El 10 Ago 2026 se agotaron y toda la API respondió
+    // 500 durante horas sin que nadie se enterara hasta que rebotó un proceso
+    // externo. Esto lo hace visible antes de que truene.
+    let conexiones = { error: true };
+    try {
+      const c = await pool.query(`
+        SELECT
+          (SELECT setting::int FROM pg_settings WHERE name='max_connections') AS tope,
+          COUNT(*)::int AS en_uso,
+          COUNT(*) FILTER (WHERE state='idle')::int AS inactivas,
+          COUNT(*) FILTER (WHERE state='idle in transaction')::int AS atoradas
+        FROM pg_stat_activity WHERE backend_type='client backend'`);
+      const r = c.rows[0] || {};
+      const pct = r.tope ? Math.round(100 * r.en_uso / r.tope) : 0;
+      conexiones = { tope: r.tope, en_uso: r.en_uso, inactivas: r.inactivas,
+                     atoradas: r.atoradas, pct,
+                     alerta: pct >= 70 || r.atoradas > 0 };
+    } catch (e) { conexiones = { error: true }; }
+
     // Intentos bloqueados: sin esto un ataque se ve igual que un día tranquilo
     let bloqueos = { total24h: 0, porMotivo: [], ipsTop: [] };
     try {
@@ -1322,7 +1360,7 @@ app.get("/api/status/checks", async (req, res) => {
       };
     } catch (e) { bloqueos = { error: true }; }
 
-    res.json({ generado: new Date().toISOString(), clara, cobee, seed, cortes, publica, uso, usoClientes, prospectos, bloqueos });
+    res.json({ generado: new Date().toISOString(), clara, cobee, seed, cortes, publica, uso, usoClientes, prospectos, bloqueos, conexiones });
   } catch (err) {
     console.error("ERROR /status/checks:", err);
     res.status(500).json({ error: "Error corriendo los checks" });

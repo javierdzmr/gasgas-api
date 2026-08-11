@@ -1,9 +1,16 @@
 const { Pool } = require("pg");
 
+// El tope de la base son 60 conexiones. Un cron no necesita mas de 2:
+// trabaja en serie y con 2 tiene margen si una se traba. Ver el incidente
+// del 10 de agosto de 2026 en CLAUDE.md.
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
+  ssl: { rejectUnauthorized: false },
+  max: 2,
+  idleTimeoutMillis: 20000,
+  connectionTimeoutMillis: 15000
 });
+pool.on("error", (err) => console.error("Pool de PostgreSQL:", err.message));
 
 // Mismos rangos que updateAgregados.js
 const RANGE = {
