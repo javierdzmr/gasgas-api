@@ -1,5 +1,5 @@
 # CLAUDE.md — GasGas Analytics
-Checkpoint: **9 Agosto 2026**
+Checkpoint: **10 Agosto 2026**
 
 Este archivo provee contexto a Claude cuando trabaja en este repositorio.
 
@@ -390,6 +390,41 @@ git checkout main && git merge dev && git push origin main && git checkout dev
 
 ---
 
+## Conexiones a la base — incidente del 10 Ago 2026
+
+**Qué pasó:** se agotaron las 60 conexiones de Postgres (3 reservadas al superusuario).
+Toda la API respondió **500 durante horas** y nadie se enteró hasta que rebotó un proceso externo.
+
+**Por qué:** cada servicio abría hasta **10** conexiones (el default de `pg`) y las dejaba
+apartadas. Sumando web prod, web dev, 3 crons, Strapi y los trabajos de Northflank ya se
+llenaba; los ~14 despliegues de ese día lo remataron, porque **Render corre la instancia
+vieja y la nueva a la vez** durante cada despliegue.
+
+**Efecto secundario:** al reiniciar Supabase para liberar, el servidor web **se murió**
+(`Exited with status 1`). Sin un `pool.on("error")`, node-postgres convierte el corte de
+conexiones en un error no manejado y Node mata el proceso.
+
+### Cómo quedó
+| Medida | Valor |
+|---|---|
+| `DATABASE_URL` de los servicios web | puerto **6543** (modo transacción, multiplexa) |
+| `DATABASE_URL` de los crons | puerto **5432** (sesión) — corren y se van |
+| Pool del servicio web | `max: 4` · idle 20 s · timeout 8 s |
+| Pool de los crons y del seeder de Clara | `max: 2` |
+| Manejador `pool.on("error")` | en todos |
+
+**Medido después:** 30 peticiones simultáneas → 30/30 OK, y el servicio web usa **4 conexiones**.
+Uso total **14 de 60 (23%)** contra 60/60 antes.
+
+⚠️ **No subir el pool "por si acaso".** Con 4 aguanta 30 peticiones a la vez; el cuello nunca
+fue el pool, era el cupo compartido.
+
+`/status` tiene tarjeta de conexiones: foco ámbar arriba del **70%** o si hay conexiones
+atoradas en transacción. **Si algún día sube de 40%, revisar Northflank** (Feed prices, API de
+Clara y API de cobee siguen sin tope explícito; sus repos no están en `gasgas-repos`).
+
+---
+
 ## Costos e infraestructura (8 Ago 2026)
 
 **Supabase Pro** — $25/mes + cómputo (~$7 con créditos). Dos proyectos: `gasgas-analytics` y `tio-cali`.
@@ -498,7 +533,9 @@ Solo se registra lo que el cliente puede notar: **campos y endpoints nuevos, fre
     en realidad era el ahorro de energía de Chrome. Perdí media hora
 25. **RLS sin política = cero filas** — al activar RLS en `gasgas_areas` el endpoint devolvió `[]`
     aunque `gasgas_ro` tenía GRANT. Hace falta `CREATE POLICY … FOR SELECT TO gasgas_ro`
-26. **Caché de 5 min en los GET de `/api`** — al verificar un despliegue, agregar `?v=<timestamp>`
+26. **Conexiones agotadas** — ver la sección del incidente del 10 Ago. Regla: **todo pool nuevo
+    lleva `max` explícito y `pool.on("error")`**. El default de 10 por proceso no es gratis
+27. **Caché de 5 min en los GET de `/api`** — al verificar un despliegue, agregar `?v=<timestamp>`
     o parecerá que el cambio no subió
 
 ---
