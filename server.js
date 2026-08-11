@@ -1440,6 +1440,10 @@ app.get("/api/salud", async (req, res) => {
 const ALERTAS_A = (process.env.ALERTAS_CORREOS || "javier@gasgas.com.mx,cesar@gasgas.com.mx")
   .split(",").map(s => s.trim()).filter(Boolean);
 const REPETIR_AVISO_MS = 6 * 3600000;   // no insistir con lo mismo antes de 6 h
+// Umbral configurable para poder probar el envío: bajarlo a 1 en Render hace que
+// llegue el correo en el siguiente chequeo, y al regresarlo a 70 llega el de
+// "ya se resolvió". Así se comprueba el circuito completo sin esperar una falla.
+const UMBRAL_CONEXIONES = Number(process.env.ALERTA_CONEXIONES_PCT) || 70;
 const avisosActivos = new Map();        // clave → { desde, ultimoEnvio }
 
 async function enviarAviso(asunto, cuerpo) {
@@ -1491,10 +1495,11 @@ async function revisarSalud() {
     const r = q.rows[0] || {};
     const pct = Math.round(100 * r.en_uso / r.tope);
 
-    await marcarAviso("conexiones", pct >= 70,
+    await marcarAviso("conexiones", pct >= UMBRAL_CONEXIONES,
       "Conexiones de la base al " + pct + "%",
       `Hay ${r.en_uso} conexiones abiertas de ${r.tope}.\n` +
-      `Arriba del 85% la API empieza a fallar. No despliegues nada hasta que baje.`);
+      `Umbral de aviso: ${UMBRAL_CONEXIONES}%. Arriba del 85% la API empieza a fallar.\n` +
+      `No despliegues nada hasta que baje.`);
 
     // El lote del día debe entrar antes del mediodía en México
     const hoyMX = new Date(Date.now() - 6 * 3600000);
