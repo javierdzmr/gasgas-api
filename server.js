@@ -1397,6 +1397,126 @@ app.get("/api/test", (req, res) => {
   res.json({ status: "ok" });
 });
 
+// ==============================
+// 🩺 SALUD REAL
+//
+// `/api/test` responde ok sin tocar la base: durante el apagón del 10 Ago
+// devolvía 200 mientras todo lo demás daba 500. Un monitor apuntado ahí
+// habría dicho "todo bien" durante horas. Este sí consulta la base y
+// responde 503 cuando no puede: es el que debe vigilar un monitor externo.
+// ==============================
+app.get("/api/salud", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const t0 = Date.now();
+  try {
+    const q = await pool.query(`
+      SELECT (SELECT setting::int FROM pg_settings WHERE name='max_connections') AS tope,
+             (SELECT COUNT(*) FROM pg_stat_activity WHERE backend_type='client backend') AS en_uso,
+             (SELECT MAX(date::date)::text FROM prices) AS ultimo_lote`);
+    const r = q.rows[0] || {};
+    const pct = r.tope ? Math.round(100 * r.en_uso / r.tope) : null;
+    const hoyMX = new Date(Date.now() - 6 * 3600000).toISOString().slice(0, 10);
+    const lote_al_dia = r.ultimo_lote === hoyMX;
+    const sano = pct !== null && pct < 85;
+    res.status(sano ? 200 : 503).json({
+      estado: sano ? "ok" : "presion_de_conexiones",
+      conexiones: { en_uso: Number(r.en_uso), tope: Number(r.tope), pct },
+      ultimo_lote: r.ultimo_lote, lote_al_dia,
+      ms: Date.now() - t0
+    });
+  } catch (e) {
+    res.status(503).json({ estado: "base_inalcanzable", detalle: String(e.message).slice(0, 120), ms: Date.now() - t0 });
+  }
+});
+
+// ==============================
+// 🔔 AVISOS POR CORREO
+//
+// El foco ámbar de /status solo sirve si alguien abre /status. El 10 Ago
+// estuvimos caídos horas y nos enteramos porque un tercero nos escribió.
+// Esto revisa solo y avisa; también manda un correo cuando ya se resolvió,
+// para no dejar a nadie con el pendiente.
+// ==============================
+const ALERTAS_A = (process.env.ALERTAS_CORREOS || "javier@gasgas.com.mx,cesar@gasgas.com.mx")
+  .split(",").map(s => s.trim()).filter(Boolean);
+const REPETIR_AVISO_MS = 6 * 3600000;   // no insistir con lo mismo antes de 6 h
+const avisosActivos = new Map();        // clave → { desde, ultimoEnvio }
+
+async function enviarAviso(asunto, cuerpo) {
+  const KEY = process.env.SENDGRID_API_KEY;
+  const DE = process.env.CORREO_REMITENTE || "hola@gasgas.com.mx";
+  if (!KEY || !ALERTAS_A.length) return false;
+  try {
+    const r = await fetch("https://api.sendgrid.com/v3/mail/send", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        personalizations: [{ to: ALERTAS_A.map(email => ({ email })) }],
+        from: { email: DE, name: "GasGas · Avisos" },
+        subject: asunto,
+        content: [{ type: "text/plain", value: cuerpo + "\n\nTablero: https://gasgas.com.mx/status" }],
+        tracking_settings: { click_tracking: { enable: false, enable_text: false }, open_tracking: { enable: false } }
+      })
+    });
+    return r.status >= 200 && r.status < 300;
+  } catch (e) { console.error("aviso:", e.message); return false; }
+}
+
+/** Levanta o baja un aviso, sin repetirlo cada 10 minutos. */
+async function marcarAviso(clave, activo, asunto, cuerpo) {
+  const ahora = Date.now();
+  const previo = avisosActivos.get(clave);
+  if (activo) {
+    if (!previo) {
+      avisosActivos.set(clave, { desde: ahora, ultimoEnvio: ahora });
+      await enviarAviso("⚠️ " + asunto, cuerpo);
+    } else if (ahora - previo.ultimoEnvio > REPETIR_AVISO_MS) {
+      previo.ultimoEnvio = ahora;
+      const horas = Math.round((ahora - previo.desde) / 3600000);
+      await enviarAviso("⚠️ Sigue: " + asunto, `Lleva ${horas} h sin resolverse.\n\n` + cuerpo);
+    }
+  } else if (previo) {
+    avisosActivos.delete(clave);
+    const min = Math.round((ahora - previo.desde) / 60000);
+    await enviarAviso("✅ Resuelto: " + asunto, `Duró ${min} minutos. Ya está normal.`);
+  }
+}
+
+async function revisarSalud() {
+  try {
+    const q = await pool.query(`
+      SELECT (SELECT setting::int FROM pg_settings WHERE name='max_connections') AS tope,
+             (SELECT COUNT(*) FROM pg_stat_activity WHERE backend_type='client backend') AS en_uso,
+             (SELECT MAX(date::date)::text FROM prices) AS ultimo_lote`);
+    const r = q.rows[0] || {};
+    const pct = Math.round(100 * r.en_uso / r.tope);
+
+    await marcarAviso("conexiones", pct >= 70,
+      "Conexiones de la base al " + pct + "%",
+      `Hay ${r.en_uso} conexiones abiertas de ${r.tope}.\n` +
+      `Arriba del 85% la API empieza a fallar. No despliegues nada hasta que baje.`);
+
+    // El lote del día debe entrar antes del mediodía en México
+    const hoyMX = new Date(Date.now() - 6 * 3600000);
+    const fechaMX = hoyMX.toISOString().slice(0, 10);
+    const pasoMediodia = hoyMX.getUTCHours() >= 12;
+    await marcarAviso("seed", pasoMediodia && r.ultimo_lote !== fechaMX,
+      "No han entrado los precios de hoy",
+      `El último lote es del ${r.ultimo_lote} y hoy es ${fechaMX}.\n` +
+      `Revisar el proceso "Feed prices" en Northflank.`);
+
+    await marcarAviso("base", false, "", "");
+  } catch (e) {
+    // Si la base no responde, eso es lo que hay que avisar
+    await marcarAviso("base", true, "La base de datos no responde",
+      `La API está devolviendo error en todo lo que consulta datos.\n\nDetalle: ${String(e.message).slice(0, 160)}`);
+  }
+}
+
+// Primera revisión a los 2 minutos (deja que arranque), luego cada 10
+setTimeout(revisarSalud, 2 * 60000);
+setInterval(revisarSalud, 10 * 60000);
+
 // 404
 app.use((req, res) => {
   res.status(404).json({ error: "Not Found" });
