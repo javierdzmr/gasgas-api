@@ -1446,10 +1446,70 @@ const REPETIR_AVISO_MS = 6 * 3600000;   // no insistir con lo mismo antes de 6 h
 const UMBRAL_CONEXIONES = Number(process.env.ALERTA_CONEXIONES_PCT) || 70;
 const avisosActivos = new Map();        // clave → { desde, ultimoEnvio }
 
-async function enviarAviso(asunto, cuerpo) {
+/** Correo de aviso. Dos formatos: alerta (rojo, con qué hacer) y todo-en-orden (verde). */
+async function enviarAviso({ alerta, titulo, quePaso, queSignifica, pedirAClaude, nota }) {
   const KEY = process.env.SENDGRID_API_KEY;
   const DE = process.env.CORREO_REMITENTE || "hola@gasgas.com.mx";
   if (!KEY || !ALERTAS_A.length) return false;
+
+  const franja = alerta ? "#B91C1C" : "#007A39";
+  const etiqueta = alerta ? "REQUIERE ATENCIÓN" : "TODO EN ORDEN";
+
+  const bloqueClaude = pedirAClaude ? `
+  <tr><td style="padding:4px 30px 0;">
+    <div style="font-family:'SFMono-Regular',Consolas,monospace;font-size:10px;letter-spacing:1px;color:#8B99A6;">CÓPIALE ESTO A CLAUDE</div>
+    <div style="background:#0E2A47;border-radius:9px;padding:14px 16px;margin-top:7px;
+                font-family:'SFMono-Regular',Consolas,monospace;font-size:13px;line-height:1.5;color:#E8F5EE;">${esc(pedirAClaude)}</div>
+    <div style="font-size:13px;color:#4C6379;margin-top:8px;">Pégalo tal cual y él lo revisa. Entre más pronto, mejor.</div>
+  </td></tr>` : "";
+
+  const html = `<!doctype html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#F1F5F8;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F1F5F8;padding:24px 12px;">
+<tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:540px;background:#FFFFFF;border-radius:14px;overflow:hidden;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+
+  <tr><td style="background:${franja};padding:22px 30px;">
+    <div style="color:rgba(255,255,255,.75);font-size:11px;letter-spacing:1.5px;font-weight:bold;">${etiqueta}</div>
+    <div style="color:#FFFFFF;font-size:22px;font-weight:800;margin-top:8px;line-height:1.3;">${esc(titulo)}</div>
+  </td></tr>
+
+  <tr><td style="padding:24px 30px 0;">
+    <div style="font-family:'SFMono-Regular',Consolas,monospace;font-size:10px;letter-spacing:1px;color:#8B99A6;">QUÉ PASÓ</div>
+    <div style="font-size:16px;color:#0E2A47;margin-top:6px;line-height:1.55;">${esc(quePaso)}</div>
+  </td></tr>
+
+  ${queSignifica ? `<tr><td style="padding:18px 30px 0;">
+    <div style="font-family:'SFMono-Regular',Consolas,monospace;font-size:10px;letter-spacing:1px;color:#8B99A6;">QUÉ SIGNIFICA</div>
+    <div style="font-size:15.5px;color:#4C6379;margin-top:6px;line-height:1.55;">${esc(queSignifica)}</div>
+  </td></tr>` : ""}
+
+  ${bloqueClaude ? `<tr><td style="padding:18px 30px 0;"><div style="border-top:1px solid #E7ECF0;"></div></td></tr>` + bloqueClaude : ""}
+
+  ${nota ? `<tr><td style="padding:18px 30px 0;">
+    <div style="font-size:15px;color:#4C6379;line-height:1.55;">${esc(nota)}</div>
+  </td></tr>` : ""}
+
+  <tr><td style="padding:22px 30px 26px;">
+    <a href="https://gasgas.com.mx/status" style="display:block;background:${alerta ? "#0E2A47" : "#00A94F"};color:#FFFFFF;text-decoration:none;
+       border-radius:9px;padding:13px;text-align:center;font-size:15.5px;font-weight:700;">Abrir el tablero</a>
+  </td></tr>
+
+  <tr><td style="background:#081B30;padding:14px 30px;">
+    <span style="color:rgba(255,255,255,.5);font-size:11.5px;">GasGas · aviso automático · se revisa cada 10 minutos</span>
+  </td></tr>
+
+</table>
+</td></tr></table>
+</body></html>`;
+
+  const texto = `${etiqueta}\n${titulo}\n\nQUÉ PASÓ\n${quePaso}\n` +
+    (queSignifica ? `\nQUÉ SIGNIFICA\n${queSignifica}\n` : "") +
+    (pedirAClaude ? `\nCÓPIALE ESTO A CLAUDE\n${pedirAClaude}\n` : "") +
+    (nota ? `\n${nota}\n` : "") +
+    `\nTablero: https://gasgas.com.mx/status`;
+
   try {
     const r = await fetch("https://api.sendgrid.com/v3/mail/send", {
       method: "POST",
@@ -1457,8 +1517,8 @@ async function enviarAviso(asunto, cuerpo) {
       body: JSON.stringify({
         personalizations: [{ to: ALERTAS_A.map(email => ({ email })) }],
         from: { email: DE, name: "GasGas · Avisos" },
-        subject: asunto,
-        content: [{ type: "text/plain", value: cuerpo + "\n\nTablero: https://gasgas.com.mx/status" }],
+        subject: (alerta ? "⚠️ " : "✅ ") + titulo,
+        content: [{ type: "text/plain", value: texto }, { type: "text/html", value: html }],
         tracking_settings: { click_tracking: { enable: false, enable_text: false }, open_tracking: { enable: false } }
       })
     });
@@ -1467,22 +1527,32 @@ async function enviarAviso(asunto, cuerpo) {
 }
 
 /** Levanta o baja un aviso, sin repetirlo cada 10 minutos. */
-async function marcarAviso(clave, activo, asunto, cuerpo) {
+async function marcarAviso(clave, activo, info) {
   const ahora = Date.now();
   const previo = avisosActivos.get(clave);
+
   if (activo) {
     if (!previo) {
-      avisosActivos.set(clave, { desde: ahora, ultimoEnvio: ahora });
-      await enviarAviso("⚠️ " + asunto, cuerpo);
+      avisosActivos.set(clave, { desde: ahora, ultimoEnvio: ahora, titulo: info.titulo });
+      await enviarAviso({ alerta: true, ...info });
     } else if (ahora - previo.ultimoEnvio > REPETIR_AVISO_MS) {
       previo.ultimoEnvio = ahora;
       const horas = Math.round((ahora - previo.desde) / 3600000);
-      await enviarAviso("⚠️ Sigue: " + asunto, `Lleva ${horas} h sin resolverse.\n\n` + cuerpo);
+      await enviarAviso({ alerta: true, ...info,
+        titulo: "Sigue sin resolverse: " + info.titulo,
+        nota: `Lleva ${horas} horas así. Si no se ha revisado, este es buen momento.` });
     }
   } else if (previo) {
     avisosActivos.delete(clave);
     const min = Math.round((ahora - previo.desde) / 60000);
-    await enviarAviso("✅ Resuelto: " + asunto, `Duró ${min} minutos. Ya está normal.`);
+    const duracion = min < 60 ? `${min} minutos` : `${Math.round(min / 60)} horas`;
+    await enviarAviso({
+      alerta: false,
+      titulo: "Todo volvió a la normalidad",
+      quePaso: `Lo que te avisamos hace rato — "${previo.titulo}" — ya se resolvió. Duró ${duracion}.`,
+      queSignifica: "El sistema está funcionando bien otra vez. No tienes que hacer nada.",
+      nota: "Seguimos revisando cada 10 minutos. Si algo vuelve a salirse de lo normal, te avisamos igual que esta vez."
+    });
   }
 }
 
@@ -1495,26 +1565,35 @@ async function revisarSalud() {
     const r = q.rows[0] || {};
     const pct = Math.round(100 * r.en_uso / r.tope);
 
-    await marcarAviso("conexiones", pct >= UMBRAL_CONEXIONES,
-      "Conexiones de la base al " + pct + "%",
-      `Hay ${r.en_uso} conexiones abiertas de ${r.tope}.\n` +
-      `Umbral de aviso: ${UMBRAL_CONEXIONES}%. Arriba del 85% la API empieza a fallar.\n` +
-      `No despliegues nada hasta que baje.`);
+    await marcarAviso("conexiones", pct >= UMBRAL_CONEXIONES, {
+      titulo: "La base de datos se está saturando",
+      quePaso: `Hay ${r.en_uso} conexiones abiertas de las ${r.tope} que aguanta la base. Va en ${pct}%.`,
+      queSignifica: "Si llega al 85%, la página deja de mostrar precios y las APIs de Clara y cobee empiezan a fallar. Todavía no pasa nada, pero va en esa dirección.",
+      pedirAClaude: `Las conexiones de la base están al ${pct}%. Revisa qué las está ocupando y bájalas antes de que lleguen al 85%.`,
+      nota: "Mientras tanto: no publiques cambios, cada despliegue ocupa conexiones de más."
+    });
 
     // El lote del día debe entrar antes del mediodía en México
     const hoyMX = new Date(Date.now() - 6 * 3600000);
     const fechaMX = hoyMX.toISOString().slice(0, 10);
     const pasoMediodia = hoyMX.getUTCHours() >= 12;
-    await marcarAviso("seed", pasoMediodia && r.ultimo_lote !== fechaMX,
-      "No han entrado los precios de hoy",
-      `El último lote es del ${r.ultimo_lote} y hoy es ${fechaMX}.\n` +
-      `Revisar el proceso "Feed prices" en Northflank.`);
+    await marcarAviso("seed", pasoMediodia && r.ultimo_lote !== fechaMX, {
+      titulo: "No han entrado los precios de hoy",
+      quePaso: `Los precios más recientes que tenemos son del ${r.ultimo_lote}, y hoy es ${fechaMX}.`,
+      queSignifica: "La página y las APIs están entregando los precios de ayer. No se rompe nada, pero el dato está viejo y los clientes lo pueden notar.",
+      pedirAClaude: `No entraron los precios de hoy: el último lote es del ${r.ultimo_lote}. Revisa el proceso "Feed prices" en Northflank y dime qué pasó.`
+    });
 
-    await marcarAviso("base", false, "", "");
+    await marcarAviso("base", false, {});
   } catch (e) {
     // Si la base no responde, eso es lo que hay que avisar
-    await marcarAviso("base", true, "La base de datos no responde",
-      `La API está devolviendo error en todo lo que consulta datos.\n\nDetalle: ${String(e.message).slice(0, 160)}`);
+    await marcarAviso("base", true, {
+      titulo: "La base de datos no responde",
+      quePaso: "El servidor no puede consultar ningún dato. Esto lleva pasando al menos unos minutos.",
+      queSignifica: "La página carga pero sin precios, y los clientes que usan la API están recibiendo errores. Es lo más grave que puede avisar este correo.",
+      pedirAClaude: "La base de datos no responde y /api/salud está dando 503. Diagnostica qué pasa y dime qué hacer.",
+      nota: `Detalle técnico: ${String(e.message).slice(0, 140)}`
+    });
   }
 }
 
