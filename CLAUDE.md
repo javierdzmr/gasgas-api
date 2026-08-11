@@ -1,5 +1,5 @@
 # CLAUDE.md — GasGas Analytics
-Checkpoint: **10 Agosto 2026**
+Checkpoint: **11 Agosto 2026**
 
 Este archivo provee contexto a Claude cuando trabaja en este repositorio.
 
@@ -87,6 +87,9 @@ gasgas-api/
 | `CORREO_REMITENTE` | No | Default `hola@gasgas.com.mx` |
 | `WHATSAPP_NUMERO` | Para el demo | `52` + 10 dígitos, sin símbolos. Sin ella el botón final cae a `mailto:` |
 | `TURNSTILE_SECRET_KEY` | Para el demo | Verificación anti-bot. **Sin ella no bloquea nada** (falla abierta a propósito) |
+| `ALERTAS_CORREOS` | No | A quién avisar. Default `javier@` y `cesar@gasgas.com.mx` |
+| `ALERTA_CONEXIONES_PCT` | No | Umbral del aviso (default 70). Bajarlo a `1` sirve para probar el envío |
+| `DB_POOL_MAX` | No | Tope del pool del servicio web (default 4). **No subirlo sin leer el incidente del 10 Ago** |
 
 ⚠️ Las cuatro nuevas están en **dev y producción** desde el 9 Ago. Al crear un servicio nuevo hay que copiarlas.
 
@@ -218,7 +221,8 @@ FROM prices WHERE regular > 0 AND date >= NOW() - INTERVAL '30 days';
 | `GET /api/demo/cp` | `cp`, `product` | **Demo de nivel CP.** Whitelist de 8 CPs + rate limit 30/h por IP |
 | `POST /api/lead` | — | Captura de prospectos (legado) |
 | `POST /api/solicitar-acceso` | — | **Motor del demo.** Ver sección "Demo self-service" |
-| `GET /api/test` | — | Health check |
+| `GET /api/salud` | — | **Chequeo real:** consulta la base, responde **503** si falla o si las conexiones pasan del 85%. Es el que debe vigilar un monitor externo |
+| `GET /api/test` | — | Solo dice que el proceso está vivo. **No toca la base — no sirve para monitoreo** |
 
 ### Privados (tablero interno)
 
@@ -418,6 +422,22 @@ Uso total **14 de 60 (23%)** contra 60/60 antes.
 
 ⚠️ **No subir el pool "por si acaso".** Con 4 aguanta 30 peticiones a la vez; el cuello nunca
 fue el pool, era el cupo compartido.
+
+### Avisos por correo (11 Ago 2026 — idea de César)
+Un foco en un tablero solo sirve si alguien lo abre. Ahora el servidor se revisa
+cada 10 min y **manda correo** a `ALERTAS_CORREOS` cuando: conexiones ≥ 70%, la base
+no responde, o no entraron los precios del día para el mediodía. Manda uno al detectar,
+recordatorio a las 6 h, y **uno de "resuelto"** al normalizar. Probado de punta a punta.
+
+⚠️ **`/api/test` miente:** responde `ok` sin tocar la base. Durante el apagón devolvía
+200 mientras todo lo demás daba 500. **Lo que hay que vigilar es `GET /api/salud`**,
+que sí consulta y responde **503** cuando algo está mal.
+
+Para probar el envío sin esperar una falla: poner `ALERTA_CONEXIONES_PCT=1` en Render,
+esperar el correo, y regresarla a `70` para recibir el de "resuelto".
+
+⚠️ **Punto ciego:** este aviso vive dentro del servidor. Si el proceso muere no avisa nada.
+**Pendiente:** monitor externo (UptimeRobot, gratis) apuntando a `/api/salud` cada 5 min.
 
 `/status` tiene tarjeta de conexiones: foco ámbar arriba del **70%** o si hay conexiones
 atoradas en transacción. **Si algún día sube de 40%, revisar Northflank** (Feed prices, API de
