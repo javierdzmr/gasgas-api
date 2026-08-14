@@ -1565,6 +1565,30 @@ async function marcarAviso(clave, activo, info) {
   }
 }
 
+/**
+ * Guarda quién tiene las conexiones. Al reiniciar para liberar se pierde la
+ * evidencia, así que sin esto cada agotamiento se investiga a ciegas.
+ * Se conservan 3 días.
+ */
+async function fotoDeConexiones() {
+  try {
+    await pool.query(`
+      INSERT INTO conexiones_historial (total, tope, por_usuario)
+      SELECT COUNT(*),
+             (SELECT setting::int FROM pg_settings WHERE name='max_connections'),
+             jsonb_object_agg(usename, n)
+      FROM (SELECT usename, COUNT(*)::int AS n
+              FROM pg_stat_activity
+             WHERE backend_type='client backend' AND usename IS NOT NULL
+             GROUP BY usename) x`);
+    if (Math.random() < 0.05) {   // limpieza ocasional, no en cada foto
+      await pool.query(`DELETE FROM conexiones_historial WHERE momento < NOW() - INTERVAL '3 days'`);
+    }
+  } catch (e) { /* nunca debe estorbar */ }
+}
+setTimeout(fotoDeConexiones, 60000);
+setInterval(fotoDeConexiones, 3 * 60000);
+
 async function revisarSalud() {
   try {
     const q = await pool.query(`
