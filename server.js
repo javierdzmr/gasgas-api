@@ -1544,6 +1544,10 @@ async function marcarAviso(clave, activo, info) {
     if (!previo) {
       avisosActivos.set(clave, { desde: ahora, ultimoEnvio: ahora, titulo: info.titulo });
       await enviarAviso({ alerta: true, ...info });
+    } else if (MODO_PRUEBA) {
+      // Un simulacro avisa UNA vez. Insistir cada 6 horas con un problema que
+      // no existe es la forma más rápida de que dejen de leer estos correos
+      // — pasó del 15 al 18 de agosto: 32 avisos falsos.
     } else if (ahora - previo.ultimoEnvio > REPETIR_AVISO_MS) {
       previo.ultimoEnvio = ahora;
       const horas = Math.round((ahora - previo.desde) / 3600000);
