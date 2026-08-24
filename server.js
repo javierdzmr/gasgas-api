@@ -89,9 +89,16 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
   max: Number(process.env.DB_POOL_MAX) || 4,
-  idleTimeoutMillis: 20000,        // suelta las inactivas pronto
-  connectionTimeoutMillis: 8000,   // no se queda esperando para siempre
-  allowExitOnIdle: false
+  // 4 minutos, no 20 segundos. Con 20 s el pool se vaciaba entre una revisión
+  // y la siguiente (que corren cada 3 min), el intermediario desmontaba el
+  // grupo por falta de suscriptores, y reconstruirlo llegó a tardar 4.6 s.
+  // El 23 Ago eso encadenó reconexiones y disparó una falsa alarma de 9 min.
+  // Mantener UNA conexión tibia no compromete el cupo compartido.
+  idleTimeoutMillis: 240000,
+  // Margen para absorber una reconexión lenta sin reportarla como caída
+  connectionTimeoutMillis: 20000,
+  allowExitOnIdle: false,
+  keepAlive: true
 });
 
 // Un error del pool no debe tumbar el proceso
