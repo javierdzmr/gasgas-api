@@ -1458,14 +1458,17 @@ const MODO_PRUEBA = UMBRAL_CONEXIONES < 20;
 const avisosActivos = new Map();        // clave → { desde, ultimoEnvio }
 
 /** Correo de aviso. Dos formatos: alerta (rojo, con qué hacer) y todo-en-orden (verde). */
-async function enviarAviso({ alerta, titulo, quePaso, queSignifica, pedirAClaude, nota }) {
+async function enviarAviso({ alerta, titulo, quePaso, queSignifica, pedirAClaude, nota, esSimulacro }) {
   titulo = String(titulo || "");
   const KEY = process.env.SENDGRID_API_KEY;
   const DE = process.env.CORREO_REMITENTE || "hola@gasgas.com.mx";
   if (!KEY || !ALERTAS_A.length) return false;
 
-  const prueba = alerta && MODO_PRUEBA;
-  // En prueba, el titular no puede anunciar una falla que no existe
+  // Solo es simulacro si QUIEN LLAMA lo marca. Antes bastaba con que el umbral
+  // de conexiones estuviera bajo, y eso etiquetó una caída real de 15 minutos
+  // como "PRUEBA — NO ES UNA FALLA" el 24 Ago. Una alarma que miente es peor
+  // que no tener alarma.
+  const prueba = alerta && esSimulacro === true;
   if (prueba) titulo = "Prueba del sistema de avisos";
   const franja = prueba ? "#B45309" : alerta ? "#B91C1C" : "#007A39";
   const etiqueta = prueba ? "PRUEBA DEL SISTEMA — NO ES UNA FALLA"
@@ -1551,7 +1554,7 @@ async function marcarAviso(clave, activo, info) {
     if (!previo) {
       avisosActivos.set(clave, { desde: ahora, ultimoEnvio: ahora, titulo: info.titulo });
       await enviarAviso({ alerta: true, ...info });
-    } else if (MODO_PRUEBA) {
+    } else if (info.esSimulacro === true) {
       // Un simulacro avisa UNA vez. Insistir cada 6 horas con un problema que
       // no existe es la forma más rápida de que dejen de leer estos correos
       // — pasó del 15 al 18 de agosto: 32 avisos falsos.
@@ -1610,6 +1613,7 @@ async function revisarSalud() {
     const pct = Math.round(100 * r.en_uso / r.tope);
 
     await marcarAviso("conexiones", pct >= UMBRAL_CONEXIONES, {
+      esSimulacro: MODO_PRUEBA,
       titulo: "La base de datos se está saturando",
       quePaso: MODO_PRUEBA
         ? `Todo bien: hay ${r.en_uso} conexiones abiertas de las ${r.tope} que aguanta la base, apenas ${pct}%.`
