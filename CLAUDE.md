@@ -1,5 +1,5 @@
 # CLAUDE.md — GasGas Analytics
-Checkpoint: **11 Agosto 2026**
+Checkpoint: **24 Agosto 2026**
 
 Este archivo provee contexto a Claude cuando trabaja en este repositorio.
 
@@ -436,8 +436,26 @@ que sí consulta y responde **503** cuando algo está mal.
 Para probar el envío sin esperar una falla: poner `ALERTA_CONEXIONES_PCT=1` en Render,
 esperar el correo, y regresarla a `70` para recibir el de "resuelto".
 
-⚠️ **Punto ciego:** este aviso vive dentro del servidor. Si el proceso muere no avisa nada.
-**Pendiente:** monitor externo (UptimeRobot, gratis) apuntando a `/api/salud` cada 5 min.
+### Monitor externo (24 Ago 2026 — resuelto)
+UptimeRobot gratuito revisa **`https://api.gasgas.com.mx/api/salud`** cada 5 minutos.
+⚠️ **Tiene que ser `/api/salud`.** La raíz `api.gasgas.com.mx` devuelve la landing con 200
+aunque la base esté caída — vigilarla sería tan inútil como vigilar `/api/test`.
+
+Dos capas, cada una con su punto ciego cubierto:
+- **Aviso interno** — sabe *por qué* falla (conexiones, seed, base lenta). No sirve si el proceso muere
+- **UptimeRobot** — sabe *que* falla aunque el servidor esté muerto. No sabe la causa
+
+### Caídas del 23–24 Ago y qué se aprendió
+| Cuándo | Duró | Causa real |
+|---|---|---|
+| 23 Ago 22:49 | 9 min | **Nuestra configuración.** `idleTimeoutMillis` en 20 s dejaba el pool vacío entre revisiones (cada 3 min); Supavisor desmontaba el grupo por falta de suscriptores y reconstruirlo tardó 4.6 s, encadenando esperas sobre el límite de 8 s. Postgres estuvo sano todo el tiempo |
+| 24 Ago 09:48 | 15 min | `enetunreach` — red inalcanzable entre Render y Supabase. **Causa distinta**, no la anterior |
+
+Ajuste aplicado: `idleTimeoutMillis` 20 s → **4 min**, `connectionTimeoutMillis` 8 s → **20 s**, `keepAlive`.
+Mantener **una** conexión tibia no compromete el cupo compartido.
+
+⚠️ **Si hay una tercera caída, escribir a soporte de Render** con los tres registros: tres eventos
+en un día ya no es mala suerte.
 
 `/status` tiene tarjeta de conexiones: foco ámbar arriba del **70%** o si hay conexiones
 atoradas en transacción. **Si algún día sube de 40%, revisar Northflank** (Feed prices, API de
@@ -543,7 +561,11 @@ Solo se registra lo que el cliente puede notar: **campos y endpoints nuevos, fre
     el `app.use("/api", …)` va **antes** de `app.get("/api/precios", …)`
 21. **SendGrid reescribía las URLs** — el rastreo de clics convertía el `curl` del correo en un enlace
     `ct.sendgrid.net` y **el comando no funcionaba**. Resuelto 9 Ago apagando `tracking_settings`
-22. **La cintilla brincaba** — dos causas: (a) se recalculaba en cada render y el feed dispara uno
+22. **Una alerta real llegó etiquetada como simulacro** — `MODO_PRUEBA` se aplicaba a TODAS las
+    alertas y no solo a la del umbral de conexiones. El 24 Ago una caída real de 15 min llegó en
+    naranja diciendo "NO ES UNA FALLA". **Una alarma que miente es peor que no tener alarma.**
+    Resuelto: `esSimulacro` se marca por alerta; solo la de conexiones puede serlo
+27. **La cintilla brincaba** — dos causas: (a) se recalculaba en cada render y el feed dispara uno
     cada 2.6 s; (b) con `gap` + `padding-left`, el `-50%` caía 48 px antes del inicio de la copia.
     Resuelto 9 Ago: lista congelada + dos copias explícitas
 23. **`gas_stations.municipio` son localidades, no municipios** — no sirve para agrupar por municipio real.
