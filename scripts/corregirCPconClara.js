@@ -317,9 +317,26 @@ async function revisarCobertura(cliente, clara) {
 // ── Principal ───────────────────────────────────────────────────────────────
 
 async function main() {
-  if (!process.env.DATABASE_URL) {
+  const url = process.env.DATABASE_URL;
+  if (!url) {
     console.error("Falta DATABASE_URL.");
     process.exit(1);
+  }
+  // Este script ESCRIBE en el padrón. La DATABASE_URL del servicio web es de
+  // solo lectura y además usa el puerto 6543 (modo transacción). Hay que tomar
+  // la de un cron, que tiene permisos de escritura y usa el 5432.
+  if (!/^postgres(ql)?:\/\//.test(url)) {
+    console.error("\nDATABASE_URL no parece una dirección de PostgreSQL.");
+    console.error("Debe empezar con postgresql:// y verse así:");
+    console.error("  postgresql://usuario:contraseña@host:5432/postgres\n");
+    console.error("Cópiala de Render, del cron 'update-precios-agregados'");
+    console.error("(NO del servicio web: ese usuario es de solo lectura).");
+    process.exit(1);
+  }
+  if (/:6543\//.test(url)) {
+    console.warn("\nAVISO: esa dirección usa el puerto 6543 (modo transacción),");
+    console.warn("que es el de los servicios web y suele ser de solo lectura.");
+    console.warn("Para escribir hay que usar la de un cron, con puerto 5432.\n");
   }
   console.log(DRY_RUN
     ? "MODO SIMULACRO — no se escribe nada en la base."
@@ -333,6 +350,21 @@ async function main() {
 
   const cliente = await pool.connect();
   try {
+    // Comprobar permiso de escritura ANTES de calcular nada: si el usuario es
+    // de solo lectura, mejor enterarnos ahora que a media corrida.
+    if (!DRY_RUN) {
+      try {
+        await cliente.query("BEGIN");
+        await cliente.query("UPDATE gas_stations SET cp = cp WHERE id = (SELECT MIN(id) FROM gas_stations)");
+        await cliente.query("ROLLBACK");
+      } catch (e) {
+        await cliente.query("ROLLBACK").catch(() => {});
+        console.error("\nEse usuario NO puede escribir en gas_stations:", e.message);
+        console.error("Usa la DATABASE_URL de un cron, no la del servicio web.");
+        process.exit(1);
+      }
+    }
+
     // La tabla de auditoría debe existir antes de tocar nada.
     await cliente.query(`
       CREATE TABLE IF NOT EXISTS gas_stations_cp_correcciones (
