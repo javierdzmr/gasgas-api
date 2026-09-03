@@ -3,6 +3,10 @@ const { Pool } = require('pg');
 const crypto = require('crypto');
 const dns = require('dns').promises;
 
+// Rangos de precios válidos: fuente única, compartida con los crons.
+// scripts/rangosPrecios.js explica por qué son estos números.
+const { RANGE } = require('./scripts/rangosPrecios');
+
 const app = express();
 const PORT = process.env.PORT || 10000;
 
@@ -411,9 +415,8 @@ app.get("/api/marcas", async (req, res) => {
     // 🛡️ Whitelist de columna (evita SQL injection)
     const prod = ['regular', 'premium', 'diesel'].includes(req.query.product) ? req.query.product : 'regular';
 
-    // 🛡️ Filtros de calidad — mismos rangos que el dashboard (updateAgregados.js)
+    // 🛡️ Filtros de calidad — RANGE viene de scripts/rangosPrecios.js.
     // Excluye precios basura (0.01, 1.00, 2.99, etc.) del promedio por marca.
-    const RANGE = { regular: { min: 21, max: 27 }, premium: { min: 23, max: 32 }, diesel: { min: 25, max: 33 } };
     const r = RANGE[prod];
 
     let filtro = "";
@@ -652,13 +655,12 @@ app.get("/api/demo/cp", async (req, res) => {
       });
     }
     const col = ["regular", "premium", "diesel"].includes(req.query.product) ? req.query.product : "regular";
-    const RANGO = { regular: [21, 27], premium: [23, 32], diesel: [25, 33] };
-    const [lo, hi] = RANGO[col];
+    const [lo, hi] = [RANGE[col].min, RANGE[col].max];
     const result = await pool.query(`
       SELECT
-        ROUND(AVG(CASE WHEN p.regular BETWEEN 21 AND 27 THEN p.regular END)::numeric, 4)::text AS regular,
-        ROUND(AVG(CASE WHEN p.premium BETWEEN 23 AND 32 THEN p.premium END)::numeric, 4)::text AS premium,
-        ROUND(AVG(CASE WHEN p.diesel  BETWEEN 25 AND 33 THEN p.diesel  END)::numeric, 4)::text AS diesel,
+        ROUND(AVG(CASE WHEN p.regular BETWEEN ${RANGE.regular.min} AND ${RANGE.regular.max} THEN p.regular END)::numeric, 4)::text AS regular,
+        ROUND(AVG(CASE WHEN p.premium BETWEEN ${RANGE.premium.min} AND ${RANGE.premium.max} THEN p.premium END)::numeric, 4)::text AS premium,
+        ROUND(AVG(CASE WHEN p.diesel  BETWEEN ${RANGE.diesel.min}  AND ${RANGE.diesel.max}  THEN p.diesel  END)::numeric, 4)::text AS diesel,
         ROUND(MIN(CASE WHEN p.${col} BETWEEN ${lo} AND ${hi} THEN p.${col} END)::numeric, 4)::text AS min,
         ROUND(MAX(CASE WHEN p.${col} BETWEEN ${lo} AND ${hi} THEN p.${col} END)::numeric, 4)::text AS max,
         ROUND(STDDEV(CASE WHEN p.${col} BETWEEN ${lo} AND ${hi} THEN p.${col} END)::numeric, 4)::text AS std,
@@ -1377,14 +1379,14 @@ app.get("/api/status/checks", async (req, res) => {
 // 🔹 Stats del día (para la landing /datos): precios y estaciones procesados hoy
 app.get("/api/stats-hoy", async (req, res) => {
   try {
-    // Los rangos deben coincidir con los de scripts/updateAgregados.js:
-    // regular 21–27 · premium 23–32 · diesel 25–33
+    // Los rangos salen de scripts/rangosPrecios.js, el mismo módulo que usan
+    // los crons. Así la página nunca publica un número calculado con otro corte.
     const result = await pool.query(`
       SELECT
         (COUNT(regular) + COUNT(premium) + COUNT(diesel))::int AS precios_hoy,
-        ( COUNT(regular) FILTER (WHERE regular BETWEEN 21 AND 27)
-        + COUNT(premium) FILTER (WHERE premium BETWEEN 23 AND 32)
-        + COUNT(diesel)  FILTER (WHERE diesel  BETWEEN 25 AND 33))::int AS precios_validados,
+        ( COUNT(regular) FILTER (WHERE regular BETWEEN ${RANGE.regular.min} AND ${RANGE.regular.max})
+        + COUNT(premium) FILTER (WHERE premium BETWEEN ${RANGE.premium.min} AND ${RANGE.premium.max})
+        + COUNT(diesel)  FILTER (WHERE diesel  BETWEEN ${RANGE.diesel.min}  AND ${RANGE.diesel.max}))::int AS precios_validados,
         COUNT(*)::int AS registros_hoy,
         MAX(date::date)::text AS fecha
       FROM prices

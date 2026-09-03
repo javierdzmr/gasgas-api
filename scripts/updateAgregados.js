@@ -12,18 +12,10 @@ const pool = new Pool({
 });
 pool.on("error", (err) => console.error("Pool de PostgreSQL:", err.message));
 
-// ============================================================
-// Rangos de precios válidos (actualizados Abril 2026)
-// Basados en análisis de percentiles p05–p99 sobre 30 días:
-//   regular: p05=21.29  p99=24.99  → BETWEEN 21 AND 27
-//   premium: p05=24.99  p99=29.99  → BETWEEN 23 AND 32
-//   diesel:  p05=26.99  p99=30.35  → BETWEEN 25 AND 33
-// ============================================================
-const RANGE = {
-  regular: { min: 21, max: 27 },
-  premium: { min: 23, max: 32 },
-  diesel:  { min: 25, max: 33 },
-};
+// Rangos de precios válidos. Viven en un solo lugar desde el 1 sep 2026:
+// scripts/rangosPrecios.js explica por qué son estos números y qué hay que
+// recalcular al cambiarlos. No los redefinas aquí.
+const { RANGE } = require("./rangosPrecios");
 
 async function updateAgregados() {
   const client = await pool.connect();

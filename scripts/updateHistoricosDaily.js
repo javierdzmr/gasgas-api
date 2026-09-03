@@ -12,12 +12,8 @@ const pool = new Pool({
 });
 pool.on("error", (err) => console.error("Pool de PostgreSQL:", err.message));
 
-// Mismos rangos que updateAgregados.js
-const RANGE = {
-  regular: { min: 21, max: 27 },
-  premium: { min: 23, max: 32 },
-  diesel:  { min: 25, max: 33 },
-};
+// Rangos de precios válidos: fuente única en scripts/rangosPrecios.js
+const { RANGE } = require("./rangosPrecios");
 
 async function updateHistoricosDaily() {
   const client = await pool.connect();
