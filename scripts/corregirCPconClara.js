@@ -93,6 +93,51 @@ function km(latA, lngA, latB, lngB) {
   return 2 * R_TIERRA * Math.asin(Math.sqrt(a));
 }
 
+/**
+ * Repara el catálogo de coordenadas antes de usarlo para arbitrar.
+ *
+ * El catálogo trae 433 códigos postales (1.5%) con la coordenada mal puesta.
+ * El caso que lo destapó: el CP 36821 es de Irapuato, pero el catálogo lo
+ * ubica en Zacatecas, a 376 km. Sus vecinos 36822 y 36824 sí están en
+ * Irapuato. Si no se corrige, cualquier gasolinera con ese CP parece estar
+ * malísimamente ubicada y el arbitraje le da la razón a Clara sin merecerlo.
+ *
+ * El arreglo: los códigos postales que comparten los primeros 4 dígitos son
+ * colonias del mismo sector y están a pocos kilómetros. Si uno se sale más de
+ * 50 km de la mediana de sus hermanos, su coordenada no sirve y se sustituye
+ * por esa mediana, que sí es representativa del sector.
+ *
+ * (De paso: el peor caso del catálogo, el CP 99626 a 6,190 km de sus vecinos,
+ *  es el mismo que produce la peor sustitución del mapa que usa la API de
+ *  Clara — manda a quien pide un CP de Zacatecas a uno de Baja California.
+ *  Ese archivo se generó con este catálogo. Vale la pena regenerarlo.)
+ */
+function sanearCoordenadas(coords) {
+  const familias = {};
+  for (const [cp, punto] of Object.entries(coords)) {
+    const k = cp.slice(0, 4);
+    (familias[k] = familias[k] || []).push([cp, punto]);
+  }
+  const mediana = (xs) => xs.slice().sort((a, b) => a - b)[Math.floor(xs.length / 2)];
+  let reparados = 0;
+  const sospechosos = new Set();
+
+  for (const arr of Object.values(familias)) {
+    if (arr.length < 3) continue;               // sin hermanos no hay con qué comparar
+    const mLat = mediana(arr.map((a) => a[1][0]));
+    const mLng = mediana(arr.map((a) => a[1][1]));
+    for (const [cp, punto] of arr) {
+      if (km(punto[0], punto[1], mLat, mLng) > 50) {
+        coords[cp] = [mLat, mLng];
+        sospechosos.add(cp);
+        reparados++;
+      }
+    }
+  }
+  console.log(`Coordenadas de CP reparadas: ${reparados} (estaban lejísimos de su sector)`);
+  return sospechosos;
+}
+
 /** Índice permiso CRE -> [códigos postales] a partir del archivo de Clara. */
 function cargarClara() {
   const datos = JSON.parse(fs.readFileSync(ARCHIVO_CLARA, "utf8"));
@@ -347,6 +392,7 @@ async function main() {
   const coordsCP = JSON.parse(fs.readFileSync(ARCHIVO_CPS, "utf8"));
   console.log(`Archivo de Clara : ${clara.size} permisos`);
   console.log(`Coordenadas de CP: ${Object.keys(coordsCP).length} códigos postales`);
+  sanearCoordenadas(coordsCP);
 
   const cliente = await pool.connect();
   try {
