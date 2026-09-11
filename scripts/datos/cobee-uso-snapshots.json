@@ -1,0 +1,74 @@
+{
+  "que_es": "Fotos diarias del contador de consultas de la API de cobee, para responder si cobee sigue usando el servicio. Cada entrada es una lectura de extensions.pg_stat_statements en Supabase (proyecto qorvxlbuhqopfbvuyfjh).",
+  "por_que": "El 9 de septiembre de 2026 los registros de Firebase de 7 dias mostraron ~2,900 llamadas diarias de cobee, TODAS pidiendo la fecha 2023-04-10 (que nunca ha existido en nuestro historial) y ~3,100 terminando en 404. Ninguna consulta de precios por fecha reciente. J pidio confirmar en una semana si cobee esta usando la API o no.",
+  "como_se_mide": "La consulta de cobee es reconocible: SELECT gs.estado AS state, $1 AS product, AVG(...) AS average_price, STDDEV_POP(...) FROM prices ... Solo la corre el servicio cobee.gasgas.app/api/daily-average-price.",
+  "CORRECCION_10sep2026": "El '96' estaba mal interpretado. Leyendo el codigo real (gasgas-repos/gasgas-cobee-firebase/functions/src/index.ts, runYourQuery + el bucle de /api/daily-average-price): cada peticion HTTP dispara entre 1 y 7 consultas (un bucle de 7 intentos que va restando un dia hasta encontrar datos), y CADA CONSULTA CON EXITO devuelve ~96 FILAS (32 estados x 3 combustibles, por los 3 UNION ALL). O sea: 96 = filas por consulta exitosa, NO consultas por peticion. Comprobado: TODOS los contadores de rows observados son multiplos exactos de 96 (67200=96x700, 8352=96x87, 24384=96x254, 16032=96x167). Consecuencia practica: para estimar peticiones se divide entre 7 las consultas de cero filas, NO entre 96 el total. Dividir entre 96 subestimaba el trafico de cobee ~13 veces. Comprobacion cruzada: 980686 consultas viejas / 7 = 140098 peticiones en ~57 dias = ~2475/dia, que cuadra con las ~2900 peticiones/dia y ~3100 404/dia que mostro Firebase el 9-sep.",
+  "regla_de_lectura": "consultas con 0 filas = pidio una fecha sin datos (los 7 intentos fallaron -> 404). consultas con 96 filas = encontro datos y devolvio el corte completo. 'consultas_con_datos' = rows / 96, y siempre da entero exacto.",
+  "no_se_puede_saber_con_esto": "pg_stat_statements no guarda ni los parametros ni quien llamo. log_statement=ddl y log_min_duration_statement=-1, asi que los valores de fecha NO quedan en los logs de Postgres. Que fecha exacta pidieron y quien la pidio solo esta en los registros de Firebase (Logs Explorer de Google Cloud).",
+  "advertencia": "pg_stat_statements es un contador ACUMULADO que se reinicia cuando Supabase reinicia o cuando la entrada se desaloja. Por eso cada foto guarda stats_since: si stats_since cambia entre dos fotos, el contador se reinicio y la resta NO es valida. En ese caso hay que decirlo, no inventar el numero.",
+  "ruido_conocido": "Nuestro propio tablero /status consulta a cobee ~3 veces al dia (~288 consultas). Cualquier cosa muy por encima de eso es trafico externo. La noche del 9 de septiembre hubo trafico nuestro por las pruebas del arreglo.",
+  "el_dato_que_mas_dice": "FILAS POR CONSULTA (rows/calls). El contador de llamadas solo dice CUANTAS veces consultaron, no QUE fecha pidieron. Pero filas_por_consulta si lo delata: una consulta por una fecha sin datos (como 2023-04-10) regresa CERO filas; una por una fecha real regresa ~6. Medido el 9-sep-2026: la version vieja acumulaba 0.069 filas por consulta (o sea, el 93% de sus 980,686 llamadas no encontraron nada) y la nueva 5.836. Ese 0.069 es evidencia independiente, desde la base, de lo mismo que mostraron los registros de Firebase: casi todo su trafico pedia una fecha que no existe.",
+  "queryids": {
+    "nueva_con_rango": "4628871337692681163  (la version desplegada el 9-sep-2026, con filtro BETWEEN)",
+    "vieja_sin_rango": "1493509803444854287  (version anterior; si sigue congelada, confirma que el cambio quedo activo)"
+  },
+  "fotos": [
+    {
+      "momento_mx": "2026-09-09 23:03:43",
+      "nota": "LINEA BASE. Tomada la misma noche del arreglo, con trafico nuestro de pruebas encima. No usar como dia normal.",
+      "nueva": { "queryid": "4628871337692681163", "calls": 1431, "rows": 8352, "filas_por_consulta": 5.836, "seg_cpu": 9.9, "stats_since": "2026-09-10 03:57:12.379713+00" },
+      "vieja": { "queryid": "1493509803444854287", "calls": 980686, "rows": 67200, "filas_por_consulta": 0.069, "seg_cpu": 9019.5, "stats_since": "2026-07-15 07:03:36.06755+00" },
+      "medicion_en_vivo": "En una muestra controlada de 90 segundos la consulta nueva avanzo +22 (~21,000/dia al ritmo de ese momento) y la vieja avanzo 0. El servicio SI esta consultando; falta separar cuanto es cobee y cuanto fuimos nosotros probando."
+    },
+    {
+      "momento_mx": "2026-09-10 15:08:32",
+      "nota": "Foto tomada por la tarea de veredicto, que se disparo 6 dias antes de tiempo (estaba programada para el 16-sep). La tarea diaria 'cobee-foto-diaria' TODAVIA NO HABIA CORRIDO NI UNA VEZ: su primer disparo era esa misma noche 23:07. O sea, esta es la primera foto despues de la linea base y solo cubre ~16 h, no una semana.",
+      "nueva": { "queryid": "4628871337692681163", "calls": 14653, "rows": 24384, "filas_por_consulta": 1.664, "consultas_con_datos": 254, "seg_cpu": 33.0, "stats_since": "2026-09-10 03:57:12.379713+00" },
+      "vieja": { "queryid": "1493509803444854287", "calls": 980686, "rows": 67200, "filas_por_consulta": 0.069, "consultas_con_datos": 700, "seg_cpu": 9019.5, "stats_since": "2026-07-15 07:03:36.06755+00" },
+      "validez": "stats_since NO cambio en ninguna de las dos entre la linea base y esta foto, asi que la resta ES valida. La consulta vieja sigue congelada en 980686 llamadas y 67200 filas, identica a la linea base: el arreglo del 9-sep sigue activo, no hubo reversion.",
+      "delta_desde_linea_base": {
+        "ventana_horas": 16.08,
+        "consultas": 13222,
+        "consultas_con_datos": 167,
+        "consultas_con_cero_filas": 13055,
+        "consultas_por_dia_extrapolado": 19735,
+        "peticiones_404_estimadas_por_dia": 2784,
+        "peticiones_con_datos_estimadas_por_dia": 249,
+        "ruido_nuestro_restado": "El tablero /status llama a cobee ~3 veces al dia, o sea ~2 peticiones en esta ventana: ~1% de las 167 con datos. No mueve la conclusion."
+      },
+      "muestra_en_vivo": "Entre 15:02:14 y 15:05:19 (185 s): +46 consultas y +384 filas = exactamente 4 consultas con datos. Ritmo 0.249 consultas/s = ~21,500/dia, consistente con el promedio de la ventana de 16 h.",
+      "lectura": "El bucle muerto de cobee SIGUE IGUAL: ~2,780 peticiones/dia que agotan los 7 intentos sin encontrar nada (era ~2,900/dia en Firebase el 9-sep). Lo que SI cambio son las consultas con datos: la version vieja acumulo 700 en ~57 dias (~12/dia) y desde el arreglo van ~249/dia, unas 20 veces mas. Pero pg_stat_statements no dice quien las hizo, asi que no se puede separar cobee de pruebas nuestras del 10-sep con esta sola medicion."
+    },
+    {
+      "momento_mx": "2026-09-10 23:07:30",
+      "nota": "Primera corrida de la tarea diaria 'cobee-foto-diaria'. Ventana de ~8 h desde la foto de las 15:08, ya sin trafico de pruebas nuestras (el arreglo se desplego el 9-sep y las pruebas fueron el 10 por la manana/tarde).",
+      "nueva": { "queryid": "4628871337692681163", "calls": 21386, "rows": 26976, "filas_por_consulta": 1.261, "consultas_con_datos": 281, "seg_cpu": 36.7, "ms_promedio": 1.71, "stats_since": "2026-09-10 03:57:12.379713+00" },
+      "vieja": { "queryid": "1493509803444854287", "calls": 980686, "rows": 67200, "filas_por_consulta": 0.069, "consultas_con_datos": 700, "seg_cpu": 9019.5, "ms_promedio": 9.20, "stats_since": "2026-07-15 07:03:36.06755+00" },
+      "validez": "stats_since identico al de las dos fotos anteriores en ambas entradas: el contador NO se reinicio y la resta ES valida. La consulta vieja sigue congelada en 980686 llamadas y 67200 filas desde el 9-sep: el arreglo sigue activo.",
+      "medicion_en_vivo": {
+        "ventana_segundos": 90,
+        "movimiento_nueva": 21,
+        "filas_nuevas_nueva": 0,
+        "filas_por_consulta_en_vivo": 0.0,
+        "movimiento_vieja": 0,
+        "ritmo_consultas_por_min": 14.0,
+        "ritmo_consultas_por_dia_extrapolado": 20160,
+        "nota": "Las 21 consultas de la muestra devolvieron CERO filas: en esos 90 segundos todo el trafico fue el bucle que no encuentra nada."
+      },
+      "delta_vs_foto_anterior": {
+        "contra": "2026-09-10 15:08:32",
+        "ventana_horas": 7.98,
+        "consultas": 6733,
+        "filas": 2592,
+        "consultas_con_datos": 27,
+        "consultas_con_cero_filas": 6706,
+        "filas_por_consulta_en_la_ventana": 0.385,
+        "consultas_por_dia_extrapolado": 20242,
+        "peticiones_404_estimadas_por_dia": 2880,
+        "peticiones_con_datos_estimadas_por_dia": 81,
+        "vieja_movimiento": 0
+      },
+      "lectura": "Sin veredicto todavia (eso toca el 16-sep). Lo observable: el bucle muerto se mantiene plano en ~2,880 peticiones/dia que agotan los 7 intentos sin encontrar nada, practicamente igual que las ~2,900/dia de Firebase el 9-sep. Las consultas CON datos bajaron de ~249/dia (ventana anterior, con pruebas nuestras encima) a ~81/dia en esta ventana limpia, lo que sugiere que buena parte de las 249 eramos nosotros probando. La muestra en vivo de 90 s no encontro ni una sola consulta con datos."
+    }
+  ]
+}

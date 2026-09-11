@@ -73,7 +73,18 @@ app.use('/api', (req, res, next) => {
   next();
 });
 
-// 📄 Servir el dashboard desde public/ (gasgas-api-dev.onrender.com)
+// 🔀 /dashboard se retiró: lo sustituye /reporte, que publica lo mismo en
+//    formato de reporte semanal y además compara contra el año pasado.
+//
+//    ⚠️ Este redirect va ANTES de express.static a propósito. El static sirve
+//    public/dashboard.html en cuanto ve la ruta, así que si se declara después
+//    nunca se ejecuta. Es el mismo orden que rompió el contador de llaves de
+//    prueba (problema conocido #20 en CLAUDE.md).
+app.get(['/dashboard', '/dashboard.html'], (req, res) => {
+  res.redirect(301, '/reporte');
+});
+
+// 📄 Servir las páginas desde public/ (gasgas-api-dev.onrender.com)
 app.use(express.static('public', { extensions: ['html'] }));
 
 // 🗄️ conexión a la base de datos
@@ -588,6 +599,187 @@ app.get("/api/vecinos", async (req, res) => {
   } catch (err) {
     console.error("ERROR /vecinos:", err);
     res.status(500).json({ error: "Error obteniendo vecinos" });
+  }
+});
+
+// ==============================
+// 🔹 REPORTE SEMANAL DE PRECIOS (alimenta la página /reporte)
+// ==============================
+//
+// Espeja la lógica de la "Gasoline and Diesel Fuel Update" de la EIA: un corte
+// semanal fijo, las tres últimas semanas en columnas, y el cambio contra la
+// semana pasada, el año pasado y hace dos años.
+//
+// DECISIONES QUE NO SON OBVIAS
+//
+// 1. El corte es el LUNES. No es capricho: fija el día de la semana, y así la
+//    comparación anual no termina midiendo un lunes contra un domingo (los
+//    precios tienen ritmo semanal). Por eso se compara contra -364 y -728 días
+//    y no contra -365: 364 son 52 semanas exactas y caen en lunes también.
+//
+// 2. Solo se publica nacional + las 6 Áreas GasGas + los 32 estados. Municipio,
+//    CP y estación son producto de pago y NO salen por aquí. Si algún día se
+//    agregan, hay que revisarlo con el lado comercial primero.
+//
+// 3. Se sirve el corte del lunes aunque tengamos el dato de hoy. El público ve
+//    el lunes; el cliente lo tuvo el mismo día. Esa distancia es el argumento
+//    de venta, no un descuido.
+//
+// 4. No hay descarga. A propósito: el histórico completo se cotiza aparte.
+const AREAS_NOMBRE = {
+  I: "Pacífico", II: "Norte", III: "Bajío",
+  IV: "Centro", V: "Valle de México", VI: "Sureste"
+};
+
+app.get("/api/reporte-semanal", async (req, res) => {
+  try {
+    // Último lunes con dato. Si el cron no ha corrido, cae solo al lunes previo.
+    const corte = await pool.query(`
+      SELECT MAX(date)::date AS l0
+      FROM precios_historicos_agregados
+      WHERE market_type = 'nacional' AND EXTRACT(DOW FROM date) = 1
+    `);
+    const l0 = corte.rows[0] && corte.rows[0].l0;
+    if (!l0) return res.status(503).json({ error: "Sin cortes semanales disponibles" });
+
+    const { rows } = await pool.query(`
+      WITH f AS (
+        SELECT $1::date AS l0, $1::date - 7 AS l1, $1::date - 14 AS l2,
+               $1::date - 364 AS a1, $1::date - 728 AS a2
+      )
+      SELECT h.market_type, h.market_value, h.date::text AS date,
+             h.regular, h.premium, h.diesel
+      FROM precios_historicos_agregados h, f
+      WHERE h.market_type IN ('nacional','area','estado')
+        AND h.date IN (f.l0, f.l1, f.l2, f.a1, f.a2)
+    `, [l0]);
+
+    // Conteo de estaciones por mercado: es la credencial de cobertura que hace
+    // creíble el promedio. Sin esto la tabla es un número sin respaldo.
+    const conteos = await pool.query(`
+      SELECT 'estado' AS tipo, estado AS clave, COUNT(*)::int AS n FROM gas_stations GROUP BY estado
+      UNION ALL
+      SELECT 'area', gasgas_area, COUNT(*)::int FROM gas_stations WHERE gasgas_area IS NOT NULL GROUP BY gasgas_area
+      UNION ALL
+      SELECT 'nacional', 'all', COUNT(*)::int FROM gas_stations
+    `);
+    const estaciones = {};
+    conteos.rows.forEach((r) => { estaciones[`${r.tipo}|${r.clave}`] = r.n; });
+
+    const iso = (d) => new Date(d).toISOString().slice(0, 10);
+    const dia = (n) => iso(new Date(new Date(l0).getTime() + n * 86400000));
+    const F = { l0: iso(l0), l1: dia(-7), l2: dia(-14), a1: dia(-364), a2: dia(-728) };
+
+    // market_type|market_value -> fecha -> fila
+    const idx = {};
+    for (const r of rows) {
+      const k = `${r.market_type}|${r.market_value}`;
+      (idx[k] = idx[k] || {})[r.date] = r;
+    }
+
+    const num = (v) => (v === null || v === undefined ? null : Number(v));
+    const resta = (a, b) => (a === null || b === null ? null : Number((a - b).toFixed(3)));
+
+    function armar(tipo, clave, nombre) {
+      const porFecha = idx[`${tipo}|${clave}`] || {};
+      const prod = {};
+      for (const p of ["regular", "premium", "diesel"]) {
+        const v = (f) => (porFecha[f] ? num(porFecha[f][p]) : null);
+        const actual = v(F.l0);
+        prod[p] = {
+          // Las tres semanas, de la más vieja a la más reciente (como la EIA).
+          serie: [v(F.l2), v(F.l1), actual],
+          cambio_semana: resta(actual, v(F.l1)),
+          cambio_ano: resta(actual, v(F.a1)),
+          cambio_dos_anos: resta(actual, v(F.a2))
+        };
+      }
+      return {
+        tipo, clave, nombre,
+        estaciones: estaciones[`${tipo}|${clave}`] || null,
+        ...prod
+      };
+    }
+
+    const areas = Object.keys(AREAS_NOMBRE)
+      .filter((c) => idx[`area|${c}`])
+      .map((c) => armar("area", c, `Área ${c} · ${AREAS_NOMBRE[c]}`));
+
+    const estados = [...new Set(rows.filter((r) => r.market_type === "estado")
+      .map((r) => r.market_value))]
+      .sort((a, b) => a.localeCompare(b, "es"))
+      .map((e) => armar("estado", e, e));
+
+    res.json({
+      corte: F.l0,
+      proxima_actualizacion: dia(7),
+      columnas: [F.l2, F.l1, F.l0],
+      comparaciones: { semana: F.l1, ano: F.a1, dos_anos: F.a2 },
+      nacional: armar("nacional", "all", "Nacional"),
+      areas,
+      estados,
+      // Honestidad sobre el alcance: la página no publica municipio ni CP.
+      nota_cobertura: "Nacional, Áreas GasGas y entidades federativas. " +
+        "Los niveles de municipio, código postal y estación son parte del servicio de paga."
+    });
+  } catch (err) {
+    console.error("ERROR /reporte-semanal:", err);
+    res.status(500).json({ error: "Error armando el reporte semanal" });
+  }
+});
+
+// 🔹 Serie semanal para la gráfica de /reporte.
+//    Solo lunes, solo nacional y las 6 Áreas: son 7 líneas, que es lo máximo
+//    que una gráfica aguanta sin volverse ilegible. Los 32 estados se leen en
+//    la tabla, no en la gráfica.
+app.get("/api/reporte-semanal/serie", async (req, res) => {
+  try {
+    const semanas = Math.min(Math.max(parseInt(req.query.semanas) || 104, 8), 160);
+    const { rows } = await pool.query(`
+      WITH corte AS (
+        SELECT MAX(date)::date AS l0 FROM precios_historicos_agregados
+        WHERE market_type = 'nacional' AND EXTRACT(DOW FROM date) = 1
+      )
+      SELECT h.market_type, h.market_value, h.date::text AS date,
+             ROUND(h.regular, 2) AS regular,
+             ROUND(h.premium, 2) AS premium,
+             ROUND(h.diesel,  2) AS diesel
+      FROM precios_historicos_agregados h, corte c
+      WHERE h.market_type IN ('nacional','area')
+        AND EXTRACT(DOW FROM h.date) = 1
+        AND h.date <= c.l0
+        AND h.date > c.l0 - ($1::int * 7)
+      ORDER BY h.date
+    `, [semanas]);
+
+    const fechas = [...new Set(rows.map((r) => r.date))].sort();
+    const series = {};
+    for (const r of rows) {
+      const clave = r.market_type === "nacional" ? "nacional" : r.market_value;
+      const s = (series[clave] = series[clave] || {
+        nombre: r.market_type === "nacional" ? "Nacional"
+          : `Área ${r.market_value} · ${AREAS_NOMBRE[r.market_value] || r.market_value}`,
+        regular: {}, premium: {}, diesel: {}
+      });
+      s.regular[r.date] = r.regular === null ? null : Number(r.regular);
+      s.premium[r.date] = r.premium === null ? null : Number(r.premium);
+      s.diesel[r.date] = r.diesel === null ? null : Number(r.diesel);
+    }
+    // Se entrega alineado al eje de fechas: un hueco viaja como null y la
+    // gráfica lo dibuja como corte, no como una línea recta inventada.
+    const salida = {};
+    for (const [clave, s] of Object.entries(series)) {
+      salida[clave] = {
+        nombre: s.nombre,
+        regular: fechas.map((f) => (f in s.regular ? s.regular[f] : null)),
+        premium: fechas.map((f) => (f in s.premium ? s.premium[f] : null)),
+        diesel: fechas.map((f) => (f in s.diesel ? s.diesel[f] : null))
+      };
+    }
+    res.json({ fechas, series: salida });
+  } catch (err) {
+    console.error("ERROR /reporte-semanal/serie:", err);
+    res.status(500).json({ error: "Error armando la serie" });
   }
 });
 

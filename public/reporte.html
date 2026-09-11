@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reporte semanal de precios de combustibles · GasGas</title>
+<meta name="description" content="Precios promedio de gasolina Magna, Premium y diésel en México. Corte semanal nacional, por región y por entidad, con el cambio contra la semana pasada, el año pasado y hace dos años.">
+<link rel="canonical" href="https://gasgas.com.mx/reporte">
+<meta property="og:title" content="Reporte semanal de precios de combustibles · GasGas">
+<meta property="og:description" content="Corte semanal de precios de gasolina y diésel en México: nacional, 6 regiones y 32 entidades.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://gasgas.com.mx/reporte">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --azul:#0E2A47; --azul-2:#16385C;
+    --verde:#00A94F; --verde-o:#007A39;
+    --magna:#00A94F; --premium:#DC2626; --diesel:#334155;
+    --texto:#111C28; --gris:#5B6B7C; --gris-2:#8494A5;
+    --linea:#DCE3EB; --fondo:#F7F9FB; --blanco:#fff;
+    --sube:#B91C1C; --baja:#047857;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:Figtree,system-ui,-apple-system,sans-serif;color:var(--texto);
+       background:var(--fondo);line-height:1.5;-webkit-font-smoothing:antialiased}
+  .cont{max-width:1120px;margin:0 auto;padding:0 20px}
+
+  /* ── Barra de navegación ─────────────────────────────────────────────── */
+  .nav{background:var(--azul);color:#fff;position:sticky;top:0;z-index:50}
+  .nav .cont{display:flex;align-items:center;gap:22px;height:60px}
+  .marca{display:flex;align-items:center;gap:9px;font-weight:800;font-size:19px;
+         letter-spacing:-.02em;color:#fff;text-decoration:none;margin-right:auto}
+  .marca .gg{background:#fff;color:var(--azul);border-radius:999px;
+             padding:3px 10px;font-size:14px}
+  .nav a.liga{color:#C3CDD8;text-decoration:none;font-size:15px;font-weight:500}
+  .nav a.liga:hover,.nav a.liga[aria-current]{color:#fff}
+  .nav a.cta{background:var(--verde);color:#fff;padding:8px 16px;border-radius:8px;
+             font-weight:700;font-size:14.5px;text-decoration:none;white-space:nowrap}
+
+  /* ── Encabezado del reporte ──────────────────────────────────────────── */
+  .cab{background:var(--azul);color:#fff;padding:40px 0 46px}
+  .overline{font-size:12.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+            color:var(--verde);margin-bottom:12px}
+  .cab h1{font-size:clamp(28px,4.4vw,42px);line-height:1.12;letter-spacing:-.025em;
+          font-weight:800;margin-bottom:12px;max-width:18ch}
+  .cab .bajada{color:#C3CDD8;font-size:clamp(16px,2vw,18.5px);max-width:62ch}
+
+  .fechas{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
+  .chip-fecha{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);
+              border-radius:10px;padding:10px 15px;font-size:14px}
+  .chip-fecha .et{display:block;font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;
+                  color:#8FA3B8;font-weight:700;margin-bottom:3px}
+  .chip-fecha .vl{font-weight:700;font-size:15.5px}
+  .chip-fecha.destacado{background:var(--verde-o);border-color:var(--verde)}
+  .chip-fecha.destacado .et{color:#A7F3C9}
+
+  /* ── Selector de producto ────────────────────────────────────────────── */
+  .barra-prod{background:var(--blanco);border-bottom:1px solid var(--linea);
+              position:sticky;top:60px;z-index:40}
+  .barra-prod .cont{display:flex;align-items:center;gap:8px;
+                    padding-top:12px;padding-bottom:12px;overflow-x:auto}
+  .tab{border:1px solid var(--linea);background:var(--blanco);color:var(--gris);
+       border-radius:999px;padding:9px 18px;font-family:inherit;font-size:15px;
+       font-weight:600;cursor:pointer;white-space:nowrap;transition:.14s}
+  .tab:hover{border-color:var(--gris-2);color:var(--texto)}
+  .tab[aria-selected="true"]{color:#fff;border-color:transparent}
+  .tab[data-p="regular"][aria-selected="true"]{background:var(--magna)}
+  .tab[data-p="premium"][aria-selected="true"]{background:var(--premium)}
+  .tab[data-p="diesel"][aria-selected="true"]{background:var(--diesel)}
+
+  main{padding:30px 0 60px}
+
+  /* ── Resumen nacional ────────────────────────────────────────────────── */
+  .resumen{background:var(--blanco);border:1px solid var(--linea);border-radius:16px;
+           padding:26px 28px;margin-bottom:26px;
+           display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:center}
+  .precio-grande{font-family:'JetBrains Mono',monospace;font-size:clamp(40px,6vw,58px);
+                 font-weight:700;letter-spacing:-.03em;line-height:1}
+  .precio-grande .unidad{font-size:17px;font-weight:500;color:var(--gris);
+                         font-family:Figtree,sans-serif;margin-left:6px;letter-spacing:0}
+  .resumen .et{font-size:12.5px;font-weight:700;letter-spacing:.08em;
+               text-transform:uppercase;color:var(--gris);margin-bottom:8px}
+  .deltas{display:flex;flex-wrap:wrap;gap:10px}
+  .delta{border:1px solid var(--linea);border-radius:10px;padding:10px 14px;min-width:118px}
+  .delta .k{font-size:11.5px;color:var(--gris);font-weight:600;
+            text-transform:uppercase;letter-spacing:.05em}
+  .delta .v{font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:700;margin-top:2px}
+  .sube{color:var(--sube)} .baja{color:var(--baja)} .igual{color:var(--gris)}
+
+  /* ── Gráfica ─────────────────────────────────────────────────────────── */
+  .panel{background:var(--blanco);border:1px solid var(--linea);
+         border-radius:16px;padding:24px 26px;margin-bottom:26px}
+  .panel h2{font-size:19px;font-weight:700;letter-spacing:-.01em}
+  .panel .sub{color:var(--gris);font-size:14.5px;margin-top:3px}
+  .grafica{margin-top:18px;width:100%;height:300px}
+  .leyenda{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:14px}
+  .leyenda span{display:inline-flex;align-items:center;gap:6px;
+                font-size:13px;color:var(--gris);font-weight:500}
+  .leyenda i{width:14px;height:3px;border-radius:2px;display:inline-block}
+
+  /* ── Tablas ──────────────────────────────────────────────────────────── */
+  .tabla-caja{background:var(--blanco);border:1px solid var(--linea);
+              border-radius:16px;overflow:hidden;margin-bottom:26px}
+  .tabla-caja > header{padding:22px 26px 16px;border-bottom:1px solid var(--linea)}
+  .tabla-caja h2{font-size:19px;font-weight:700;letter-spacing:-.01em}
+  .tabla-caja .sub{color:var(--gris);font-size:14.5px;margin-top:3px}
+  .scroll-x{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{width:100%;border-collapse:collapse;font-size:14.5px;min-width:660px}
+  thead th{background:#F2F6F9;color:var(--gris);font-size:11.5px;font-weight:700;
+           letter-spacing:.06em;text-transform:uppercase;padding:11px 14px;
+           text-align:right;white-space:nowrap;border-bottom:1px solid var(--linea)}
+  thead th.mercado{text-align:left}
+  thead tr.grupo th{background:#E9EFF4;padding-top:9px;padding-bottom:9px;
+                    text-align:center;font-size:11px}
+  tbody td{padding:11px 14px;text-align:right;border-bottom:1px solid #EDF1F5;
+           font-family:'JetBrains Mono',monospace;font-size:14px;white-space:nowrap}
+  tbody td.mercado{text-align:left;font-family:Figtree,sans-serif;font-weight:600;font-size:14.5px}
+  tbody td.mercado small{display:block;font-weight:500;color:var(--gris-2);
+                         font-size:12px;font-family:Figtree,sans-serif}
+  tbody tr:hover{background:#FAFCFD}
+  tbody tr.destacada td{background:#F1FAF4;font-weight:700}
+  tbody tr.destacada:hover td{background:#E8F7EE}
+  td.actual{font-weight:700;color:var(--texto)}
+  .sep td{background:#F2F6F9;font-family:Figtree,sans-serif;font-weight:700;
+          font-size:12px;letter-spacing:.07em;text-transform:uppercase;
+          color:var(--gris);text-align:left;padding:9px 14px}
+
+  /* ── Estados de carga y error ────────────────────────────────────────── */
+  .cargando,.error{padding:44px 26px;text-align:center;color:var(--gris)}
+  .error{color:#991B1B}
+  .error button{margin-top:14px;background:var(--azul);color:#fff;border:0;
+                border-radius:8px;padding:9px 18px;font-family:inherit;
+                font-weight:600;cursor:pointer}
+  .oculto{display:none !important}
+
+  /* ── Nota y cierre ───────────────────────────────────────────────────── */
+  .nota{background:#FFF8E7;border:1px solid #F3DFA8;border-radius:14px;
+        padding:18px 22px;font-size:14.5px;color:#6B5312;margin-bottom:26px}
+  .nota b{color:#4A3908}
+  .cierre{background:var(--azul);color:#fff;border-radius:18px;padding:34px 32px;text-align:center}
+  .cierre h2{font-size:clamp(21px,3vw,27px);font-weight:800;letter-spacing:-.02em;margin-bottom:10px}
+  .cierre p{color:#C3CDD8;max-width:56ch;margin:0 auto 20px;font-size:16px}
+  .cierre a{display:inline-block;background:var(--verde);color:#fff;text-decoration:none;
+            padding:13px 26px;border-radius:10px;font-weight:700}
+
+  footer{border-top:1px solid var(--linea);padding:26px 0 40px;
+         color:var(--gris-2);font-size:13.5px}
+  footer a{color:var(--gris);text-decoration:none}
+  footer a:hover{text-decoration:underline}
+  footer .ligas{display:flex;flex-wrap:wrap;gap:16px;margin-bottom:12px}
+
+  @media (max-width:820px){
+    .nav .cont{gap:14px}
+    .nav a.liga{display:none}
+    .resumen{grid-template-columns:1fr;gap:20px}
+    .barra-prod{top:60px}
+  }
+  @media print{
+    .nav,.barra-prod,.cierre,.error button{display:none}
+    body{background:#fff}
+    .tabla-caja,.panel{break-inside:avoid;border-color:#bbb}
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="cont">
+    <a href="/" class="marca"><span class="gg">GG</span>GasGas</a>
+    <a href="/reporte" class="liga" aria-current="page">Reporte semanal</a>
+    <a href="/mapa" class="liga">Monitor nacional</a>
+    <a href="/docs" class="liga">Documentación</a>
+    <a href="/#contacto" class="cta">Solicitar acceso</a>
+  </div>
+</nav>
+
+<header class="cab">
+  <div class="cont">
+    <div class="overline">Reporte semanal</div>
+    <h1>Precios de gasolina y diésel en México</h1>
+    <p class="bajada">
+      Promedio por litro al corte de cada semana: nacional, por región y por entidad
+      federativa, con el cambio contra la semana anterior, el año pasado y hace dos años.
+    </p>
+    <div class="fechas" id="fechas"></div>
+  </div>
+</header>
+
+<div class="barra-prod">
+  <div class="cont" role="tablist" aria-label="Combustible">
+    <button class="tab" data-p="regular" role="tab" aria-selected="true">Magna (regular)</button>
+    <button class="tab" data-p="premium" role="tab" aria-selected="false">Premium</button>
+    <button class="tab" data-p="diesel"  role="tab" aria-selected="false">Diésel</button>
+  </div>
+</div>
+
+<main class="cont">
+
+  <div id="cargando" class="cargando panel">Cargando el corte más reciente…</div>
+
+  <div id="error" class="error panel oculto">
+    <div id="error-msg">No pudimos cargar el reporte.</div>
+    <button onclick="cargar()">Reintentar</button>
+  </div>
+
+  <div id="contenido" class="oculto">
+
+    <section class="resumen">
+      <div>
+        <div class="et">Promedio nacional</div>
+        <div class="precio-grande" id="precio-nac">—<span class="unidad">MXN/litro</span></div>
+      </div>
+      <div>
+        <div class="et">Cambio</div>
+        <div class="deltas" id="deltas-nac"></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Dos años de precio semanal</h2>
+      <div class="sub" id="grafica-sub">Nacional y las seis regiones GasGas.</div>
+      <svg class="grafica" id="grafica" role="img" aria-label="Serie semanal de precios"></svg>
+      <div class="leyenda" id="leyenda"></div>
+    </section>
+
+    <section class="tabla-caja">
+      <header>
+        <h2>Nacional y regiones</h2>
+        <div class="sub">Las seis regiones comerciales GasGas cubren el país completo.</div>
+      </header>
+      <div class="scroll-x"><table id="tabla-regiones"></table></div>
+    </section>
+
+    <section class="tabla-caja">
+      <header>
+        <h2>Entidades federativas</h2>
+        <div class="sub">Las 32 entidades, ordenadas alfabéticamente.</div>
+      </header>
+      <div class="scroll-x"><table id="tabla-estados"></table></div>
+    </section>
+
+    <div class="nota" id="nota"></div>
+
+    <section class="cierre">
+      <h2>Este corte es semanal. El dato es diario.</h2>
+      <p>
+        Nuestros clientes reciben el mismo cálculo todos los días y hasta nivel de
+        municipio, código postal y estación, con histórico desde mayo de 2024.
+      </p>
+      <a href="/#contacto">Solicitar acceso de evaluación</a>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <div class="cont">
+    <div class="ligas">
+      <a href="/">Inicio</a>
+      <a href="/mapa">Monitor nacional</a>
+      <a href="/docs">Documentación</a>
+      <a href="mailto:hola@gasgas.com.mx">hola@gasgas.com.mx</a>
+    </div>
+    <div id="pie-nota"></div>
+  </div>
+</footer>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   Reporte semanal de precios — /reporte
+
+   Estructura deliberada, por si alguien la toca después:
+
+   · El corte es el LUNES y se compara contra -364 y -728 días (52 y 104
+     semanas exactas), no contra "hace un año" de calendario. Así siempre se
+     compara lunes contra lunes; los precios tienen ritmo semanal y comparar
+     un lunes contra un domingo mete ruido que no es de mercado.
+
+   · Un hueco en la serie viaja como null y se dibuja como corte. Nunca se
+     interpola: una línea recta inventada entre dos puntos reales es una
+     mentira que se ve idéntica a un dato.
+
+   · La página NO ofrece descarga. Es una decisión comercial, no un olvido:
+     el histórico completo se cotiza aparte.
+
+   · No se menciona de dónde sale el dato. Ver la sección "Mensajes" en
+     CLAUDE.md antes de agregar cualquier texto sobre el origen.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+var PRODUCTOS = {
+  regular: { nombre:'Magna (regular)', color:'#00A94F' },
+  premium: { nombre:'Premium',         color:'#DC2626' },
+  diesel:  { nombre:'Diésel',          color:'#334155' }
+};
+var COLORES_SERIE = ['#0E2A47','#00A94F','#DC2626','#B45309','#7C3AED','#0891B2','#BE185D'];
+
+var datos = null, serie = null, producto = 'regular';
+
+var MESES = ['enero','febrero','marzo','abril','mayo','junio','julio',
+             'agosto','septiembre','octubre','noviembre','diciembre'];
+
+/* Las fechas llegan como 'YYYY-MM-DD'. Se parten a mano en vez de usar
+   new Date(cadena): eso las interpreta en UTC y en México las recorre un día. */
+function partes(iso){
+  var p = String(iso).split('-');
+  return { a:+p[0], m:+p[1], d:+p[2] };
+}
+function fechaLarga(iso){
+  var f = partes(iso);
+  return f.d + ' de ' + MESES[f.m-1] + ' de ' + f.a;
+}
+function fechaCorta(iso){
+  var f = partes(iso);
+  return f.d + '/' + String(f.m).padStart(2,'0') + '/' + String(f.a).slice(2);
+}
+function pesos(v){
+  return v === null || v === undefined || isNaN(v) ? '—' : Number(v).toFixed(2);
+}
+/* El cambio se muestra con signo explícito. En precios, "subió" es mala
+   noticia para quien compra, así que sube va en rojo y baja en verde. */
+function cambio(v){
+  if (v === null || v === undefined || isNaN(v)) return { txt:'—', clase:'igual' };
+  var n = Number(v);
+  if (Math.abs(n) < 0.005) return { txt:'sin cambio', clase:'igual' };
+  return { txt:(n>0?'+':'−') + Math.abs(n).toFixed(2), clase:(n>0?'sube':'baja') };
+}
+
+function cargar(){
+  document.getElementById('error').classList.add('oculto');
+  document.getElementById('cargando').classList.remove('oculto');
+  document.getElementById('contenido').classList.add('oculto');
+
+  var v = '?v=' + Date.now();
+  Promise.all([
+    fetch('/api/reporte-semanal' + v).then(function(r){
+      if(!r.ok) throw new Error('reporte ' + r.status); return r.json(); }),
+    fetch('/api/reporte-semanal/serie' + v).then(function(r){
+      if(!r.ok) throw new Error('serie ' + r.status); return r.json(); })
+  ]).then(function(res){
+    datos = res[0]; serie = res[1];
+    document.getElementById('cargando').classList.add('oculto');
+    document.getElementById('contenido').classList.remove('oculto');
+    pintarFechas();
+    pintarTodo();
+  }).catch(function(e){
+    document.getElementById('cargando').classList.add('oculto');
+    var box = document.getElementById('error');
+    box.classList.remove('oculto');
+    document.getElementById('error-msg').textContent =
+      'No pudimos cargar el reporte (' + e.message + ').';
+  });
+}
+
+function pintarFechas(){
+  var c = datos.comparaciones;
+  document.getElementById('fechas').innerHTML =
+    chipFecha('Corte publicado', fechaLarga(datos.corte), true) +
+    chipFecha('Próxima actualización', fechaLarga(datos.proxima_actualizacion), false) +
+    chipFecha('Se compara contra', fechaCorta(c.semana) + ' · ' +
+              fechaCorta(c.ano) + ' · ' + fechaCorta(c.dos_anos), false);
+
+  document.getElementById('nota').innerHTML =
+    '<b>Qué incluye este reporte.</b> ' + datos.nota_cobertura +
+    ' El promedio se calcula sobre las lecturas válidas de cada corte, ' +
+    'depuradas con el algoritmo de calidad GasGas.';
+
+  document.getElementById('pie-nota').innerHTML =
+    'GasGas · Reporte semanal al ' + fechaLarga(datos.corte) +
+    '. Precios en pesos por litro, impuestos incluidos. ' +
+    'Promedios sobre ' + (datos.nacional.estaciones || 0).toLocaleString('es-MX') +
+    ' estaciones en el padrón nacional.';
+}
+function chipFecha(et, vl, destacado){
+  return '<div class="chip-fecha' + (destacado?' destacado':'') + '">' +
+         '<span class="et">' + et + '</span>' +
+         '<span class="vl">' + vl + '</span></div>';
+}
+
+function pintarTodo(){
+  pintarResumen();
+  pintarTabla('tabla-regiones', [datos.nacional].concat(datos.areas), true);
+  pintarTabla('tabla-estados', datos.estados, false);
+  pintarGrafica();
+}
+
+function pintarResumen(){
+  var n = datos.nacional[producto];
+  document.getElementById('precio-nac').innerHTML =
+    '$' + pesos(n.serie[2]) + '<span class="unidad">MXN/litro</span>';
+
+  var filas = [
+    ['vs. semana', n.cambio_semana],
+    ['vs. hace 1 año', n.cambio_ano],
+    ['vs. hace 2 años', n.cambio_dos_anos]
+  ];
+  document.getElementById('deltas-nac').innerHTML = filas.map(function(f){
+    var c = cambio(f[1]);
+    return '<div class="delta"><div class="k">' + f[0] + '</div>' +
+           '<div class="v ' + c.clase + '">' + c.txt + '</div></div>';
+  }).join('');
+}
+
+function pintarTabla(id, filas, resaltarPrimera){
+  var col = datos.columnas, cmp = datos.comparaciones;
+  var html =
+    '<thead>' +
+      '<tr class="grupo">' +
+        '<th class="mercado" rowspan="2">Mercado</th>' +
+        '<th colspan="3">Precio al corte</th>' +
+        '<th colspan="3">Cambio contra</th>' +
+      '</tr>' +
+      '<tr>' +
+        '<th>' + fechaCorta(col[0]) + '</th>' +
+        '<th>' + fechaCorta(col[1]) + '</th>' +
+        '<th>' + fechaCorta(col[2]) + '</th>' +
+        '<th>semana</th><th>1 año</th><th>2 años</th>' +
+      '</tr>' +
+    '</thead><tbody>';
+
+  filas.forEach(function(f, i){
+    var p = f[producto];
+    var cs = cambio(p.cambio_semana), ca = cambio(p.cambio_ano), cd = cambio(p.cambio_dos_anos);
+    html += '<tr' + (resaltarPrimera && i === 0 ? ' class="destacada"' : '') + '>' +
+      '<td class="mercado">' + f.nombre +
+        (f.estaciones ? '<small>' + f.estaciones.toLocaleString('es-MX') + ' estaciones</small>' : '') +
+      '</td>' +
+      '<td>' + pesos(p.serie[0]) + '</td>' +
+      '<td>' + pesos(p.serie[1]) + '</td>' +
+      '<td class="actual">' + pesos(p.serie[2]) + '</td>' +
+      '<td class="' + cs.clase + '">' + cs.txt + '</td>' +
+      '<td class="' + ca.clase + '">' + ca.txt + '</td>' +
+      '<td class="' + cd.clase + '">' + cd.txt + '</td>' +
+    '</tr>';
+  });
+  document.getElementById(id).innerHTML = html + '</tbody>';
+}
+
+/* Gráfica en SVG a mano. No se usa una librería a propósito: son siete líneas
+   y un eje: traer 90 KB de dependencia para esto no se paga. */
+function pintarGrafica(){
+  var svg = document.getElementById('grafica');
+  var claves = Object.keys(serie.series);
+  var fechas = serie.fechas;
+  if (!fechas.length) { svg.innerHTML = ''; return; }
+
+  var W = svg.clientWidth || 900, H = 300;
+  var mIzq = 46, mDer = 12, mArr = 14, mAba = 28;
+  var ancho = W - mIzq - mDer, alto = H - mArr - mAba;
+
+  var todos = [];
+  claves.forEach(function(k){
+    serie.series[k][producto].forEach(function(v){ if (v !== null) todos.push(v); });
+  });
+  if (!todos.length) { svg.innerHTML = ''; return; }
+
+  var min = Math.min.apply(null, todos), max = Math.max.apply(null, todos);
+  var pad = (max - min) * 0.12 || 0.5;
+  min -= pad; max += pad;
+
+  var x = function(i){ return mIzq + (fechas.length === 1 ? ancho/2 : ancho * i / (fechas.length - 1)); };
+  var y = function(v){ return mArr + alto - alto * (v - min) / (max - min); };
+
+  var s = '';
+  // Rejilla horizontal con cinco marcas.
+  for (var g = 0; g <= 4; g++){
+    var val = min + (max - min) * g / 4, yy = y(val);
+    s += '<line x1="' + mIzq + '" y1="' + yy + '" x2="' + (W - mDer) + '" y2="' + yy +
+         '" stroke="#EDF1F5" stroke-width="1"/>' +
+         '<text x="' + (mIzq - 8) + '" y="' + (yy + 4) + '" text-anchor="end" ' +
+         'font-size="11" font-family="JetBrains Mono, monospace" fill="#8494A5">' +
+         val.toFixed(1) + '</text>';
+  }
+  // Eje de tiempo: solo cuatro etiquetas, si no se encima todo.
+  for (var t = 0; t < 4; t++){
+    var i = Math.round((fechas.length - 1) * t / 3);
+    s += '<text x="' + x(i) + '" y="' + (H - 8) + '" text-anchor="middle" ' +
+         'font-size="11" font-family="Figtree, sans-serif" fill="#8494A5">' +
+         fechaCorta(fechas[i]) + '</text>';
+  }
+  // Una ruta por mercado. Los nulos parten la línea (se abre una ruta nueva).
+  claves.forEach(function(k, idx){
+    var vals = serie.series[k][producto], d = '', abierto = false;
+    for (var i = 0; i < vals.length; i++){
+      if (vals[i] === null) { abierto = false; continue; }
+      d += (abierto ? ' L ' : ' M ') + x(i).toFixed(1) + ' ' + y(vals[i]).toFixed(1);
+      abierto = true;
+    }
+    s += '<path d="' + d + '" fill="none" stroke="' + COLORES_SERIE[idx % COLORES_SERIE.length] +
+         '" stroke-width="' + (k === 'nacional' ? 2.6 : 1.6) + '" ' +
+         'stroke-linejoin="round" stroke-linecap="round" ' +
+         (k === 'nacional' ? '' : 'opacity="0.75"') + '/>';
+  });
+
+  svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  svg.innerHTML = s;
+
+  document.getElementById('leyenda').innerHTML = claves.map(function(k, idx){
+    return '<span><i style="background:' + COLORES_SERIE[idx % COLORES_SERIE.length] + '"></i>' +
+           serie.series[k].nombre + '</span>';
+  }).join('');
+
+  document.getElementById('grafica-sub').textContent =
+    PRODUCTOS[producto].nombre + ' · pesos por litro · ' + fechas.length +
+    ' cortes semanales, del ' + fechaLarga(fechas[0]) + ' a la fecha.';
+}
+
+document.querySelectorAll('.tab').forEach(function(b){
+  b.addEventListener('click', function(){
+    document.querySelectorAll('.tab').forEach(function(o){
+      o.setAttribute('aria-selected', String(o === b));
+    });
+    producto = b.dataset.p;
+    if (datos) pintarTodo();
+  });
+});
+
+/* La gráfica se redibuja al cambiar el ancho, pero con freno: sin él, una
+   ventana que se arrastra dispara cientos de repintados. */
+var frenoResize;
+window.addEventListener('resize', function(){
+  clearTimeout(frenoResize);
+  frenoResize = setTimeout(function(){ if (serie) pintarGrafica(); }, 180);
+});
+
+cargar();
+</script>
+</body>
+</html>
