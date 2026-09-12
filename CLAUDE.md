@@ -129,7 +129,28 @@ Columnas: `market_type`, `market_value`, `days`, `regular/premium/diesel`, `min/
 Periodos: `days = 1, 7, 30`. Mercados: 1 nacional + 32 estados + **2,919 municipios**.
 
 ### precios_historicos_agregados
-Serie diaria para gráficas (**146,083 filas**). Columnas: `market_type`, `market_value`, `date`, `regular`, `premium`, `diesel`, `estado_slug`, `updated_at`.
+Serie diaria para gráficas. Columnas: `market_type`, `market_value`, `date`, `regular`, `premium`, `diesel`, `estado_slug`, `updated_at`.
+
+**Profundidad por nivel (tras el relleno del 11 Sep 2026):**
+
+| market_type | Desde | Filas | Días |
+|---|---|---|---|
+| `nacional` | **2024-05-01** | 861 | 861 |
+| `area` | **2024-05-01** | 5,166 | 861 |
+| `estado` | **2024-05-01** | 27,552 | 861 |
+| `municipio` | 2026-06-20 | 244,885 | 84 |
+
+⚠️ La tabla se creó en abril de 2026, así que solo tenía 4 meses aunque `prices` llega a
+**mayo de 2024** (861 días con dato de 864 posibles, 99.7%). `scripts/backfillHistoricos.js`
+la rellenó hacia atrás con **exactamente la misma fórmula** que usa el cron diario. Es idempotente.
+**Municipio se dejó fuera a propósito:** serían 2.5M de filas y la página pública no publica ese nivel.
+
+⚠️ **Quiebre real en la serie, no es error nuestro.** Al recalcular los 861 días con parámetros
+idénticos apareció un salto entre febrero y abril de 2026: **premium +10%** (25.74 → 28.29) y diésel
++7%, mientras regular sigue clavada en ~23.6. Se verificó que NO es artefacto: el conteo de lecturas
+es estable (~380k de premium al mes), el promedio **sin filtrar** se mueve igual que el filtrado, y el
+salto ocurre **en las 6 regiones a la vez**. La lectura probable: regular está topada por acuerdo de
+precio y premium/diésel flotan. Si alguien pregunta por ese escalón en `/reporte`, esta es la respuesta.
 
 ### Tablas del demo (9 Ago 2026)
 | Tabla | Qué guarda |
@@ -182,17 +203,26 @@ Resultado: 13,822 estaciones por CP (97.4%), 360 por vecino más cercano, 12 cor
 
 ## Rangos de Precios Válidos
 
-Objeto `RANGE` presente en `updateAgregados.js` y `updateHistoricosDaily.js`:
+**Fuente única: `scripts/rangosPrecios.js`** (centralizado el 10 Sep 2026). Lo importan
+`updateAgregados.js`, `updateHistoricosDaily.js`, `backfillHistoricos.js` y `server.js`.
 
 | Producto | Mínimo | Máximo |
 |---|---|---|
-| Regular | 21 | 27 |
-| Premium | 23 | 32 |
+| Regular | **18** | **28** |
+| Premium | **20** | **32** |
 | Diesel | 25 | 33 |
 
-⚠️ **Los rangos viven en tres lugares:** `updateAgregados.js`, `updateHistoricosDaily.js` y ahora
-también `server.js` (endpoint `/api/stats-hoy`). Si se ajustan por percentiles hay que cambiar los tres,
-si no la página publica un número y los promedios se calculan con otro. **Pendiente: centralizarlos.**
+⚠️ **Por qué el piso de regular bajó de 21 a 18:** la frontera norte tiene estímulo fiscal de IEPS
+(~$3.83/L en Magna) y sus precios reales caen por debajo de 21. El piso viejo los tiraba como
+basura: se recuperaron **605 precios al día** y se corrigieron los promedios de Chihuahua y
+Tamaulipas. Con los cortes nuevos se siguen atrapando los 4 registros verdaderamente absurdos.
+
+⚠️ **Dos copias viven fuera de este repo** y hay que cambiarlas a mano:
+`gasgas-analytics-api-as-a-service-seed` (el seeder de Clara) y `gasgas-cobee-firebase`.
+Si divergen, cada cliente recibe promedios calculados con criterios distintos.
+
+⚠️ **Al cambiar un rango hay que recalcular la historia**, si no la serie queda partida a la mitad
+con dos criterios distintos.
 
 ```sql
 -- Diagnóstico para reajustar rangos
@@ -221,6 +251,8 @@ FROM prices WHERE regular > 0 AND date >= NOW() - INTERVAL '30 days';
 | `GET /api/demo/cp` | `cp`, `product` | **Demo de nivel CP.** Whitelist de 8 CPs + rate limit 30/h por IP |
 | `POST /api/lead` | — | Captura de prospectos (legado) |
 | `POST /api/solicitar-acceso` | — | **Motor del demo.** Ver sección "Demo self-service" |
+| `GET /api/reporte-semanal` | — | **11 Sep 2026.** Corte semanal completo: nacional + 6 Áreas + 32 estados, los 3 productos, las 3 últimas semanas y el cambio vs. semana / 1 año / 2 años. Alimenta `/reporte` |
+| `GET /api/reporte-semanal/serie` | `semanas` (8–160, default 104) | Serie de lunes para la gráfica de `/reporte`. Solo nacional y las 6 Áreas (7 líneas es el tope legible). Los huecos viajan como `null` |
 | `GET /api/salud` | — | **Chequeo real:** consulta la base, responde **503** si falla o si las conexiones pasan del 85%. Es el que debe vigilar un monitor externo |
 | `GET /api/test` | — | Solo dice que el proceso está vivo. **No toca la base — no sirve para monitoreo** |
 
@@ -317,7 +349,8 @@ de `prices`. Separarlos habría costado ~3.4 GB extra por periodo, unos **200 GB
 | Ruta | Archivo | Qué es |
 |---|---|---|
 | `/` | index.html | **Landing B2B** (diseño Claude Design): hero, **asistente de demo (2ª sección)**, ticker, mapa, proceso, niveles, API, playground, planes, cierre |
-| `/dashboard` | dashboard.html | Dashboard de precios al consumidor (chips nacional/estado, gráfica SVG, chips Pro bloqueados) |
+| `/reporte` | reporte.html | **Reporte semanal de precios** (11 Sep 2026). Ver sección propia abajo |
+| ~~`/dashboard`~~ | — | **Retirado 11 Sep 2026.** Redirige 301 a `/reporte`. ⚠️ El redirect va **antes** de `express.static` en server.js; si se mueve después, el static sirve `dashboard.html` y el redirect nunca corre (problema conocido #20). `public/dashboard.html` sigue en el repo pero ya no se sirve |
 | `/datos` | datos.html | Mismo contenido que `/` (compatibilidad con links viejos) |
 | `/mapa` | mapa.html | Monitor Nacional: choropleth D3, KPIs, movimientos 7 días, ficha estatal, feed |
 | `/docs` | docs.html | Documentación pública de la API |
@@ -342,6 +375,37 @@ Niveles **Estado/Municipio/CP** activos; **Estación** bloqueado (gancho comerci
   La separación va como `padding` de cada elemento, **nunca como `gap` del contenedor**
 
 ---
+
+## Reporte semanal `/reporte` (11 Sep 2026)
+
+Réplica de la *Gasoline and Diesel Fuel Update* de la **EIA** de Estados Unidos
+(eia.gov/petroleum/gasdiesel), que es la página de referencia de precios de combustible
+de ese mercado. Objetivo: ser la página citable de México.
+
+### Decisiones comerciales (NO cambiar sin hablarlo con César)
+
+| Decisión | Qué se hizo | Por qué |
+|---|---|---|
+| **Qué se regala** | Nacional + 6 Áreas GasGas + 32 estados | Espeja a la EIA (país + regiones + estados). Municipio, CP y estación **no salen**: son el producto de paga. El nivel Estado queda expuesto a propósito — es el gancho que da confianza para vender el nivel CP |
+| **Frecuencia** | Público **semanal** (corte del lunes), clientes **diario** | El ritual de "corte publicado / próxima actualización" es lo que vuelve citable a la EIA. Y el retraso es argumento de venta: lo que el público ve el lunes, el cliente lo tuvo el mismo día |
+| **Descarga** | **Ninguna** | La EIA regala el histórico completo en Excel. Para nosotros ese histórico se cotiza aparte |
+| **`/dashboard`** | Retirado, redirige a `/reporte` | Hacía lo mismo peor. Evita un tercer frente público de precios que mantener |
+
+### Detalles técnicos que no son obvios
+
+- **El corte es el LUNES** y se compara contra **−364 y −728 días**, no contra "hace un año" de
+  calendario. 364 son 52 semanas exactas, así que siempre cae en lunes. Comparar un lunes contra un
+  domingo mete ruido de ritmo semanal que no es de mercado.
+- **La gráfica es SVG a mano**, sin librería: son 7 líneas y un eje, no se paga traer 90 KB.
+- **Los huecos viajan como `null` y se dibujan como corte.** Nunca se interpola: una línea recta
+  inventada entre dos puntos reales se ve idéntica a un dato.
+- **Orden de las líneas fijo** (`nacional` primero, luego I–VI). Si se deja el orden que devuelve la
+  base, a Nacional le toca un color secundario y se pierde entre las regiones.
+- Las fechas `YYYY-MM-DD` se parten a mano, **nunca con `new Date(cadena)`**: eso las lee en UTC y en
+  México las recorre un día.
+- **Sube = rojo, baja = verde.** En precios, "subió" es mala noticia para quien compra.
+
+⚠️ **No menciona la fuente del dato** (ver sección "Mensajes"). Verificado con grep antes de publicar.
 
 ## Cloudflare
 
