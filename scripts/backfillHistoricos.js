@@ -182,6 +182,91 @@ const CONTEOS = {
     GROUP BY gs.estado, gs.municipio, p.date::date) t`
 };
 
+/**
+ * AUDITORÍA — no quitar.
+ *
+ * Compara CADA fila guardada contra un recálculo fresco. Existe por un error
+ * real del 11 de septiembre de 2026:
+ *
+ * Se rellenó el histórico hacia atrás pero se cortó el nivel `nacional` en la
+ * fecha donde la tabla "ya tenía datos", dando por hecho que esas filas estaban
+ * bien. No lo estaban: las había escrito el cron con el rango viejo (piso de
+ * regular en 21). Ese piso tira los precios de la frontera norte, así que el
+ * promedio nacional salía ~0.17 más alto.
+ *
+ * Resultado: un escalón falso de +0.17 el 4 de mayo en la gráfica pública, y
+ * un titular de "bajó 17 centavos esta semana" que era puro artefacto.
+ *
+ * Lo detectó J a simple vista, con el mejor argumento posible: el nacional
+ * brincaba y NINGUNA de las seis áreas brincaba. Un promedio del país no puede
+ * moverse sin que se mueva alguna de sus partes. Esa invariante vale como
+ * prueba y por eso también se revisa aquí.
+ *
+ * Moraleja: al rellenar, NUNCA asumir que lo que ya estaba es correcto.
+ * Recalcular el rango completo y comprobar.
+ */
+async function auditar(client) {
+  console.log("\nAuditoría — cada fila guardada contra un recálculo fresco:");
+  let problemas = 0;
+
+  for (const nivel of NIVELES) {
+    if (nivel === "municipio") continue; // demasiadas filas para auditar en línea
+    const agrupa = {
+      nacional: { sel: "'nacional', 'all'", from: "FROM prices p", grp: "p.date::date" },
+      estado: {
+        sel: "'estado', gs.estado",
+        from: `FROM prices p JOIN prices_gas_station_links l ON l.price_id = p.id
+               JOIN gas_stations gs ON gs.id = l.gas_station_id`,
+        grp: "gs.estado, p.date::date"
+      },
+      area: {
+        sel: "'area', gs.gasgas_area",
+        from: `FROM prices p JOIN prices_gas_station_links l ON l.price_id = p.id
+               JOIN gas_stations gs ON gs.id = l.gas_station_id`,
+        grp: "gs.gasgas_area, p.date::date"
+      }
+    }[nivel];
+
+    const { rows } = await client.query(`
+      WITH r AS (
+        SELECT ${agrupa.sel} AS mv_sel, p.date::date AS d,
+               AVG(CASE WHEN p.regular BETWEEN ${RANGE.regular.min} AND ${RANGE.regular.max}
+                        THEN p.regular END) AS reg
+        ${agrupa.from}
+        WHERE p.date >= $1::date AND p.date <= $2::date
+        GROUP BY ${agrupa.grp}
+      )
+      SELECT COUNT(*) AS revisadas,
+             COUNT(*) FILTER (WHERE ABS(COALESCE(h.regular,0) - COALESCE(r.reg,0)) > 0.005) AS malas,
+             COALESCE(ROUND(MAX(ABS(COALESCE(h.regular,0) - COALESCE(r.reg,0)))::numeric, 4), 0) AS peor,
+             MAX(h.date) FILTER (WHERE ABS(COALESCE(h.regular,0) - COALESCE(r.reg,0)) > 0.005)::text AS peor_dia
+      FROM precios_historicos_agregados h
+      JOIN r ON r.mv_sel = h.market_value AND r.d = h.date
+      WHERE h.market_type = $3`, [DESDE, HASTA, nivel]);
+
+    const a = rows[0];
+    const malas = Number(a.malas);
+    // El día en curso casi siempre difiere: siguen entrando precios mientras
+    // corre el script. No cuenta como problema.
+    const soloHoy = malas > 0 && a.peor_dia === new Date().toISOString().slice(0, 10);
+    const marca = malas === 0 ? "ok  " : (soloHoy ? "ok* " : "MAL ");
+    if (malas > 0 && !soloHoy) problemas++;
+    console.log(`  ${marca} ${nivel.padEnd(10)} ${Number(a.revisadas).toLocaleString("es-MX")} filas · ` +
+      `${malas} desajustadas` + (malas ? ` · peor ${a.peor} el ${a.peor_dia}` : "") +
+      (soloHoy ? "  (solo el día en curso, normal)" : ""));
+  }
+
+  if (problemas) {
+    console.error(`\n⚠️  ${problemas} nivel(es) con filas que NO coinciden con el recálculo.`);
+    console.error("   Casi siempre significa que quedaron filas viejas calculadas con otro");
+    console.error("   rango de precios. Vuelve a correr cubriendo TODO el periodo, sin cortar");
+    console.error("   en la fecha donde la tabla 'ya tenía datos'.");
+    process.exitCode = 1;
+  } else {
+    console.log("  Todo cuadra.");
+  }
+}
+
 const sumarDias = (iso, n) => {
   const d = new Date(iso + "T00:00:00Z");
   d.setUTCDate(d.getUTCDate() + n);
@@ -260,6 +345,8 @@ async function main() {
       v.rows.forEach((r) => console.log(
         `  ${r.market_type.padEnd(10)} ${r.desde} → ${r.hasta}  ` +
         `${Number(r.filas).toLocaleString("es-MX")} filas · ${r.dias} días`));
+
+      await auditar(client);
     }
   } finally {
     client.release();

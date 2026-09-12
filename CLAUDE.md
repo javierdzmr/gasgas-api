@@ -152,6 +152,31 @@ es estable (~380k de premium al mes), el promedio **sin filtrar** se mueve igual
 salto ocurre **en las 6 regiones a la vez**. La lectura probable: regular está topada por acuerdo de
 precio y premium/diésel flotan. Si alguien pregunta por ese escalón en `/reporte`, esta es la respuesta.
 
+### ⚠️ La invariante que hay que revisar SIEMPRE (12 Sep 2026)
+
+**Si el promedio nacional se mueve y ninguna de las 6 Áreas se mueve, el dato está mal.**
+Un promedio del país no puede brincar sin que brinque alguna de sus partes.
+
+Así se detectó un escalón falso de **+0.17 en Magna el 4 de mayo de 2026**: el relleno del histórico
+se cortó en la fecha donde la tabla "ya tenía datos" para el nivel `nacional`, dando por hecho que
+esas filas estaban bien. No lo estaban — las había escrito el cron con el **piso viejo de 21**, que
+tira los precios de la frontera norte y sube el promedio. Las áreas sí se habían reescrito completas,
+por eso solo el nacional tenía el escalón. Llegó a publicarse en dev un titular de *"bajó 17 centavos
+esta semana"* que era 100% artefacto; el número real era +0.003.
+
+Verificación de los 4 saltos reales que quedan (>10 centavos), todos con las 6 áreas moviéndose:
+
+| Lunes | Nacional | Áreas que se movieron |
+|---|---|---|
+| 2024-06-17 | +0.138 | 6 de 6 |
+| 2025-01-06 | +0.138 | 6 de 6 |
+| 2025-03-03 | −0.284 | 6 de 6 |
+| 2025-03-10 | −0.148 | 5 de 6 |
+
+**`backfillHistoricos.js` ahora audita solo:** al terminar compara cada fila guardada contra un
+recálculo fresco y sale con código 1 si algo no cuadra. Solo tolera diferencias del día en curso
+(siguen entrando precios mientras corre). **Nunca asumir que lo que ya estaba en la tabla es correcto.**
+
 ### Tablas del demo (9 Ago 2026)
 | Tabla | Qué guarda |
 |---|---|
