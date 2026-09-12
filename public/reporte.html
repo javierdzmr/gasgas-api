@@ -441,7 +441,15 @@ function pintarTabla(id, filas, resaltarPrimera){
    y un eje: traer 90 KB de dependencia para esto no se paga. */
 function pintarGrafica(){
   var svg = document.getElementById('grafica');
-  var claves = Object.keys(serie.series);
+  /* El orden importa: define el color y el lugar en la leyenda. Nacional va
+     SIEMPRE primero (se queda con el azul oscuro y el trazo grueso) y las
+     áreas después en orden romano. Sin esto quedan como las devuelva la base,
+     y la línea principal puede tocarle un color secundario y perderse. */
+  var ORDEN = ['nacional','I','II','III','IV','V','VI'];
+  var claves = Object.keys(serie.series).sort(function(a,b){
+    var ia = ORDEN.indexOf(a), ib = ORDEN.indexOf(b);
+    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+  });
   var fechas = serie.fechas;
   if (!fechas.length) { svg.innerHTML = ''; return; }
 
@@ -472,10 +480,12 @@ function pintarGrafica(){
          'font-size="11" font-family="JetBrains Mono, monospace" fill="#8494A5">' +
          val.toFixed(1) + '</text>';
   }
-  // Eje de tiempo: solo cuatro etiquetas, si no se encima todo.
+  // Eje de tiempo: solo cuatro etiquetas, si no se encima todo. La primera y
+  // la última se anclan a su borde; centradas se salen del lienzo y se cortan.
   for (var t = 0; t < 4; t++){
     var i = Math.round((fechas.length - 1) * t / 3);
-    s += '<text x="' + x(i) + '" y="' + (H - 8) + '" text-anchor="middle" ' +
+    var anc = t === 0 ? 'start' : (t === 3 ? 'end' : 'middle');
+    s += '<text x="' + x(i) + '" y="' + (H - 8) + '" text-anchor="' + anc + '" ' +
          'font-size="11" font-family="Figtree, sans-serif" fill="#8494A5">' +
          fechaCorta(fechas[i]) + '</text>';
   }
