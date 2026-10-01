@@ -111,7 +111,11 @@ node scripts/updateHistoricosDaily.js
 
 ### gas_stations
 Padrón de **14,194** estaciones. Columnas clave: `id`, `estado`, `municipio`, `cp`, `lat`, `lng`, `cre_id`, `estado_slug`.
-**5,013 CPs** distintos con estación · **3,528 estaciones sin CP válido** (pendiente: 2ª tanda de backfill).
+**7,884 CPs** distintos con estación · **4 estaciones sin CP válido** (medido 1 Oct 2026).
+
+⚠️ Estas dos cifras cambiaron mucho el 2 Sep 2026 al completar el padrón con el archivo de Clara:
+de 4,911 a 7,884 CPs, y de 3,524 a 4 estaciones sin código postal. **Si aparecen 5,013 CPs o
+3,528 estaciones sin CP en algún lado, está viejo.**
 
 ### prices
 Motor principal: **+10.7M registros**. Columnas: `id`, `date`, `regular`, `premium`, `diesel`.
@@ -390,7 +394,16 @@ Niveles **Estado/Municipio/CP** activos; **Estación** bloqueado (gancho comerci
 - Tipografías: Figtree (UI) + JetBrains Mono (números)
 - **No se menciona la fuente ni "el archivo que limpiar"** en nada que vea el cliente (ver Mensajes)
 - Pie del sitio: *"datos procesados por el algoritmo de calidad GasGas"*
-- Cobertura publicada: 14,194 estaciones · 32 estados · 2,900+ municipios · **5,000+ CPs** · histórico desde mayo 2024 · **7 cortes al día**
+- Cobertura publicada: 14,194 estaciones · 32 estados · 2,900+ municipios · **7,800+ CPs** · histórico desde mayo 2024 · **7 cortes al día**
+
+⚠️ **Las cifras publicadas viven en 5 archivos** (`index.html`, `datos.html`, `datos-v2.html`,
+`dashboard.html`, `datos-anterior.html`) y el número de CPs aparece **7 veces solo en la landing**.
+Al cambiar cobertura hay que corregirlas todas: el 1 Oct 2026 el sitio seguía diciendo "5,000+ CPs"
+un mes después de que el padrón pasara a 7,884. Comando para auditar contra la base:
+
+```bash
+grep -rn "5,000+\|3,528\|5,013\|4,911" public/*.html   # cifras que ya quedaron viejas
+```
 - La landing es un export de **Claude Design** (`<x-dc>` + `support.js`): la lógica vive en la clase `Component extends DCLogic` al final del archivo, y el HTML usa `{{ }}` y `<sc-for>`. **No romper esa estructura.**
 - Capa responsive añadida post-export en el `<style>`: no borrarla al reimportar diseños
 - ⚠️ La capa responsive usa selectores por **substring del atributo `style`** (`[style*="display: flex"]`).
