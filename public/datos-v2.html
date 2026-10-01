@@ -545,7 +545,7 @@
       <div style="border: 1px solid #E7ECF0; border-radius: 14px; padding: 28px; display: flex; flex-direction: column">
         <div style="font-size: 18px; font-weight: 700; margin-bottom: 6px">Estado</div>
         <div style="font-size: 14px; color: #4C6379; margin-bottom: 24px">32 mercados + nacional</div>
-        <div style="font-family: 'JetBrains Mono', monospace; margin-bottom: 28px"><span style="font-size: 13px; color: #8B99A6">desde</span> <span style="font-size: 30px; font-weight: 600">$17,250</span> <span style="font-size: 13px; color: #8B99A6">MXN/mes</span></div>
+        <div style="font-family: 'JetBrains Mono', monospace; margin-bottom: 28px"><span style="font-size: 13px; color: #8B99A6">desde</span> <span style="font-size: 30px; font-weight: 600">$17,250</span> <span style="font-size: 13px; color: #8B99A6">MXN/mes + IVA</span></div>
         <div style="display: grid; gap: 12px; font-size: 14px; color: #33475B; flex: 1">
           <span>✓ Promedios estatales y nacional</span>
           <span>✓ 3 combustibles, actualización diaria</span>
@@ -556,7 +556,7 @@
       <div style="border: 1px solid #E7ECF0; border-radius: 14px; padding: 28px; display: flex; flex-direction: column">
         <div style="font-size: 18px; font-weight: 700; margin-bottom: 6px">Municipio</div>
         <div style="font-size: 14px; color: #4C6379; margin-bottom: 24px">2,900+ plazas</div>
-        <div style="font-family: 'JetBrains Mono', monospace; margin-bottom: 28px"><span style="font-size: 13px; color: #8B99A6">desde</span> <span style="font-size: 30px; font-weight: 600">$28,750</span> <span style="font-size: 13px; color: #8B99A6">MXN/mes</span></div>
+        <div style="font-family: 'JetBrains Mono', monospace; margin-bottom: 28px"><span style="font-size: 13px; color: #8B99A6">desde</span> <span style="font-size: 30px; font-weight: 600">$28,750</span> <span style="font-size: 13px; color: #8B99A6">MXN/mes + IVA</span></div>
         <div style="display: grid; gap: 12px; font-size: 14px; color: #33475B; flex: 1">
           <span>✓ Todo lo de Estado</span>
           <span>✓ Promedios y dispersión por plaza</span>
@@ -568,7 +568,7 @@
         <div style="position: absolute; top: -13px; left: 50%; transform: translateX(-50%); background: #00A94F; color: #FFFFFF; font-size: 12px; font-weight: 700; padding: 4px 14px; border-radius: 999px; letter-spacing: 0.03em; white-space: nowrap">MÁS CONTRATADO</div>
         <div style="font-size: 18px; font-weight: 700; margin-bottom: 6px">Código Postal</div>
         <div style="font-size: 14px; color: #4C6379; margin-bottom: 24px">5,000+ zonas</div>
-        <div style="font-family: 'JetBrains Mono', monospace; margin-bottom: 28px"><span style="font-size: 13px; color: #8B99A6">desde</span> <span style="font-size: 30px; font-weight: 600">$40,250</span> <span style="font-size: 13px; color: #8B99A6">MXN/mes</span></div>
+        <div style="font-family: 'JetBrains Mono', monospace; margin-bottom: 28px"><span style="font-size: 13px; color: #8B99A6">desde</span> <span style="font-size: 30px; font-weight: 600">$40,250</span> <span style="font-size: 13px; color: #8B99A6">MXN/mes + IVA</span></div>
         <div style="display: grid; gap: 12px; font-size: 14px; color: #33475B; flex: 1">
           <span>✓ Todo lo de Municipio</span>
           <span>✓ Nivel código postal</span>
@@ -1025,7 +1025,11 @@ class Component extends DCLogic {
 
           atras: () => this.setState({ wPaso: Math.max(1, s.wPaso - 1), wError: "" }),
           resumen: NIV_TXT[s.wNivel] + " · " + (s.wNacional ? "cobertura nacional" : nAreas === 1 ? "área " + nombresSel[0] : nAreas + " áreas"),
-          estimadoTxt: "$" + est.min.toLocaleString("en-US") + " – $" + est.max.toLocaleString("en-US"),
+          // El " + IVA" va aquí y no en la etiqueta para que el impuesto viaje pegado
+          // al número en los dos lugares donde se muestra el estimado (pasos 2 y 3).
+          // El correo y el mensaje de WhatsApp ya lo decían; la página no, y el
+          // prospecto veía un número en pantalla y otro distinto al recibir la llave.
+          estimadoTxt: "$" + est.min.toLocaleString("en-US") + " – $" + est.max.toLocaleString("en-US") + " + IVA",
           nombre: s.wNombre, empresa: s.wEmpresa, email: s.wEmail, whatsapp: s.wWhatsapp,
           setNombre: (e) => this.setState({ wNombre: e.target.value }),
           setEmpresa: (e) => this.setState({ wEmpresa: e.target.value }),
